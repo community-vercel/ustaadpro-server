@@ -1,0 +1,189 @@
+DROP TABLE IF EXISTS shop_order_items CASCADE;
+DROP TABLE IF EXISTS shop_orders CASCADE;
+DROP TABLE IF EXISTS shop_products CASCADE;
+DROP TABLE IF EXISTS service_reviews CASCADE;
+DROP TABLE IF EXISTS order_items CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS user_addresses CASCADE;
+DROP TABLE IF EXISTS app_settings CASCADE;
+DROP TABLE IF EXISTS home_slides CASCADE;
+DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS services CASCADE;
+DROP TABLE IF EXISTS subcategories CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS auth_otps CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  fcm_token VARCHAR(255),
+  wallet_balance NUMERIC(10, 2) NOT NULL DEFAULT 5200.00,
+  coins INT NOT NULL DEFAULT 1280,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_addresses (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  label VARCHAR(80) NOT NULL,
+  detail VARCHAR(255) NOT NULL,
+  is_default SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE auth_otps (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(100) NOT NULL,
+  purpose VARCHAR(50) NOT NULL,
+  code_hash VARCHAR(255) NOT NULL,
+  payload JSONB,
+  expires_at TIMESTAMP NOT NULL,
+  consumed_at TIMESTAMP,
+  attempts INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_auth_otps_email_purpose ON auth_otps (email, purpose);
+
+CREATE TABLE categories (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  subtitle VARCHAR(255) NOT NULL,
+  icon VARCHAR(50) NOT NULL,
+  tint VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE subcategories (
+  id VARCHAR(50) PRIMARY KEY,
+  category_id VARCHAR(50) NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  title VARCHAR(100) NOT NULL,
+  description VARCHAR(255)
+);
+
+CREATE TABLE services (
+  id VARCHAR(50) PRIMARY KEY,
+  category_id VARCHAR(50) NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  subcategory_id VARCHAR(50) REFERENCES subcategories(id) ON DELETE SET NULL,
+  title VARCHAR(150) NOT NULL,
+  description TEXT NOT NULL,
+  price NUMERIC(10, 2) NOT NULL,
+  original_price NUMERIC(10, 2) NOT NULL,
+  duration VARCHAR(50) NOT NULL,
+  rating NUMERIC(3, 2) NOT NULL DEFAULT 0.00,
+  reviews INT NOT NULL DEFAULT 0,
+  badge VARCHAR(50),
+  service_type VARCHAR(80) NOT NULL DEFAULT 'Standard Visit',
+  image_url TEXT,
+  detail_description TEXT,
+  details JSONB,
+  includes JSONB NOT NULL,
+  excludes JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE home_slides (
+  id VARCHAR(80) PRIMARY KEY,
+  badge VARCHAR(80) NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  subtitle TEXT NOT NULL,
+  button_label VARCHAR(80) NOT NULL,
+  category_id VARCHAR(50) NOT NULL,
+  category_title VARCHAR(100) NOT NULL,
+  visual VARCHAR(40) NOT NULL,
+  image_url TEXT,
+  primary_color VARCHAR(20) NOT NULL,
+  secondary_color VARCHAR(20) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 1,
+  is_active SMALLINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE app_settings (
+  setting_key VARCHAR(80) PRIMARY KEY,
+  setting_value VARCHAR(255) NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE subscriptions (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(150) NOT NULL,
+  duration VARCHAR(50) NOT NULL,
+  price NUMERIC(10, 2) NOT NULL,
+  original_price NUMERIC(10, 2) NOT NULL,
+  perks JSONB NOT NULL
+);
+
+CREATE TABLE orders (
+  id VARCHAR(50) PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  total NUMERIC(10, 2) NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'confirmed',
+  booked_for VARCHAR(100) NOT NULL,
+  payment_method VARCHAR(50) NOT NULL,
+  address VARCHAR(255) NOT NULL,
+  special_instructions TEXT,
+  inspection_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  tax NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+  id SERIAL PRIMARY KEY,
+  order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  service_id VARCHAR(50) NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  quantity INT NOT NULL DEFAULT 1,
+  price NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE service_reviews (
+  id SERIAL PRIMARY KEY,
+  service_id VARCHAR(50) NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating SMALLINT NOT NULL,
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uniq_service_order_user_review UNIQUE (service_id, order_id, user_id)
+);
+
+CREATE TABLE shop_products (
+  id VARCHAR(80) PRIMARY KEY,
+  title VARCHAR(150) NOT NULL,
+  category VARCHAR(80) NOT NULL DEFAULT 'General',
+  description TEXT NOT NULL,
+  price NUMERIC(10, 2) NOT NULL,
+  original_price NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  image_url TEXT,
+  stock INT NOT NULL DEFAULT 0,
+  is_active SMALLINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shop_orders (
+  id VARCHAR(40) PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  total NUMERIC(10, 2) NOT NULL,
+  shipping_cost NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  status VARCHAR(40) NOT NULL DEFAULT 'placed',
+  payment_method VARCHAR(80),
+  address VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shop_order_items (
+  id SERIAL PRIMARY KEY,
+  order_id VARCHAR(40) NOT NULL REFERENCES shop_orders(id) ON DELETE CASCADE,
+  product_id VARCHAR(80) NOT NULL REFERENCES shop_products(id),
+  quantity INT NOT NULL,
+  price NUMERIC(10, 2) NOT NULL
+);

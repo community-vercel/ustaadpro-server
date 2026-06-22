@@ -1,0 +1,444 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import pool from '../config/db.js';
+import Order from '../models/Order.js';
+import Service from '../models/Service.js';
+import AppControl from '../models/AppControl.js';
+import Subscription from '../models/Subscription.js';
+import { getFirebaseMessaging } from '../utils/firebase.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.resolve(__dirname, '../uploads');
+
+async function populateAdminOrder(order) {
+  const [items] = await pool.query(
+    `SELECT oi.quantity, oi.price, s.id as serviceId, s.title,
+            s.description, s.duration, s.category_id as categoryId,
+            s.service_type as serviceType, s.image_url as imageUrl,
+            s.detail_description as detailDescription, s.details
+     FROM order_items oi
+     JOIN services s ON oi.service_id = s.id
+     WHERE oi.order_id = ?`,
+    [order.id],
+  );
+
+  return {
+    ...order,
+    total: Number(order.total),
+    inspectionFee: Number(order.inspectionFee),
+    tax: Number(order.tax),
+    items: items.map(item => ({
+      ...item,
+      price: Number(item.price),
+      imageUrl: item.imageUrl || '',
+      details:
+        typeof item.details === 'string'
+          ? JSON.parse(item.details || '[]')
+          : item.details || [],
+    })),
+  };
+}
+
+export const getAdminSummary = async (_req, res) => {
+  try {
+    const [[orders]] = await pool.query(
+      'SELECT COUNT(*) as totalOrders, COALESCE(SUM(total), 0) as revenue FROM orders',
+    );
+    const [[customers]] = await pool.query(
+      'SELECT COUNT(*) as totalCustomers FROM users',
+    );
+    const [[services]] = await pool.query(
+      'SELECT COUNT(*) as totalServices FROM services',
+    );
+    const [[active]] = await pool.query(
+      "SELECT COUNT(*) as activeOrders FROM orders WHERE status NOT IN ('completed', 'cancelled')",
+    );
+
+    res.json({
+      totalOrders: Number(orders.totalOrders),
+      revenue: Number(orders.revenue),
+      totalCustomers: Number(customers.totalCustomers),
+      totalServices: Number(services.totalServices),
+      activeOrders: Number(active.activeOrders),
+    });
+  } catch (error) {
+    console.error('Admin summary error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminOrders = async (_req, res) => {
+  try {
+    const [orders] = await pool.query(
+      `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
+              o.payment_method as paymentMethod, o.address,
+              o.special_instructions as specialInstructions,
+              o.inspection_fee as inspectionFee, o.tax,
+              o.created_at as createdAt,
+              u.name as customerName, u.phone as customerPhone, u.email as customerEmail
+       FROM orders o
+       JOIN users u ON o.user_id = u.id
+       ORDER BY o.created_at DESC`,
+    );
+
+    const populated = [];
+    for (const order of orders) {
+      populated.push(await populateAdminOrder(order));
+    }
+
+    res.json(populated);
+  } catch (error) {
+    console.error('Admin orders error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminOrderById = async (req, res) => {
+  try {
+    const [orders] = await pool.query(
+      `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
+              o.payment_method as paymentMethod, o.address,
+              o.special_instructions as specialInstructions,
+              o.inspection_fee as inspectionFee, o.tax,
+              o.created_at as createdAt,
+              u.name as customerName, u.phone as customerPhone, u.email as customerEmail
+       FROM orders o
+       JOIN users u ON o.user_id = u.id
+       WHERE o.id = ?`,
+      [req.params.id],
+    );
+
+    if (!orders[0]) {
+      return res.status(404).json({message: 'Order not found.'});
+    }
+
+    res.json(await populateAdminOrder(orders[0]));
+  } catch (error) {
+    console.error('Admin order detail error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const updateAdminOrderStatus = async (req, res) => {
+  try {
+    const {status} = req.body;
+    const allowed = [
+      'confirmed',
+      'assigned',
+      'in_progress',
+      'completed',
+      'cancelled',
+    ];
+
+    if (!allowed.includes(status)) {
+      return res.status(400).json({message: 'Invalid order status.'});
+    }
+
+    await Order.updateStatus(req.params.id, status);
+
+    const [orders] = await pool.query(
+      'SELECT user_id FROM orders WHERE id = ?',
+      [req.params.id],
+    );
+    const order = orders[0];
+    if (order) {
+      const [users] = await pool.query(
+        'SELECT fcm_token as fcmToken FROM users WHERE id = ?',
+        [order.user_id],
+      );
+      const fcmToken = users[0]?.fcmToken;
+      const messaging = getFirebaseMessaging();
+
+      if (fcmToken && messaging) {
+        try {
+          await messaging.send({
+            token: fcmToken,
+            android: {
+              priority: 'high',
+              notification: {
+                channelId: 'order_updates',
+                icon: 'ic_notification',
+                color: '#006C49',
+                sound: 'default',
+              },
+            },
+            notification: {
+              title: 'Order Status Updated',
+              body: `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
+            },
+            data: {
+              orderId: req.params.id,
+              status,
+            },
+          });
+          console.log(`Push notification sent to user ${order.user_id} for order ${req.params.id}`);
+        } catch (pushError) {
+          console.error('Failed to send push notification:', pushError);
+        }
+      }
+    }
+
+    res.json({message: 'Order status updated.', id: req.params.id, status});
+  } catch (error) {
+    console.error('Admin order status error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const sendBroadcastNotification = async (req, res) => {
+  try {
+    const title = String(req.body.title || '').trim();
+    const message = String(req.body.message || '').trim();
+
+    if (!title || !message) {
+      return res
+        .status(400)
+        .json({message: 'Notification title and message are required.'});
+    }
+
+    const messaging = getFirebaseMessaging();
+    if (!messaging) {
+      return res.status(503).json({
+        message: 'Firebase Admin SDK is not configured on the server.',
+        sentCount: 0,
+        failedCount: 0,
+        targetCount: 0,
+      });
+    }
+
+    const [users] = await pool.query(
+      `SELECT id, fcm_token as fcmToken
+       FROM users
+       WHERE fcm_token IS NOT NULL AND fcm_token != ''`,
+    );
+    const tokens = [...new Set(users.map(user => user.fcmToken).filter(Boolean))];
+
+    if (tokens.length === 0) {
+      return res.json({
+        message: 'No user devices have notification tokens yet.',
+        sentCount: 0,
+        failedCount: 0,
+        targetCount: 0,
+      });
+    }
+
+    const notificationId = `broadcast-${Date.now()}`;
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (let index = 0; index < tokens.length; index += 500) {
+      const tokenBatch = tokens.slice(index, index + 500);
+      const result = await messaging.sendEachForMulticast({
+        tokens: tokenBatch,
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'order_updates',
+            icon: 'ic_notification',
+            color: '#006C49',
+            sound: 'default',
+          },
+        },
+        notification: {
+          title,
+          body: message,
+        },
+        data: {
+          type: 'broadcast',
+          notificationId: `${notificationId}-${index}`,
+        },
+      });
+
+      sentCount += result.successCount;
+      failedCount += result.failureCount;
+    }
+
+    res.json({
+      message: `Broadcast sent to ${sentCount} device${sentCount === 1 ? '' : 's'}.`,
+      sentCount,
+      failedCount,
+      targetCount: tokens.length,
+    });
+  } catch (error) {
+    console.error('Admin broadcast notification error:', error);
+    res.status(500).json({message: 'Could not send broadcast notification.'});
+  }
+};
+
+export const getAdminServices = async (_req, res) => {
+  try {
+    const services = await Service.getAll();
+    res.json(services);
+  } catch (error) {
+    console.error('Admin services error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const createAdminService = async (req, res) => {
+  try {
+    const id = await Service.create(req.body);
+    res.status(201).json({message: 'Service created.', id});
+  } catch (error) {
+    console.error('Admin create service error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const updateAdminService = async (req, res) => {
+  try {
+    await Service.update(req.params.id, req.body);
+    res.json({message: 'Service updated.', id: req.params.id});
+  } catch (error) {
+    console.error('Admin update service error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const uploadAdminImage = async (req, res) => {
+  try {
+    const {dataUrl, filename = 'admin-upload.jpg'} = req.body;
+
+    if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+      return res.status(400).json({message: 'A valid image is required.'});
+    }
+
+    const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (!match) {
+      return res.status(400).json({message: 'Invalid image format.'});
+    }
+
+    const mimeType = match[1];
+    const base64 = match[2];
+    const extension =
+      mimeType
+        .split('/')[1]
+        ?.replace('jpeg', 'jpg')
+        .replace(/[^a-z0-9]/gi, '') || 'jpg';
+    const safeName = filename
+      .replace(/\.[^.]+$/, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const storedName = `${Date.now()}-${safeName || 'image'}.${extension}`;
+
+    await fs.mkdir(uploadDir, {recursive: true});
+    await fs.writeFile(
+      path.join(uploadDir, storedName),
+      Buffer.from(base64, 'base64'),
+    );
+
+    res.status(201).json({url: `/uploads/${storedName}`});
+  } catch (error) {
+    console.error('Admin image upload error:', error);
+    res.status(500).json({message: 'Could not upload image.'});
+  }
+};
+
+export const getAdminUsers = async (_req, res) => {
+  try {
+    const [users] = await pool.query(
+      `SELECT u.id, u.name, u.phone, u.email,
+              u.created_at as createdAt,
+              COUNT(o.id) as totalOrders,
+              COALESCE(SUM(o.total), 0) as totalSpend
+       FROM users u
+       LEFT JOIN orders o ON o.user_id = u.id
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`,
+    );
+
+    res.json(
+      users.map(user => ({
+        ...user,
+        totalOrders: Number(user.totalOrders),
+        totalSpend: Number(user.totalSpend),
+      })),
+    );
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminHomeSlides = async (_req, res) => {
+  try {
+    const slides = await AppControl.getSlides({activeOnly: false});
+    res.json(slides);
+  } catch (error) {
+    console.error('Admin home slides error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const saveAdminHomeSlide = async (req, res) => {
+  try {
+    const id = await AppControl.upsertSlide(req.body);
+    res.json({message: 'Home header slide saved.', id});
+  } catch (error) {
+    console.error('Admin save home slide error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminSettings = async (_req, res) => {
+  try {
+    const settings = await AppControl.getSettings();
+    res.json(settings);
+  } catch (error) {
+    console.error('Admin settings error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const updateAdminSettings = async (req, res) => {
+  try {
+    const settings = await AppControl.updateSettings(req.body);
+    res.json(settings);
+  } catch (error) {
+    console.error('Admin update settings error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminSubscriptions = async (_req, res) => {
+  try {
+    const subs = await Subscription.getAll();
+    res.json(subs);
+  } catch (error) {
+    console.error('Admin subscriptions error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const createAdminSubscription = async (req, res) => {
+  try {
+    const id = await Subscription.create(req.body);
+    res.status(201).json({message: 'Subscription created.', id});
+  } catch (error) {
+    console.error('Admin create subscription error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const updateAdminSubscription = async (req, res) => {
+  try {
+    await Subscription.update(req.params.id, req.body);
+    res.json({message: 'Subscription updated.', id: req.params.id});
+  } catch (error) {
+    console.error('Admin update subscription error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const deleteAdminSubscription = async (req, res) => {
+  try {
+    await Subscription.delete(req.params.id);
+    res.json({message: 'Subscription deleted.', id: req.params.id});
+  } catch (error) {
+    console.error('Admin delete subscription error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};

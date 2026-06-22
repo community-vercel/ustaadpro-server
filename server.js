@@ -1,0 +1,66 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+// Route files
+import authRoutes from './routes/auth.js';
+import serviceRoutes from './routes/services.js';
+import orderRoutes from './routes/orders.js';
+import addressRoutes from './routes/addresses.js';
+import adminRoutes from './routes/admin.js';
+import shopRoutes from './routes/shop.js';
+import reviewRoutes from './routes/reviews.js';
+import AppControl from './models/AppControl.js';
+import Shop from './models/Shop.js';
+import { initFirebase } from './utils/firebase.js';
+
+// Initialize Firebase
+initFirebase();
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middlewares
+app.use(cors());
+app.use(express.json({limit: '10mb'}));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api', serviceRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/shop', shopRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', reviewRoutes);
+
+// Root test route
+app.get('/', (req, res) => {
+  res.json({message: 'Welcome to UstaadPro (Theka Online) API server.'});
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({message: 'Something went wrong on the server!'});
+});
+
+try {
+  await AppControl.ensureSchema();
+  await Shop.ensureTables();
+  console.log('Dynamic app control schema is ready.');
+} catch (error) {
+  console.error('Could not initialize dynamic app control schema:', error);
+}
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

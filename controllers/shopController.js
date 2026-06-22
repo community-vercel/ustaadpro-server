@@ -1,0 +1,183 @@
+import Shop from '../models/Shop.js';
+import AppControl from '../models/AppControl.js';
+import { getFirebaseMessaging } from '../utils/firebase.js';
+
+const SHOP_STATUSES = ['placed', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+export const getShopProducts = async (_req, res) => {
+  try {
+    res.json(await Shop.getProducts({activeOnly: true}));
+  } catch (error) {
+    console.error('Shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getMyShopOrders = async (req, res) => {
+  try {
+    res.json(await Shop.getOrders({userId: req.user.id}));
+  } catch (error) {
+    console.error('Shop orders error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const checkoutShopOrder = async (req, res) => {
+  try {
+    const {items, address, paymentMethod = 'Cash on Delivery'} = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({message: 'Shop cart items are required.'});
+    }
+    if (!address) {
+      return res.status(400).json({message: 'Delivery address is required.'});
+    }
+
+    let subtotal = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      const product = await Shop.findProductById(item.productId || item.product?.id);
+      const quantity = Number(item.quantity || 0);
+
+      if (!product || !product.isActive) {
+        return res.status(404).json({message: 'Product not found.'});
+      }
+      if (quantity <= 0) {
+        return res.status(400).json({message: 'Invalid product quantity.'});
+      }
+      if (product.stock < quantity) {
+        return res
+          .status(400)
+          .json({message: `${product.title} has only ${product.stock} in stock.`});
+      }
+
+      subtotal += product.price * quantity;
+      orderItems.push({
+        productId: product.id,
+        quantity,
+        price: product.price,
+      });
+    }
+
+    const suffix = Math.floor(100000 + Math.random() * 900000).toString();
+    const orderId = `SHOP-${suffix}`;
+    const settings = await AppControl.getSettings();
+    const shippingCost = Number(settings.shippingCost || 0);
+    const total = subtotal + shippingCost;
+
+    await Shop.createOrder({
+      id: orderId,
+      userId: req.user.id,
+      total,
+      shippingCost,
+      status: 'placed',
+      paymentMethod,
+      address,
+      items: orderItems,
+    });
+
+    const [order] = await Shop.getOrders({userId: req.user.id});
+    res.status(201).json({message: 'Shop order placed.', order});
+  } catch (error) {
+    console.error('Shop checkout error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminShopProducts = async (_req, res) => {
+  try {
+    res.json(await Shop.getProducts({activeOnly: false}));
+  } catch (error) {
+    console.error('Admin shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const saveAdminShopProduct = async (req, res) => {
+  try {
+    const {title, price} = req.body;
+    if (!title || Number(price || 0) <= 0) {
+      return res.status(400).json({message: 'Product title and price are required.'});
+    }
+
+    const id = await Shop.saveProduct({...req.body, id: req.params.id || req.body.id});
+    res.json({message: 'Shop product saved.', id});
+  } catch (error) {
+    console.error('Admin save shop product error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminShopOrders = async (_req, res) => {
+  try {
+    res.json(await Shop.getOrders());
+  } catch (error) {
+    console.error('Admin shop orders error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const updateAdminShopOrderStatus = async (req, res) => {
+  try {
+    const {status} = req.body;
+    if (!SHOP_STATUSES.includes(status)) {
+      return res.status(400).json({message: 'Invalid shop order status.'});
+    }
+
+    await Shop.updateOrderStatus(req.params.id, status);
+    const owner = await Shop.findOrderOwner(req.params.id);
+    const messaging = getFirebaseMessaging();
+    let pushStatus = 'not_sent';
+    let pushMessage = 'No FCM token is saved for this customer.';
+
+    if (owner?.fcmToken && messaging) {
+      try {
+        const notificationId = `shop-${req.params.id}-${Date.now()}`;
+        await messaging.send({
+          token: owner.fcmToken,
+          android: {
+            priority: 'high',
+            notification: {
+              channelId: 'order_updates',
+              icon: 'ic_notification',
+              color: '#006C49',
+              sound: 'default',
+            },
+          },
+          notification: {
+            title: 'Store Order Updated',
+            body: `Your store order is now: ${status.toUpperCase()}`,
+          },
+          data: {
+            orderId: req.params.id,
+            status,
+            type: 'shop_order',
+            notificationId,
+          },
+        });
+        pushStatus = 'sent';
+        pushMessage = 'Push notification sent.';
+        console.log(`Shop push notification sent for order ${req.params.id}`);
+      } catch (pushError) {
+        pushStatus = 'failed';
+        pushMessage = pushError?.message || 'Push notification failed.';
+        console.error('Failed to send shop push notification:', pushError);
+      }
+    } else if (!messaging) {
+      pushStatus = 'not_configured';
+      pushMessage = 'Firebase Admin SDK is not configured on the server.';
+    }
+
+    res.json({
+      message: 'Shop order status updated.',
+      id: req.params.id,
+      status,
+      pushStatus,
+      pushMessage,
+    });
+  } catch (error) {
+    console.error('Admin shop order status error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
