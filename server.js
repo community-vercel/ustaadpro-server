@@ -46,6 +46,7 @@ app.use('/api', reviewRoutes);
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to UstaadPro (Theka Online) API server.' });
 });
+
 app.get('/db-test', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT COUNT(*) FROM services');
