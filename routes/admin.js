@@ -8,6 +8,7 @@ import {
   getAdminSettings,
   getAdminSummary,
   getAdminUsers,
+  deleteAdminUser,
   saveAdminHomeSlide,
   sendBroadcastNotification,
   uploadAdminImage,
@@ -32,6 +33,7 @@ router.get('/summary', getAdminSummary);
 router.post('/notifications/broadcast', sendBroadcastNotification);
 router.post('/uploads', uploadAdminImage);
 router.get('/users', getAdminUsers);
+router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);

@@ -363,6 +363,55 @@ export const getAdminUsers = async (_req, res) => {
   }
 };
 
+export const deleteAdminUser = async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({message: 'A valid user id is required.'});
+    }
+
+    const [users] = await pool.query(
+      'SELECT id, email, phone FROM users WHERE id = ?',
+      [userId],
+    );
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({message: 'User not found.'});
+    }
+
+    await pool.query('DELETE FROM service_reviews WHERE user_id = ?', [userId]);
+    await pool.query('DELETE FROM user_addresses WHERE user_id = ?', [userId]);
+    await pool.query(
+      'DELETE FROM shop_order_items WHERE order_id IN (SELECT id FROM shop_orders WHERE user_id = ?)',
+      [userId],
+    );
+    await pool.query('DELETE FROM shop_orders WHERE user_id = ?', [userId]);
+    await pool.query(
+      'DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)',
+      [userId],
+    );
+    await pool.query('DELETE FROM orders WHERE user_id = ?', [userId]);
+    await pool.query('DELETE FROM auth_otps WHERE email IN (?, ?)', [
+      user.email,
+      user.phone,
+    ]);
+
+    const [deleted] = await pool.query('DELETE FROM users WHERE id = ?', [
+      userId,
+    ]);
+
+    res.json({
+      message: 'User deleted.',
+      id: userId,
+      affectedRows: deleted.affectedRows || deleted.rowCount || 1,
+    });
+  } catch (error) {
+    console.error('Admin delete user error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
 export const getAdminHomeSlides = async (_req, res) => {
   try {
     const slides = await AppControl.getSlides({activeOnly: false});
