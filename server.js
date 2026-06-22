@@ -15,6 +15,7 @@ import reviewRoutes from './routes/reviews.js';
 import AppControl from './models/AppControl.js';
 import Shop from './models/Shop.js';
 import { initFirebase } from './utils/firebase.js';
+import db from './config/db.js';
 
 // Initialize Firebase
 initFirebase();
