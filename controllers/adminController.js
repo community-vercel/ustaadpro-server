@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
@@ -11,6 +12,56 @@ import { getFirebaseMessaging } from '../utils/firebase.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDir = path.resolve(__dirname, '../uploads');
+
+async function ensureAdminCredentialsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_credentials (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      role VARCHAR(40) NOT NULL DEFAULT 'superadmin',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export const loginAdmin = async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({message: 'Email and password are required.'});
+    }
+
+    await ensureAdminCredentialsTable();
+
+    const [admins] = await pool.query(
+      'SELECT id, email, password_hash, role FROM admin_credentials WHERE email = ?',
+      [email],
+    );
+    const admin = admins[0];
+    const isValidPassword = admin
+      ? await bcrypt.compare(password, admin.password_hash)
+      : false;
+
+    if (!admin || !isValidPassword) {
+      return res.status(401).json({message: 'Invalid email or password.'});
+    }
+
+    res.json({
+      id: admin.id,
+      email: admin.email,
+      role: admin.role,
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
 
 async function populateAdminOrder(order) {
   const [items] = await pool.query(

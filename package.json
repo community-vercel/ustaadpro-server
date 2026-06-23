@@ -9,6 +9,8 @@
     "dev": "nodemon server.js",
     "schema": "node db/run-schema.js",
     "seed": "node db/seed.js",
+    "seedPassword": "node db/seedPassword.js",
+    "seed:password": "node db/seedPassword.js",
     "seed:services": "node serviceSeed.js",
     "migrate:mysql-to-postgres": "node db/migrate-mysql-to-postgres.js"
   },
