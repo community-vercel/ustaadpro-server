@@ -42,6 +42,14 @@ async function ensureShopTables() {
       }
     });
 
+  await pool
+    .query('ALTER TABLE shop_orders ADD COLUMN cancel_reason TEXT NULL')
+    .catch(error => {
+      if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
+        throw error;
+      }
+    });
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shop_order_items (
       id SERIAL PRIMARY KEY,
@@ -182,7 +190,7 @@ class Shop {
     const [orders] = await pool.query(
       `SELECT so.id, so.total, so.shipping_cost as shippingCost,
               so.status, so.payment_method as paymentMethod,
-              so.address, so.created_at as createdAt,
+              so.address, so.cancel_reason as cancelReason, so.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM shop_orders so
        JOIN users u ON u.id = so.user_id
@@ -221,9 +229,13 @@ class Shop {
     return populated;
   }
 
-  static async updateOrderStatus(id, status) {
+  static async updateOrderStatus(id, status, cancelReason = null) {
     await ensureShopTables();
-    await pool.query('UPDATE shop_orders SET status = ? WHERE id = ?', [status, id]);
+    if (cancelReason) {
+      await pool.query('UPDATE shop_orders SET status = ?, cancel_reason = ? WHERE id = ?', [status, cancelReason, id]);
+    } else {
+      await pool.query('UPDATE shop_orders SET status = ? WHERE id = ?', [status, id]);
+    }
   }
 
   static async findOrderOwner(id) {
