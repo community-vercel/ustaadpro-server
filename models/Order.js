@@ -43,7 +43,7 @@ class Order {
 
   static async findByUserId(userId) {
     const [orders] = await pool.query(
-      'SELECT id, total, status, booked_for as bookedFor, payment_method as paymentMethod, address, special_instructions as specialInstructions, inspection_fee as inspectionFee, tax, created_at as createdAt FROM orders WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, total, status, booked_for as bookedFor, payment_method as paymentMethod, address, special_instructions as specialInstructions, cancel_reason as cancelReason, inspection_fee as inspectionFee, tax, created_at as createdAt FROM orders WHERE user_id = ? ORDER BY created_at DESC',
       [userId],
     );
 
@@ -94,8 +94,19 @@ class Order {
     return populatedOrders;
   }
 
-  static async updateStatus(id, status) {
-    await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+  static async updateStatus(id, status, cancelReason = null) {
+    if (status === 'cancelled') {
+      await pool.query(
+        'UPDATE orders SET status = ?, cancel_reason = ? WHERE id = ?',
+        [status, cancelReason, id],
+      );
+      return;
+    }
+
+    await pool.query(
+      'UPDATE orders SET status = ?, cancel_reason = NULL WHERE id = ?',
+      [status, id],
+    );
   }
 
   static async findOwnedById(id, userId) {

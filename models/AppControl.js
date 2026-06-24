@@ -210,6 +210,23 @@ class AppControl {
       'ALTER TABLE home_slides MODIFY COLUMN image_url LONGTEXT NULL',
     );
 
+    const orderColumns = [['cancel_reason', 'TEXT NULL']];
+
+    for (const [column, definition] of orderColumns) {
+      const [columns] = await pool.query(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'orders'
+           AND COLUMN_NAME = ?`,
+        [column],
+      );
+
+      if (!columns.length) {
+        await pool.query(`ALTER TABLE orders ADD COLUMN ${column} ${definition}`);
+      }
+    }
+
     const [[slideCount]] = await pool.query(
       'SELECT COUNT(*) as count FROM home_slides',
     );

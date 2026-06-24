@@ -70,6 +70,13 @@ function normalizeProduct(row) {
   };
 }
 
+function normalizeImageUrl(url = '') {
+  const value = String(url || '').trim();
+  const match = value.match(/^https?:\/\/(?:127\.0\.0\.1|localhost):\d+(\/uploads\/.+)$/i);
+
+  return match ? match[1] : value;
+}
+
 class Shop {
   static async ensureTables() {
     await ensureShopTables();
@@ -82,7 +89,7 @@ class Shop {
               original_price as originalPrice, image_url as imageUrl,
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
-       ${activeOnly ? 'WHERE is_active = 1' : ''}
+       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}
        ORDER BY created_at DESC`,
     );
     return rows.map(normalizeProduct);
@@ -130,7 +137,7 @@ class Shop {
         product.description || '',
         Number(product.price || 0),
         Number(product.originalPrice || product.original_price || 0),
-        product.imageUrl || product.image_url || '',
+        normalizeImageUrl(product.imageUrl || product.image_url || ''),
         Number(product.stock || 0),
         product.isActive === false ? 0 : 1,
       ],

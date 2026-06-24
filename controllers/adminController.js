@@ -126,6 +126,7 @@ export const getAdminOrders = async (_req, res) => {
       `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
+              o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
@@ -152,6 +153,7 @@ export const getAdminOrderById = async (req, res) => {
       `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
+              o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
@@ -174,7 +176,7 @@ export const getAdminOrderById = async (req, res) => {
 
 export const updateAdminOrderStatus = async (req, res) => {
   try {
-    const {status} = req.body;
+    const {status, cancelReason} = req.body;
     const allowed = [
       'confirmed',
       'assigned',
@@ -187,7 +189,7 @@ export const updateAdminOrderStatus = async (req, res) => {
       return res.status(400).json({message: 'Invalid order status.'});
     }
 
-    await Order.updateStatus(req.params.id, status);
+    await Order.updateStatus(req.params.id, status, cancelReason);
 
     const [orders] = await pool.query(
       'SELECT user_id FROM orders WHERE id = ?',

@@ -29,6 +29,7 @@ const lowerCamelAliases = {
   buttonlabel: 'buttonLabel',
   categoryid: 'categoryId',
   categorytitle: 'categoryTitle',
+  cancelreason: 'cancelReason',
   createdat: 'createdAt',
   customeremail: 'customerEmail',
   customername: 'customerName',

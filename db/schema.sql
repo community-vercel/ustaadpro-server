@@ -140,6 +140,7 @@ CREATE TABLE orders (
   payment_method VARCHAR(50) NOT NULL,
   address VARCHAR(255) NOT NULL,
   special_instructions TEXT,
+  cancel_reason TEXT,
   inspection_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   tax NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
