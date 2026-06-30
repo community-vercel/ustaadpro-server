@@ -120,12 +120,12 @@ export const getAdminShopOrders = async (_req, res) => {
 
 export const updateAdminShopOrderStatus = async (req, res) => {
   try {
-    const {status} = req.body;
+    const {status, cancelReason} = req.body;
     if (!SHOP_STATUSES.includes(status)) {
       return res.status(400).json({message: 'Invalid shop order status.'});
     }
 
-    await Shop.updateOrderStatus(req.params.id, status);
+    await Shop.updateOrderStatus(req.params.id, status, cancelReason);
     const owner = await Shop.findOrderOwner(req.params.id);
     const messaging = getFirebaseMessaging();
     let pushStatus = 'not_sent';
@@ -178,6 +178,23 @@ export const updateAdminShopOrderStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Admin shop order status error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const cancelShopOrder = async (req, res) => {
+  try {
+    const {cancelReason} = req.body;
+    // ensure the user owns the order, but for simplicity here we just update it
+    // we could check the owner like we do for finding FCM token
+    const owner = await Shop.findOrderOwner(req.params.id);
+    if (!owner || owner.userId !== req.user.id) {
+      return res.status(403).json({message: 'Unauthorized'});
+    }
+    await Shop.updateOrderStatus(req.params.id, 'cancelled', cancelReason);
+    res.json({message: 'Shop order cancelled.', status: 'cancelled', cancelReason});
+  } catch (error) {
+    console.error('Cancel shop order error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };

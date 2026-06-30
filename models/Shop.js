@@ -42,6 +42,14 @@ async function ensureShopTables() {
       }
     });
 
+  await pool
+    .query('ALTER TABLE shop_orders ADD COLUMN cancel_reason TEXT NULL')
+    .catch(error => {
+      if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
+        throw error;
+      }
+    });
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shop_order_items (
       id SERIAL PRIMARY KEY,
@@ -70,6 +78,13 @@ function normalizeProduct(row) {
   };
 }
 
+function normalizeImageUrl(url = '') {
+  const value = String(url || '').trim();
+  const match = value.match(/^https?:\/\/(?:127\.0\.0\.1|localhost):\d+(\/uploads\/.+)$/i);
+
+  return match ? match[1] : value;
+}
+
 class Shop {
   static async ensureTables() {
     await ensureShopTables();
@@ -82,7 +97,7 @@ class Shop {
               original_price as originalPrice, image_url as imageUrl,
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
-       ${activeOnly ? 'WHERE is_active = 1' : ''}
+       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}
        ORDER BY created_at DESC`,
     );
     return rows.map(normalizeProduct);
@@ -130,7 +145,7 @@ class Shop {
         product.description || '',
         Number(product.price || 0),
         Number(product.originalPrice || product.original_price || 0),
-        product.imageUrl || product.image_url || '',
+        normalizeImageUrl(product.imageUrl || product.image_url || ''),
         Number(product.stock || 0),
         product.isActive === false ? 0 : 1,
       ],
@@ -175,7 +190,7 @@ class Shop {
     const [orders] = await pool.query(
       `SELECT so.id, so.total, so.shipping_cost as shippingCost,
               so.status, so.payment_method as paymentMethod,
-              so.address, so.created_at as createdAt,
+              so.address, so.cancel_reason as cancelReason, so.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM shop_orders so
        JOIN users u ON u.id = so.user_id
@@ -214,9 +229,13 @@ class Shop {
     return populated;
   }
 
-  static async updateOrderStatus(id, status) {
+  static async updateOrderStatus(id, status, cancelReason = null) {
     await ensureShopTables();
-    await pool.query('UPDATE shop_orders SET status = ? WHERE id = ?', [status, id]);
+    if (cancelReason) {
+      await pool.query('UPDATE shop_orders SET status = ?, cancel_reason = ? WHERE id = ?', [status, cancelReason, id]);
+    } else {
+      await pool.query('UPDATE shop_orders SET status = ? WHERE id = ?', [status, id]);
+    }
   }
 
   static async findOrderOwner(id) {

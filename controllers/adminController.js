@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
@@ -11,6 +12,56 @@ import { getFirebaseMessaging } from '../utils/firebase.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDir = path.resolve(__dirname, '../uploads');
+
+async function ensureAdminCredentialsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_credentials (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      role VARCHAR(40) NOT NULL DEFAULT 'superadmin',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export const loginAdmin = async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({message: 'Email and password are required.'});
+    }
+
+    await ensureAdminCredentialsTable();
+
+    const [admins] = await pool.query(
+      'SELECT id, email, password_hash, role FROM admin_credentials WHERE email = ?',
+      [email],
+    );
+    const admin = admins[0];
+    const isValidPassword = admin
+      ? await bcrypt.compare(password, admin.password_hash)
+      : false;
+
+    if (!admin || !isValidPassword) {
+      return res.status(401).json({message: 'Invalid email or password.'});
+    }
+
+    res.json({
+      id: admin.id,
+      email: admin.email,
+      role: admin.role,
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
 
 async function populateAdminOrder(order) {
   const [items] = await pool.query(
@@ -75,6 +126,7 @@ export const getAdminOrders = async (_req, res) => {
       `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
+              o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
@@ -101,6 +153,7 @@ export const getAdminOrderById = async (req, res) => {
       `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
+              o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
@@ -123,7 +176,7 @@ export const getAdminOrderById = async (req, res) => {
 
 export const updateAdminOrderStatus = async (req, res) => {
   try {
-    const {status} = req.body;
+    const {status, cancelReason} = req.body;
     const allowed = [
       'confirmed',
       'assigned',
@@ -136,7 +189,7 @@ export const updateAdminOrderStatus = async (req, res) => {
       return res.status(400).json({message: 'Invalid order status.'});
     }
 
-    await Order.updateStatus(req.params.id, status);
+    await Order.updateStatus(req.params.id, status, cancelReason);
 
     const [orders] = await pool.query(
       'SELECT user_id FROM orders WHERE id = ?',
@@ -359,6 +412,55 @@ export const getAdminUsers = async (_req, res) => {
     );
   } catch (error) {
     console.error('Admin users error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const deleteAdminUser = async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({message: 'A valid user id is required.'});
+    }
+
+    const [users] = await pool.query(
+      'SELECT id, email, phone FROM users WHERE id = ?',
+      [userId],
+    );
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({message: 'User not found.'});
+    }
+
+    await pool.query('DELETE FROM service_reviews WHERE user_id = ?', [userId]);
+    await pool.query('DELETE FROM user_addresses WHERE user_id = ?', [userId]);
+    await pool.query(
+      'DELETE FROM shop_order_items WHERE order_id IN (SELECT id FROM shop_orders WHERE user_id = ?)',
+      [userId],
+    );
+    await pool.query('DELETE FROM shop_orders WHERE user_id = ?', [userId]);
+    await pool.query(
+      'DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = ?)',
+      [userId],
+    );
+    await pool.query('DELETE FROM orders WHERE user_id = ?', [userId]);
+    await pool.query('DELETE FROM auth_otps WHERE email IN (?, ?)', [
+      user.email,
+      user.phone,
+    ]);
+
+    const [deleted] = await pool.query('DELETE FROM users WHERE id = ?', [
+      userId,
+    ]);
+
+    res.json({
+      message: 'User deleted.',
+      id: userId,
+      affectedRows: deleted.affectedRows || deleted.rowCount || 1,
+    });
+  } catch (error) {
+    console.error('Admin delete user error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };

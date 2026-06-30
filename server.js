@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 // Route files
 import authRoutes from './routes/auth.js';
@@ -15,6 +15,7 @@ import reviewRoutes from './routes/reviews.js';
 import AppControl from './models/AppControl.js';
 import Shop from './models/Shop.js';
 import { initFirebase } from './utils/firebase.js';
+import db from './config/db.js';
 
 // Initialize Firebase
 initFirebase();
@@ -29,7 +30,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(cors());
-app.use(express.json({limit: '10mb'}));
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
@@ -41,15 +42,35 @@ app.use('/api/shop', shopRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', reviewRoutes);
 
+
+
 // Root test route
 app.get('/', (req, res) => {
-  res.json({message: 'Welcome to UstaadPro (Theka Online) API server.'});
+  res.json({ message: 'Welcome to UstaadPro (Theka Online) API server.' });
+});
+
+app.get('/db-test', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT COUNT(*) FROM services');
+
+    res.json({
+      connected: true,
+      database: process.env.DB_NAME || 'ustaadpro_db',
+      servicesCount: Number(rows[0].count),
+    });
+  } catch (error) {
+    console.error('DB test failed:', error);
+    res.status(500).json({
+      connected: false,
+      error: error.message,
+    });
+  }
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({message: 'Something went wrong on the server!'});
+  res.status(500).json({ message: 'Something went wrong on the server!' });
 });
 
 try {

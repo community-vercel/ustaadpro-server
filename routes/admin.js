@@ -8,6 +8,7 @@ import {
   getAdminSettings,
   getAdminSummary,
   getAdminUsers,
+  deleteAdminUser,
   saveAdminHomeSlide,
   sendBroadcastNotification,
   uploadAdminImage,
@@ -18,6 +19,7 @@ import {
   createAdminSubscription,
   updateAdminSubscription,
   deleteAdminSubscription,
+  loginAdmin,
 } from '../controllers/adminController.js';
 import {
   getAdminShopOrders,
@@ -28,10 +30,12 @@ import {
 
 const router = express.Router();
 
+router.post('/auth/login', loginAdmin);
 router.get('/summary', getAdminSummary);
 router.post('/notifications/broadcast', sendBroadcastNotification);
 router.post('/uploads', uploadAdminImage);
 router.get('/users', getAdminUsers);
+router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);

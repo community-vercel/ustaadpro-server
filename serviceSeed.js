@@ -12,18 +12,39 @@ const publicImageBase = '/uploads/seedappContent';
 
 const categories = [
   {
-    id: 'home',
-    title: 'Home Services',
-    subtitle: 'AC, plumbing, geyser and repair work',
+    id: 'ac-services',
+    title: 'AC Services',
+    subtitle: 'Maintenance, installation, gas refill and dismounting',
     icon: 'tools',
     tint: '#006C49',
   },
   {
-    id: 'cleaning',
-    title: 'Cleaning',
-    subtitle: 'Deep cleaning, sofa, carpet and water tank care',
+    id: 'electrician',
+    title: 'Electrician',
+    subtitle: 'Wiring, fans, lights, sockets and breaker repairs',
+    icon: 'bolt',
+    tint: '#0F766E',
+  },
+  {
+    id: 'plumbers',
+    title: 'Plumbers',
+    subtitle: 'Leakage, taps, geyser and pipe repair work',
+    icon: 'pipe',
+    tint: '#134E4A',
+  },
+  {
+    id: 'home-cleaning',
+    title: 'Home Cleaning',
+    subtitle: 'Deep cleaning, kitchen, bathroom and water tank care',
     icon: 'sparkle',
     tint: '#0B1C30',
+  },
+  {
+    id: 'dry-cleaning',
+    title: 'Dry Cleaning',
+    subtitle: 'Sofa, carpet, rug and fabric shampoo cleaning',
+    icon: 'sparkle',
+    tint: '#213145',
   },
   {
     id: 'subscriptions',
@@ -36,28 +57,82 @@ const categories = [
 
 const subcategories = [
   {
-    id: 'ac-services',
-    categoryId: 'home',
-    title: 'AC Services',
-    description: 'AC service, installation, dismounting and gas refill',
+    id: 'ac-maintenance',
+    categoryId: 'ac-services',
+    title: 'AC Maintenance',
+    description: 'Indoor/outdoor service, cooling check and routine cleaning',
+  },
+  {
+    id: 'ac-installation',
+    categoryId: 'ac-services',
+    title: 'AC Installation',
+    description: 'Split AC indoor and outdoor unit fitting',
+  },
+  {
+    id: 'ac-dismounting',
+    categoryId: 'ac-services',
+    title: 'AC Dismounting',
+    description: 'Safe AC removal for shifting or replacement',
+  },
+  {
+    id: 'ac-gas-pressure-check',
+    categoryId: 'ac-services',
+    title: 'AC Gas Pressure Check',
+    description: 'Cooling diagnosis and gas pressure inspection',
+  },
+  {
+    id: 'ac-gas-refill',
+    categoryId: 'ac-services',
+    title: 'AC Gas Refill',
+    description: 'Gas top-up and basic leakage inspection',
+  },
+  {
+    id: 'electrical-repairs',
+    categoryId: 'electrician',
+    title: 'Electrical Repairs',
+    description: 'Switch boards, sockets, wiring faults and breakers',
+  },
+  {
+    id: 'fan-light-installation',
+    categoryId: 'electrician',
+    title: 'Fan & Light Installation',
+    description: 'Fan, light, holder and fixture installation',
   },
   {
     id: 'plumbing-services',
-    categoryId: 'home',
+    categoryId: 'plumbers',
     title: 'Plumbing Services',
     description: 'Leakage, taps, geyser and pipe repair visits',
   },
   {
-    id: 'home-cleaning',
-    categoryId: 'cleaning',
-    title: 'Home Cleaning',
+    id: 'geyser-services',
+    categoryId: 'plumbers',
+    title: 'Geyser Services',
+    description: 'Water heater repair, element and thermostat checks',
+  },
+  {
+    id: 'deep-home-cleaning',
+    categoryId: 'home-cleaning',
+    title: 'Deep Home Cleaning',
     description: 'Full home and water tank cleaning',
   },
   {
-    id: 'sofa-carpet-cleaning',
-    categoryId: 'cleaning',
-    title: 'Sofa & Carpet Care',
-    description: 'Sofa shampoo and carpet cleaning',
+    id: 'water-tank-cleaning',
+    categoryId: 'home-cleaning',
+    title: 'Water Tank Cleaning',
+    description: 'Underground and overhead tank cleaning',
+  },
+  {
+    id: 'sofa-care',
+    categoryId: 'dry-cleaning',
+    title: 'Sofa Care',
+    description: 'Sofa shampoo, wet vacuum and fabric refresh',
+  },
+  {
+    id: 'carpet-care',
+    categoryId: 'dry-cleaning',
+    title: 'Carpet Care',
+    description: 'Carpet, rug and floor fabric cleaning',
   },
   {
     id: 'commercial',
@@ -70,8 +145,8 @@ const subcategories = [
 const services = [
   {
     id: 'ac-general-service',
-    categoryId: 'home',
-    subcategoryId: 'ac-services',
+    categoryId: 'ac-services',
+    subcategoryId: 'ac-maintenance',
     imageFile: 'ac_general_service.webp',
     publicFile: 'ac-general-service.webp',
     title: 'AC General Service',
@@ -110,8 +185,8 @@ const services = [
   },
   {
     id: 'ac-installation',
-    categoryId: 'home',
-    subcategoryId: 'ac-services',
+    categoryId: 'ac-services',
+    subcategoryId: 'ac-installation',
     imageFile: 'ac-installation-services.jpg',
     publicFile: 'ac-installation.jpg',
     title: 'AC Installation',
@@ -150,8 +225,8 @@ const services = [
   },
   {
     id: 'ac-dismounting',
-    categoryId: 'home',
-    subcategoryId: 'ac-services',
+    categoryId: 'ac-services',
+    subcategoryId: 'ac-dismounting',
     imageFile: 'ac_dismounting.webp',
     publicFile: 'ac-dismounting.webp',
     title: 'AC Dismounting',
@@ -189,8 +264,8 @@ const services = [
   },
   {
     id: 'ac-gas-refill',
-    categoryId: 'home',
-    subcategoryId: 'ac-services',
+    categoryId: 'ac-services',
+    subcategoryId: 'ac-gas-refill',
     imageFile: 'ac_gas_refill.webp',
     publicFile: 'ac-gas-refill.webp',
     title: 'AC Gas Refill',
@@ -227,8 +302,168 @@ const services = [
     ],
   },
   {
+    id: 'ac-gas-pressure-check',
+    categoryId: 'ac-services',
+    subcategoryId: 'ac-gas-pressure-check',
+    imageFile: 'ac_general_service.webp',
+    publicFile: 'ac-gas-pressure-check.webp',
+    title: 'AC Gas Pressure Check',
+    description:
+      'Cooling diagnosis with gas pressure reading, air throw check and technician advice.',
+    detailDescription:
+      'Ideal when your AC is cooling weakly but you are not sure if gas refill is required. The technician checks pressure and visible leakage signs before recommending the next step.',
+    price: 1499,
+    originalPrice: 2200,
+    duration: '35-45 min',
+    rating: 4.82,
+    reviews: 275,
+    badge: 'Diagnostic',
+    serviceType: 'Pressure Check',
+    includes: [
+      'Gas pressure reading',
+      'Cooling performance check',
+      'Air throw inspection',
+      'Visible leak signs check',
+      'Repair or refill recommendation',
+    ],
+    details: [
+      'Gas pressure checked with gauge',
+      'Indoor cooling and airflow observed',
+      'Outdoor unit condition visually checked',
+      'Technician explains whether refill is needed',
+      'Estimate shared before any extra work',
+    ],
+    excludes: [
+      'Gas refilling',
+      'Leak repair',
+      'Parts replacement',
+      'Full AC washing service',
+      'Compressor repair',
+    ],
+  },
+  {
+    id: 'switch-board-repair',
+    categoryId: 'electrician',
+    subcategoryId: 'electrical-repairs',
+    imageFile: 'office maintainance visite.jpg',
+    publicFile: 'switch-board-repair.jpg',
+    title: 'Switch Board Repair',
+    description:
+      'Electrician visit for faulty switches, sockets, loose wiring and spark issues.',
+    detailDescription:
+      'The electrician inspects the switch board, tightens safe connections, replaces minor accessories when supplied, and explains any material requirement.',
+    price: 999,
+    originalPrice: 1500,
+    duration: '45-60 min',
+    rating: 4.76,
+    reviews: 430,
+    badge: 'Quick fix',
+    serviceType: 'Electrical Repair',
+    includes: [
+      'Switch board inspection',
+      'Socket and switch check',
+      'Loose wire tightening',
+      'Breaker load advice',
+      'Repair estimate',
+    ],
+    details: [
+      'Problem switch board inspected',
+      'Basic voltage and connection checks completed',
+      'Loose accessible wiring tightened where safe',
+      'Material needs explained before replacement',
+      'Safety guidance shared after visit',
+    ],
+    excludes: [
+      'New switch/socket material',
+      'Concealed wiring replacement',
+      'Main panel rewiring',
+      'Wall breaking or civil repair',
+      'Heavy appliance repair',
+    ],
+  },
+  {
+    id: 'fan-installation',
+    categoryId: 'electrician',
+    subcategoryId: 'fan-light-installation',
+    imageFile: 'office maintainance visite.jpg',
+    publicFile: 'fan-installation.jpg',
+    title: 'Fan Installation',
+    description:
+      'Ceiling fan fitting with hook check, wiring connection and speed testing.',
+    detailDescription:
+      'Best for new fan installation or replacement. The electrician checks mounting safety, connects wiring and tests fan operation.',
+    price: 1299,
+    originalPrice: 1800,
+    duration: '45-60 min',
+    rating: 4.79,
+    reviews: 365,
+    badge: 'Home essential',
+    serviceType: 'Installation',
+    includes: [
+      'Fan mounting',
+      'Wiring connection',
+      'Regulator check',
+      'Speed test',
+      'Basic balancing check',
+    ],
+    details: [
+      'Ceiling hook and point checked',
+      'Fan assembled where required',
+      'Electrical connection completed',
+      'Fan speed and regulator tested',
+      'Technician checks visible wobble before handover',
+    ],
+    excludes: [
+      'New fan or regulator cost',
+      'New wiring point creation',
+      'False ceiling work',
+      'Bracket fabrication',
+      'Repair of faulty fan motor',
+    ],
+  },
+  {
+    id: 'breaker-replacement',
+    categoryId: 'electrician',
+    subcategoryId: 'electrical-repairs',
+    imageFile: 'office maintainance visite.jpg',
+    publicFile: 'breaker-replacement.jpg',
+    title: 'Breaker Replacement Visit',
+    description:
+      'Inspection and replacement support for faulty MCB/breaker issues at home.',
+    detailDescription:
+      'The electrician checks the breaker fault, advises correct rating and replaces the breaker if material is available.',
+    price: 1199,
+    originalPrice: 1700,
+    duration: '45 min',
+    rating: 4.74,
+    reviews: 220,
+    badge: 'Safety check',
+    serviceType: 'Breaker Repair',
+    includes: [
+      'Breaker inspection',
+      'Load advice',
+      'Loose connection check',
+      'Replacement support',
+      'Safety test',
+    ],
+    details: [
+      'Faulty breaker point inspected',
+      'Load and tripping symptoms reviewed',
+      'Correct breaker rating advised',
+      'Replacement done if part is provided',
+      'Final power safety check completed',
+    ],
+    excludes: [
+      'Breaker/MCB cost',
+      'Main distribution board replacement',
+      'Concealed wiring repair',
+      'Three-phase industrial work',
+      'Emergency after-hours visit',
+    ],
+  },
+  {
     id: 'plumbing-visit',
-    categoryId: 'home',
+    categoryId: 'plumbers',
     subcategoryId: 'plumbing-services',
     imageFile: 'plumbing_repair.webp',
     publicFile: 'plumbing-repair.webp',
@@ -268,8 +503,8 @@ const services = [
   },
   {
     id: 'geyser-repair',
-    categoryId: 'home',
-    subcategoryId: 'plumbing-services',
+    categoryId: 'plumbers',
+    subcategoryId: 'geyser-services',
     imageFile: 'geyser water heater repair.webp',
     publicFile: 'geyser-water-heater-repair.webp',
     title: 'Geyser / Water Heater Repair',
@@ -308,8 +543,8 @@ const services = [
   },
   {
     id: 'deep-cleaning',
-    categoryId: 'cleaning',
-    subcategoryId: 'home-cleaning',
+    categoryId: 'home-cleaning',
+    subcategoryId: 'deep-home-cleaning',
     imageFile: 'full_home_deep_cleaning.webp',
     publicFile: 'full-home-deep-cleaning.webp',
     title: 'Full Home Deep Cleaning',
@@ -348,8 +583,8 @@ const services = [
   },
   {
     id: 'water-tank-cleaning',
-    categoryId: 'cleaning',
-    subcategoryId: 'home-cleaning',
+    categoryId: 'home-cleaning',
+    subcategoryId: 'water-tank-cleaning',
     imageFile: 'water-tank-cleaning.jpg',
     publicFile: 'water-tank-cleaning.jpg',
     title: 'Water Tank Cleaning',
@@ -388,8 +623,8 @@ const services = [
   },
   {
     id: 'sofa-cleaning',
-    categoryId: 'cleaning',
-    subcategoryId: 'sofa-carpet-cleaning',
+    categoryId: 'dry-cleaning',
+    subcategoryId: 'sofa-care',
     imageFile: 'sopha_shampoo_cleaning.jpg',
     publicFile: 'sofa-shampoo-cleaning.jpg',
     title: 'Sofa Shampoo Cleaning',
@@ -428,8 +663,8 @@ const services = [
   },
   {
     id: 'carpet-dry-cleaning',
-    categoryId: 'cleaning',
-    subcategoryId: 'sofa-carpet-cleaning',
+    categoryId: 'dry-cleaning',
+    subcategoryId: 'carpet-care',
     imageFile: 'carpet-cleaning.jpg',
     publicFile: 'carpet-cleaning.jpg',
     title: 'Carpet Dry Cleaning',
@@ -515,8 +750,8 @@ const homeSlides = [
     title: 'Deep Cleaning\nFor Every Home',
     subtitle: 'Kitchen, bathroom, floor and sofa care with trained teams.',
     buttonLabel: 'Book Cleaning',
-    categoryId: 'cleaning',
-    categoryTitle: 'Cleaning',
+    categoryId: 'home-cleaning',
+    categoryTitle: 'Home Cleaning',
     visual: 'CLEAN',
     imageUrl: '/uploads/seedappContent/full-home-deep-cleaning.webp',
     primaryColor: '#0b1c30',
@@ -530,8 +765,8 @@ const homeSlides = [
     title: 'AC Service\nAt Your Doorstep',
     subtitle: 'Service, gas refill, installation and dismounting.',
     buttonLabel: 'Fix AC',
-    categoryId: 'home',
-    categoryTitle: 'Home Services',
+    categoryId: 'ac-services',
+    categoryTitle: 'AC Services',
     visual: 'AC',
     imageUrl: '/uploads/seedappContent/ac-general-service.webp',
     primaryColor: '#0f766e',
@@ -545,8 +780,8 @@ const homeSlides = [
     title: 'Plumbing & Geyser\nRepair Visits',
     subtitle: 'Trusted technicians for leaks, taps and water heaters.',
     buttonLabel: 'Book Repair',
-    categoryId: 'home',
-    categoryTitle: 'Home Services',
+    categoryId: 'plumbers',
+    categoryTitle: 'Plumbers',
     visual: 'FIX',
     imageUrl: '/uploads/seedappContent/plumbing-repair.webp',
     primaryColor: '#131b2e',
@@ -779,17 +1014,19 @@ async function seedHomeSlides() {
 
 async function cleanupLegacyContentRows() {
   await pool.query(`
-    DELETE s FROM services s
-    LEFT JOIN order_items oi ON oi.service_id = s.id
-    WHERE oi.id IS NULL
-      AND (s.id = '' OR s.title = '' OR s.id = 'ac-gass-refill')
+    DELETE FROM services s
+    WHERE (s.id = '' OR s.title = '' OR s.id = 'ac-gass-refill')
+      AND NOT EXISTS (
+      SELECT 1 FROM order_items oi WHERE oi.service_id = s.id
+    )
   `);
 
   await pool.query(`
-    DELETE c FROM categories c
-    LEFT JOIN services s ON s.category_id = c.id
-    WHERE c.id = 'salon'
-      AND s.id IS NULL
+    DELETE FROM categories c
+    WHERE c.id IN ('home', 'cleaning', 'salon')
+      AND NOT EXISTS (
+        SELECT 1 FROM services s WHERE s.category_id = c.id
+      )
   `);
 }
 

@@ -216,10 +216,15 @@ export const updateOrder = async (req, res) => {
 
 export const cancelOrder = async (req, res) => {
   try {
+    const cancelReason = String(req.body?.cancelReason || '').trim();
     const order = await Order.findOwnedById(req.params.id, req.user.id);
 
     if (!order) {
       return res.status(404).json({message: 'Order not found.'});
+    }
+
+    if (!cancelReason) {
+      return res.status(400).json({message: 'Cancellation reason is required.'});
     }
 
     if (order.status !== 'confirmed') {
@@ -228,12 +233,13 @@ export const cancelOrder = async (req, res) => {
         .json({message: 'This order can no longer be cancelled after assignment.'});
     }
 
-    await Order.updateStatus(req.params.id, 'cancelled');
+    await Order.updateStatus(req.params.id, 'cancelled', cancelReason);
 
     res.json({
       message: 'Order cancelled successfully.',
       id: req.params.id,
       status: 'cancelled',
+      cancelReason,
     });
   } catch (error) {
     console.error('Cancel order error:', error);
