@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const {Pool} = pg;
+const { Pool } = pg;
 
 const rawPool = new Pool(
   process.env.DATABASE_URL
@@ -11,7 +11,7 @@ const rawPool = new Pool(
         connectionString: process.env.DATABASE_URL,
         ssl:
           process.env.DB_SSL === 'true'
-            ? {rejectUnauthorized: false}
+            ? { rejectUnauthorized: false }
             : undefined,
       }
     : {
@@ -23,6 +23,67 @@ const rawPool = new Pool(
         max: Number(process.env.DB_POOL_SIZE || 10),
       },
 );
+
+// ═══════════════════════════════════════
+// WHATSAPP-BOT TABLES (Auto-create)
+// ═══════════════════════════════════════
+export const createWhatsAppBotTables = async () => {
+    const queries = [
+        `CREATE TABLE IF NOT EXISTS bot_services (
+            id SERIAL PRIMARY KEY,
+            category VARCHAR(100) NOT NULL,
+            name VARCHAR(200) NOT NULL,
+            msg TEXT NOT NULL,
+            options JSONB DEFAULT '[]'::jsonb,
+            active BOOLEAN DEFAULT true,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS bot_bookings (
+            id SERIAL PRIMARY KEY,
+            user_id VARCHAR(50) NOT NULL,
+            main_category VARCHAR(100),
+            service_type VARCHAR(200),
+            sub_service TEXT,
+            date VARCHAR(50),
+            time VARCHAR(50),
+            address TEXT,
+            address_type VARCHAR(20),
+            has_image VARCHAR(50),
+            image_data BYTEA,
+            image_mime VARCHAR(50),
+            status VARCHAR(20) DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS bot_sessions (
+            id SERIAL PRIMARY KEY,
+            user_id VARCHAR(50) UNIQUE NOT NULL,
+            step VARCHAR(50) DEFAULT 'MAIN_MENU',
+            order_details JSONB DEFAULT '{}'::jsonb,
+            current_service_key VARCHAR(10),
+            current_service_type VARCHAR(20),
+            change_date_temp VARCHAR(50),
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
+    ];
+    // ... rest same
+
+    try {
+        for (const query of queries) {
+            await rawPool.query(query);
+        }
+        console.log('✅ WhatsApp Bot tables are ready!');
+    } catch (error) {
+        console.error('❌ WhatsApp Bot table creation failed:', error.message);
+    }
+};
+
+// Auto-create tables on startup
+createWhatsAppBotTables();
+
+// ═══════════════════════════════════════
+// USTADPRO EXISTING CODE (UNCHANGED)
+// ═══════════════════════════════════════
 
 const lowerCamelAliases = {
   bookedfor: 'bookedFor',
@@ -76,7 +137,7 @@ function normalizeRow(row) {
     return row;
   }
 
-  const next = {...row};
+  const next = { ...row };
   for (const [key, value] of Object.entries(row)) {
     if (key.includes('_')) {
       const camelKey = toCamelCase(key);
@@ -153,7 +214,7 @@ async function query(sql, params = []) {
   const preparedSql = prepareSql(sql);
 
   if (/^-- noop mysql (modify column|foreign key checks)/i.test(preparedSql.trim())) {
-    return [{affectedRows: 0, rowCount: 0}, undefined];
+    return [{ affectedRows: 0, rowCount: 0 }, undefined];
   }
 
   const result = await rawPool.query(preparedSql, params);
@@ -181,6 +242,22 @@ async function getConnection() {
     release() {},
   };
 }
+
+// ═══════════════════════════════════════
+// CONNECT & INITIALIZE
+// ═══════════════════════════════════════
+export const connectDB = async () => {
+    try {
+        const client = await rawPool.connect();
+        console.log('✅ PostgreSQL Connected Successfully!');
+        console.log(`📊 Database: ${process.env.DB_NAME || 'ustaadpro_db'}`);
+        await createWhatsAppBotTables();
+        client.release();
+    } catch (error) {
+        console.error('❌ Database connection failed:', error.message);
+        throw error;
+    }
+};
 
 export default {
   query,

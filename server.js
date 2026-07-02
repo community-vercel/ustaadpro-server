@@ -12,6 +12,13 @@ import addressRoutes from './routes/addresses.js';
 import adminRoutes from './routes/admin.js';
 import shopRoutes from './routes/shop.js';
 import reviewRoutes from './routes/reviews.js';
+
+// ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
+import botServiceRoutes from './routes/botserviceRoutes.js';
+import botBookingRoutes from './routes/botbookingRoutes.js';
+import botSessionRoutes from './routes/botsessionRoutes.js';
+import botStatsRoutes from './routes/botstatsRoutes.js';
+
 import AppControl from './models/AppControl.js';
 import Shop from './models/Shop.js';
 import { initFirebase } from './utils/firebase.js';
@@ -33,7 +40,14 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
+app.use('/api/services', botServiceRoutes);
+app.use('/api/bookings', botBookingRoutes);
+app.use('/api/sessions', botSessionRoutes);
+app.use('/api/stats', botStatsRoutes);
+
+
+// ═══════════════ USTADPRO ROUTES ═══════════════
 app.use('/api/auth', authRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api/orders', orderRoutes);
@@ -43,12 +57,28 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', reviewRoutes);
 
 
+// ═══════════════ WHATSAPP-BOT FRONTEND ═══════════════
+app.use('/admin', express.static(path.join(__dirname, 'frontend')));
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
 
 // Root test route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to UstaadPro (Theka Online) API server.' });
 });
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: 'PostgreSQL'
+  });
+});
+
+// DB test
 app.get('/db-test', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT COUNT(*) FROM services');
@@ -85,3 +115,5 @@ try {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+export default app;
