@@ -41,7 +41,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
-app.use('/api/services', botServiceRoutes);
+app.use('/api/bot/services', botServiceRoutes);
 app.use('/api/bookings', botBookingRoutes);
 app.use('/api/sessions', botSessionRoutes);
 app.use('/api/stats', botStatsRoutes);

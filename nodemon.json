@@ -1,0 +1,22 @@
+{
+    "watch":  [
+                  "server.js",
+                  "bot.js",
+                  "controllers",
+                  "routes",
+                  "models",
+                  "services",
+                  "utils",
+                  "config",
+                  "db",
+                  "middlewares"
+              ],
+    "ignore":  [
+                   "auth_data/**",
+                   "node_modules/**",
+                   "uploads/**",
+                   "*.log"
+               ],
+    "ext":  "js,mjs,cjs,json",
+    "delay":  "500"
+}
