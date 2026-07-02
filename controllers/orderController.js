@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
 import AppControl from '../models/AppControl.js';
+import User from '../models/User.js';
 
 export const checkout = async (req, res) => {
   try {
@@ -11,6 +12,7 @@ export const checkout = async (req, res) => {
       address,
       specialInstructions,
       recurringOccurrences,
+      useRewardPoints = false,
     } = req.body;
     const userId = req.user.id;
     const occurrenceCount = Math.max(
@@ -57,10 +59,60 @@ export const checkout = async (req, res) => {
 
     const settings = await AppControl.getSettings();
     const inspectionFee = Number(settings.inspectionFee || 0);
-    const tax = Math.round(
-      (total * Number(settings.serviceTaxPercent || 0)) / 100,
+    const rewardEnabled = settings.rewardEnabled !== false;
+    const rewardPointValue = Math.max(
+      1,
+      Number(settings.rewardPointValue || 25),
     );
-    const calculatedTotal = total + inspectionFee + tax;
+    const rewardMinimumRedeem = Math.max(
+      0,
+      Number(settings.rewardMinimumRedeem || 100),
+    );
+    const serviceRewardMaxDiscountPercent = Math.max(
+      0,
+      Number(settings.serviceRewardMaxDiscountPercent || 10),
+    );
+    let rewardPointsRedeemed = 0;
+    let rewardDiscount = 0;
+
+    if (useRewardPoints && rewardEnabled) {
+      const user = await User.findById(userId);
+      const availablePoints = Number(user?.rewardPoints || 0);
+      const availableRewardValue = availablePoints * rewardPointValue;
+      const maxDiscountByPercent = Math.floor(
+        (total * serviceRewardMaxDiscountPercent) / 100,
+      );
+      const maxAllowedDiscount = Math.min(
+        availableRewardValue,
+        maxDiscountByPercent,
+      );
+      const redeemablePoints = Math.floor(maxAllowedDiscount / rewardPointValue);
+      const redeemableDiscount = redeemablePoints * rewardPointValue;
+
+      if (
+        availableRewardValue < rewardMinimumRedeem ||
+        redeemableDiscount < rewardMinimumRedeem ||
+        redeemablePoints <= 0
+      ) {
+        return res.status(400).json({
+          message: `You need at least Rs. ${rewardMinimumRedeem} reward value to redeem points.`,
+        });
+      }
+
+      const redeemed = await User.redeemRewardPoints(userId, redeemablePoints);
+      if (!redeemed) {
+        return res.status(400).json({message: 'Not enough reward points.'});
+      }
+
+      rewardPointsRedeemed = redeemablePoints;
+      rewardDiscount = redeemableDiscount;
+    }
+
+    const taxableTotal = Math.max(0, total - rewardDiscount);
+    const tax = Math.round(
+      (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
+    );
+    const calculatedTotal = taxableTotal + inspectionFee + tax;
 
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const orderId = `USTAADPRO-${randomSuffix.slice(-6)}`;
@@ -76,9 +128,13 @@ export const checkout = async (req, res) => {
       specialInstructions,
       inspectionFee: Number(inspectionFee || 0),
       tax: Number(tax || 0),
+      rewardPointsEarned: 0,
+      rewardPointsRedeemed,
+      rewardDiscount,
     });
 
     await Order.addItems(orderId, itemsToInsert);
+    const updatedUser = await User.findById(userId);
 
     res.status(201).json({
       message: 'Booking confirmed successfully',
@@ -92,9 +148,20 @@ export const checkout = async (req, res) => {
         specialInstructions,
         inspectionFee: Number(inspectionFee || 0),
         tax: Number(tax || 0),
+        rewardPointsEarned: 0,
+        rewardPointsRedeemed,
+        rewardDiscount,
         createdAt: new Date().toISOString(),
         items: cart,
       },
+      user: updatedUser
+        ? {
+            ...updatedUser,
+            walletBalance: Number(updatedUser.walletBalance || 0),
+            coins: Number(updatedUser.coins || 0),
+            rewardPoints: Number(updatedUser.rewardPoints || 0),
+          }
+        : null,
     });
   } catch (error) {
     console.error('Checkout error:', error);
@@ -185,10 +252,28 @@ export const updateOrder = async (req, res) => {
 
     const settings = await AppControl.getSettings();
     const inspectionFee = Number(settings.inspectionFee || 0);
-    const tax = Math.round(
-      (servicesTotal * Number(settings.serviceTaxPercent || 0)) / 100,
+    const rewardPointValue = Math.max(
+      1,
+      Number(settings.rewardPointValue || 25),
     );
-    const calculatedTotal = servicesTotal + inspectionFee + tax;
+    const serviceRewardMaxDiscountPercent = Math.max(
+      0,
+      Number(settings.serviceRewardMaxDiscountPercent || 10),
+    );
+    const previousRedeemedValue =
+      Number(order.rewardPointsRedeemed || 0) * rewardPointValue;
+    const maxDiscountByPercent = Math.floor(
+      (servicesTotal * serviceRewardMaxDiscountPercent) / 100,
+    );
+    const rewardDiscount =
+      Number(order.rewardPointsRedeemed || 0) > 0
+        ? Math.min(previousRedeemedValue, maxDiscountByPercent)
+        : 0;
+    const taxableTotal = Math.max(0, servicesTotal - rewardDiscount);
+    const tax = Math.round(
+      (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
+    );
+    const calculatedTotal = taxableTotal + inspectionFee + tax;
 
     await Order.updateDetails(req.params.id, req.user.id, {
       bookedFor: bookedFor ? String(bookedFor).trim() : 'Schedule pending',
@@ -199,6 +284,7 @@ export const updateOrder = async (req, res) => {
       total: calculatedTotal,
       inspectionFee,
       tax,
+      rewardDiscount,
     });
 
     await Order.replaceItems(req.params.id, itemsToInsert);

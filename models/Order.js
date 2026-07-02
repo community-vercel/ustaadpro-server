@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import AppControl from './AppControl.js';
 
 class Order {
   static async create({
@@ -12,9 +13,16 @@ class Order {
     specialInstructions,
     inspectionFee,
     tax,
+    rewardPointsEarned = 0,
+    rewardPointsRedeemed = 0,
+    rewardDiscount = 0,
   }) {
     await pool.query(
-      'INSERT INTO orders (id, user_id, total, status, booked_for, payment_method, address, special_instructions, inspection_fee, tax) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO orders
+       (id, user_id, total, status, booked_for, payment_method, address,
+        special_instructions, inspection_fee, tax, reward_points_earned,
+        reward_points_redeemed, reward_discount)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -26,6 +34,9 @@ class Order {
         specialInstructions || null,
         inspectionFee,
         tax,
+        rewardPointsEarned,
+        rewardPointsRedeemed,
+        rewardDiscount,
       ],
     );
     return id;
@@ -43,7 +54,18 @@ class Order {
 
   static async findByUserId(userId) {
     const [orders] = await pool.query(
-      'SELECT id, total, status, booked_for as bookedFor, payment_method as paymentMethod, address, special_instructions as specialInstructions, cancel_reason as cancelReason, inspection_fee as inspectionFee, tax, created_at as createdAt FROM orders WHERE user_id = ? ORDER BY created_at DESC',
+      `SELECT id, total, status, booked_for as bookedFor,
+              payment_method as paymentMethod, address,
+              special_instructions as specialInstructions,
+              cancel_reason as cancelReason,
+              inspection_fee as inspectionFee, tax,
+              reward_points_earned as rewardPointsEarned,
+              reward_points_redeemed as rewardPointsRedeemed,
+              reward_discount as rewardDiscount,
+              created_at as createdAt
+       FROM orders
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
       [userId],
     );
 
@@ -87,6 +109,9 @@ class Order {
         total: Number(order.total),
         inspectionFee: Number(order.inspectionFee),
         tax: Number(order.tax),
+        rewardPointsEarned: Number(order.rewardPointsEarned || 0),
+        rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
+        rewardDiscount: Number(order.rewardDiscount || 0),
         items: cartItems,
       });
     }
@@ -95,11 +120,68 @@ class Order {
   }
 
   static async updateStatus(id, status, cancelReason = null) {
+    const [orders] = await pool.query(
+      `SELECT user_id as userId, status, reward_points_earned as rewardPointsEarned,
+              reward_points_redeemed as rewardPointsRedeemed
+       FROM orders
+       WHERE id = ?
+       LIMIT 1`,
+      [id],
+    );
+    const order = orders[0];
+
+    if (status === 'completed') {
+      await pool.query(
+        'UPDATE orders SET status = ?, cancel_reason = NULL WHERE id = ?',
+        [status, id],
+      );
+
+      if (
+        order &&
+        order.status !== 'completed' &&
+        Number(order.rewardPointsEarned || 0) === 0
+      ) {
+        const settings = await AppControl.getSettings();
+        const points =
+          settings.rewardEnabled === false
+            ? 0
+            : Math.max(
+                0,
+                Number(settings.serviceRewardPointsOnCompletion || 0),
+              );
+
+        if (points > 0) {
+          await pool.query(
+            'UPDATE users SET reward_points = COALESCE(reward_points, 0) + ? WHERE id = ?',
+            [points, order.userId],
+          );
+          await pool.query(
+            'UPDATE orders SET reward_points_earned = ? WHERE id = ?',
+            [points, id],
+          );
+        }
+      }
+      return;
+    }
+
     if (status === 'cancelled') {
       await pool.query(
         'UPDATE orders SET status = ?, cancel_reason = ? WHERE id = ?',
         [status, cancelReason, id],
       );
+
+      if (order && order.status !== 'cancelled') {
+        const adjustment =
+          Number(order.rewardPointsRedeemed || 0) -
+          Number(order.rewardPointsEarned || 0);
+
+        if (adjustment) {
+          await pool.query(
+            'UPDATE users SET reward_points = GREATEST(0, COALESCE(reward_points, 0) + ?) WHERE id = ?',
+            [adjustment, order.userId],
+          );
+        }
+      }
       return;
     }
 
@@ -111,7 +193,13 @@ class Order {
 
   static async findOwnedById(id, userId) {
     const [orders] = await pool.query(
-      'SELECT id, status, user_id as userId FROM orders WHERE id = ? AND user_id = ? LIMIT 1',
+      `SELECT id, status, user_id as userId,
+              reward_points_earned as rewardPointsEarned,
+              reward_points_redeemed as rewardPointsRedeemed,
+              reward_discount as rewardDiscount
+       FROM orders
+       WHERE id = ? AND user_id = ?
+       LIMIT 1`,
       [id, userId],
     );
 
@@ -128,12 +216,20 @@ class Order {
   static async updateDetails(
     id,
     userId,
-    {bookedFor, address, specialInstructions, total, inspectionFee, tax},
+    {
+      bookedFor,
+      address,
+      specialInstructions,
+      total,
+      inspectionFee,
+      tax,
+      rewardDiscount,
+    },
   ) {
     await pool.query(
       `UPDATE orders
        SET booked_for = ?, address = ?, special_instructions = ?,
-           total = ?, inspection_fee = ?, tax = ?
+           total = ?, inspection_fee = ?, tax = ?, reward_discount = ?
        WHERE id = ? AND user_id = ?`,
       [
         bookedFor,
@@ -142,6 +238,7 @@ class Order {
         total,
         inspectionFee,
         tax,
+        rewardDiscount || 0,
         id,
         userId,
       ],

@@ -55,6 +55,13 @@ const defaultSettings = {
   currency: 'PKR',
   supportPhone: '+923001234567',
   shippingCost: 200,
+  rewardEnabled: true,
+  rewardPointValue: 25,
+  rewardMinimumRedeem: 100,
+  serviceRewardPointsOnCompletion: 1,
+  serviceRewardMaxDiscountPercent: 10,
+  shopRewardEarnPercent: 0.5,
+  shopRewardMaxDiscountPercent: 5,
 };
 
 const defaultCategories = [
@@ -210,7 +217,29 @@ class AppControl {
       'ALTER TABLE home_slides MODIFY COLUMN image_url LONGTEXT NULL',
     );
 
-    const orderColumns = [['cancel_reason', 'TEXT NULL']];
+    const userColumns = [['reward_points', 'INT NOT NULL DEFAULT 0']];
+
+    for (const [column, definition] of userColumns) {
+      const [columns] = await pool.query(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'users'
+           AND COLUMN_NAME = ?`,
+        [column],
+      );
+
+      if (!columns.length) {
+        await pool.query(`ALTER TABLE users ADD COLUMN ${column} ${definition}`);
+      }
+    }
+
+    const orderColumns = [
+      ['cancel_reason', 'TEXT NULL'],
+      ['reward_points_earned', 'INT NOT NULL DEFAULT 0'],
+      ['reward_points_redeemed', 'INT NOT NULL DEFAULT 0'],
+      ['reward_discount', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'],
+    ];
 
     for (const [column, definition] of orderColumns) {
       const [columns] = await pool.query(
@@ -243,6 +272,22 @@ class AppControl {
       ['currency', defaultSettings.currency],
       ['support_phone', defaultSettings.supportPhone],
       ['shipping_cost', defaultSettings.shippingCost],
+      ['reward_enabled', defaultSettings.rewardEnabled ? '1' : '0'],
+      ['reward_point_value', defaultSettings.rewardPointValue],
+      ['reward_minimum_redeem', defaultSettings.rewardMinimumRedeem],
+      [
+        'service_reward_points_on_completion',
+        defaultSettings.serviceRewardPointsOnCompletion,
+      ],
+      [
+        'service_reward_max_discount_percent',
+        defaultSettings.serviceRewardMaxDiscountPercent,
+      ],
+      ['shop_reward_earn_percent', defaultSettings.shopRewardEarnPercent],
+      [
+        'shop_reward_max_discount_percent',
+        defaultSettings.shopRewardMaxDiscountPercent,
+      ],
     ];
 
     for (const [key, value] of defaultEntries) {
@@ -332,6 +377,38 @@ class AppControl {
       if (row.setting_key === 'shipping_cost') {
         settings.shippingCost = Number(row.setting_value);
       }
+      if (row.setting_key === 'reward_enabled') {
+        settings.rewardEnabled =
+          row.setting_value === '1' || row.setting_value === 'true';
+      }
+      if (row.setting_key === 'reward_point_value') {
+        settings.rewardPointValue = Number(row.setting_value);
+      }
+      if (row.setting_key === 'reward_minimum_redeem') {
+        settings.rewardMinimumRedeem = Number(row.setting_value);
+      }
+      if (row.setting_key === 'service_reward_points_on_completion') {
+        settings.serviceRewardPointsOnCompletion = Number(row.setting_value);
+      }
+      if (row.setting_key === 'service_reward_max_discount_percent') {
+        settings.serviceRewardMaxDiscountPercent = Number(row.setting_value);
+      }
+      if (row.setting_key === 'shop_reward_earn_percent') {
+        settings.shopRewardEarnPercent = Number(row.setting_value);
+      }
+      if (row.setting_key === 'shop_reward_max_discount_percent') {
+        settings.shopRewardMaxDiscountPercent = Number(row.setting_value);
+      }
+      if (row.setting_key === 'reward_points_per_booking') {
+        settings.serviceRewardPointsOnCompletion = Number(row.setting_value);
+      }
+      if (row.setting_key === 'reward_points_for_free_service') {
+        const legacyPoints = Number(row.setting_value);
+        if (legacyPoints > 0) {
+          settings.rewardMinimumRedeem =
+            legacyPoints * Number(settings.rewardPointValue || 25);
+        }
+      }
     }
 
     return settings;
@@ -348,6 +425,47 @@ class AppControl {
       currency: payload.currency || defaultSettings.currency,
       support_phone: payload.supportPhone || defaultSettings.supportPhone,
       shipping_cost: Number(payload.shippingCost ?? defaultSettings.shippingCost),
+      reward_enabled:
+        payload.rewardEnabled === false || payload.rewardEnabled === 'false'
+          ? '0'
+          : '1',
+      reward_point_value: Math.max(
+        1,
+        Number(payload.rewardPointValue ?? defaultSettings.rewardPointValue),
+      ),
+      reward_minimum_redeem: Math.max(
+        0,
+        Number(
+          payload.rewardMinimumRedeem ?? defaultSettings.rewardMinimumRedeem,
+        ),
+      ),
+      service_reward_points_on_completion: Math.max(
+        0,
+        Number(
+          payload.serviceRewardPointsOnCompletion ??
+            defaultSettings.serviceRewardPointsOnCompletion,
+        ),
+      ),
+      service_reward_max_discount_percent: Math.max(
+        0,
+        Number(
+          payload.serviceRewardMaxDiscountPercent ??
+            defaultSettings.serviceRewardMaxDiscountPercent,
+        ),
+      ),
+      shop_reward_earn_percent: Math.max(
+        0,
+        Number(
+          payload.shopRewardEarnPercent ?? defaultSettings.shopRewardEarnPercent,
+        ),
+      ),
+      shop_reward_max_discount_percent: Math.max(
+        0,
+        Number(
+          payload.shopRewardMaxDiscountPercent ??
+            defaultSettings.shopRewardMaxDiscountPercent,
+        ),
+      ),
     };
 
     for (const [key, value] of Object.entries(settings)) {

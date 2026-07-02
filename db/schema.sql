@@ -33,6 +33,7 @@ CREATE TABLE users (
   fcm_token VARCHAR(255),
   wallet_balance NUMERIC(10, 2) NOT NULL DEFAULT 5200.00,
   coins INT NOT NULL DEFAULT 1280,
+  reward_points INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -143,6 +144,9 @@ CREATE TABLE orders (
   cancel_reason TEXT,
   inspection_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   tax NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  reward_points_earned INT NOT NULL DEFAULT 0,
+  reward_points_redeemed INT NOT NULL DEFAULT 0,
+  reward_discount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -187,6 +191,10 @@ CREATE TABLE shop_orders (
   status VARCHAR(40) NOT NULL DEFAULT 'placed',
   payment_method VARCHAR(80),
   address VARCHAR(255) NOT NULL,
+  cancel_reason TEXT,
+  reward_points_earned INT NOT NULL DEFAULT 0,
+  reward_points_redeemed INT NOT NULL DEFAULT 0,
+  reward_discount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
