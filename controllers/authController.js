@@ -22,6 +22,7 @@ function formatUser(user) {
     email: user.email,
     walletBalance: Number(user.walletBalance ?? user.wallet_balance),
     coins: user.coins,
+    rewardPoints: Number(user.rewardPoints ?? user.reward_points ?? 0),
     createdAt: user.createdAt ?? user.created_at,
   };
 }
@@ -519,6 +520,7 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
     user.walletBalance = Number(user.walletBalance);
+    user.rewardPoints = Number(user.rewardPoints ?? 0);
     res.json(user);
   } catch (error) {
     console.error('Get profile error:', error);

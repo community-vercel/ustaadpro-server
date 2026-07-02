@@ -3,7 +3,7 @@ import pool from '../config/db.js';
 class User {
   static async findById(id) {
     const [rows] = await pool.query(
-      'SELECT id, name, phone, email, wallet_balance as walletBalance, coins, created_at as createdAt FROM users WHERE id = ?',
+      'SELECT id, name, phone, email, wallet_balance as walletBalance, coins, reward_points as rewardPoints, created_at as createdAt FROM users WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -32,6 +32,22 @@ class User {
       'UPDATE users SET wallet_balance = ?, coins = ? WHERE id = ?',
       [balance, coins, id]
     );
+  }
+
+  static async addRewardPoints(id, points) {
+    await pool.query(
+      'UPDATE users SET reward_points = GREATEST(0, COALESCE(reward_points, 0) + ?) WHERE id = ?',
+      [Number(points || 0), id],
+    );
+  }
+
+  static async redeemRewardPoints(id, points) {
+    const [result] = await pool.query(
+      'UPDATE users SET reward_points = reward_points - ? WHERE id = ? AND reward_points >= ?',
+      [Number(points || 0), id, Number(points || 0)],
+    );
+
+    return Number(result.affectedRows || result.rowCount || 0) > 0;
   }
 
   static async updateFcmToken(id, token) {

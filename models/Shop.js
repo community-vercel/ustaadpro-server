@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import AppControl from './AppControl.js';
 
 async function ensureShopTables() {
   await pool.query(`
@@ -49,6 +50,22 @@ async function ensureShopTables() {
         throw error;
       }
     });
+
+  const rewardColumns = [
+    ['reward_points_earned', 'INT NOT NULL DEFAULT 0'],
+    ['reward_points_redeemed', 'INT NOT NULL DEFAULT 0'],
+    ['reward_discount', 'DECIMAL(10, 2) NOT NULL DEFAULT 0'],
+  ];
+
+  for (const [column, definition] of rewardColumns) {
+    await pool
+      .query(`ALTER TABLE shop_orders ADD COLUMN ${column} ${definition}`)
+      .catch(error => {
+        if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
+          throw error;
+        }
+      });
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shop_order_items (
@@ -161,12 +178,29 @@ class Shop {
     status,
     paymentMethod,
     address,
+    rewardPointsEarned = 0,
+    rewardPointsRedeemed = 0,
+    rewardDiscount = 0,
     items,
   }) {
     await ensureShopTables();
     await pool.query(
-      'INSERT INTO shop_orders (id, user_id, total, shipping_cost, status, payment_method, address) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, userId, total, shippingCost, status, paymentMethod, address],
+      `INSERT INTO shop_orders
+       (id, user_id, total, shipping_cost, status, payment_method, address,
+        reward_points_earned, reward_points_redeemed, reward_discount)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        userId,
+        total,
+        shippingCost,
+        status,
+        paymentMethod,
+        address,
+        rewardPointsEarned,
+        rewardPointsRedeemed,
+        rewardDiscount,
+      ],
     );
 
     for (const item of items) {
@@ -191,6 +225,9 @@ class Shop {
       `SELECT so.id, so.total, so.shipping_cost as shippingCost,
               so.status, so.payment_method as paymentMethod,
               so.address, so.cancel_reason as cancelReason, so.created_at as createdAt,
+              so.reward_points_earned as rewardPointsEarned,
+              so.reward_points_redeemed as rewardPointsRedeemed,
+              so.reward_discount as rewardDiscount,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM shop_orders so
        JOIN users u ON u.id = so.user_id
@@ -213,6 +250,9 @@ class Shop {
         ...order,
         total: Number(order.total),
         shippingCost: Number(order.shippingCost || 0),
+        rewardPointsEarned: Number(order.rewardPointsEarned || 0),
+        rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
+        rewardDiscount: Number(order.rewardDiscount || 0),
         items: items.map(item => ({
           quantity: Number(item.quantity),
           price: Number(item.price),
@@ -231,10 +271,71 @@ class Shop {
 
   static async updateOrderStatus(id, status, cancelReason = null) {
     await ensureShopTables();
+    const [orders] = await pool.query(
+      `SELECT user_id as userId, status, reward_points_earned as rewardPointsEarned,
+              reward_points_redeemed as rewardPointsRedeemed
+       FROM shop_orders
+       WHERE id = ?
+       LIMIT 1`,
+      [id],
+    );
+    const order = orders[0];
+
     if (cancelReason) {
       await pool.query('UPDATE shop_orders SET status = ?, cancel_reason = ? WHERE id = ?', [status, cancelReason, id]);
     } else {
       await pool.query('UPDATE shop_orders SET status = ? WHERE id = ?', [status, id]);
+    }
+
+    if (status === 'cancelled' && order && order.status !== 'cancelled') {
+      const refundPoints = Number(order.rewardPointsRedeemed || 0);
+      const removeEarnedPoints = Number(order.rewardPointsEarned || 0);
+      const adjustment = refundPoints - removeEarnedPoints;
+
+      if (adjustment) {
+        await pool.query(
+          'UPDATE users SET reward_points = GREATEST(0, COALESCE(reward_points, 0) + ?) WHERE id = ?',
+          [adjustment, order.userId],
+        );
+      }
+      return;
+    }
+
+    if (
+      status === 'delivered' &&
+      order &&
+      order.status !== 'delivered' &&
+      Number(order.rewardPointsEarned || 0) === 0
+    ) {
+      const settings = await AppControl.getSettings();
+      if (settings.rewardEnabled === false) {
+        return;
+      }
+
+      const [items] = await pool.query(
+        'SELECT quantity, price FROM shop_order_items WHERE order_id = ?',
+        [id],
+      );
+      const subtotal = items.reduce(
+        (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
+        0,
+      );
+      const pointValue = Math.max(1, Number(settings.rewardPointValue || 25));
+      const rewardValue =
+        (subtotal * Math.max(0, Number(settings.shopRewardEarnPercent || 0))) /
+        100;
+      const earnedPoints = Math.floor(rewardValue / pointValue);
+
+      if (earnedPoints > 0) {
+        await pool.query(
+          'UPDATE users SET reward_points = COALESCE(reward_points, 0) + ? WHERE id = ?',
+          [earnedPoints, order.userId],
+        );
+        await pool.query(
+          'UPDATE shop_orders SET reward_points_earned = ? WHERE id = ?',
+          [earnedPoints, id],
+        );
+      }
     }
   }
 

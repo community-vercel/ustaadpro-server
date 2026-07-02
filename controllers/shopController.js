@@ -1,5 +1,6 @@
 import Shop from '../models/Shop.js';
 import AppControl from '../models/AppControl.js';
+import User from '../models/User.js';
 import { getFirebaseMessaging } from '../utils/firebase.js';
 
 const SHOP_STATUSES = ['placed', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -24,7 +25,12 @@ export const getMyShopOrders = async (req, res) => {
 
 export const checkoutShopOrder = async (req, res) => {
   try {
-    const {items, address, paymentMethod = 'Cash on Delivery'} = req.body;
+    const {
+      items,
+      address,
+      paymentMethod = 'Cash on Delivery',
+      useRewardPoints = false,
+    } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({message: 'Shop cart items are required.'});
@@ -64,7 +70,55 @@ export const checkoutShopOrder = async (req, res) => {
     const orderId = `SHOP-${suffix}`;
     const settings = await AppControl.getSettings();
     const shippingCost = Number(settings.shippingCost || 0);
-    const total = subtotal + shippingCost;
+    let rewardPointsRedeemed = 0;
+    let rewardDiscount = 0;
+
+    if (useRewardPoints && settings.rewardEnabled !== false) {
+      const pointValue = Math.max(1, Number(settings.rewardPointValue || 25));
+      const minimumRedeem = Math.max(
+        0,
+        Number(settings.rewardMinimumRedeem || 100),
+      );
+      const maxDiscountPercent = Math.max(
+        0,
+        Number(settings.shopRewardMaxDiscountPercent || 5),
+      );
+      const user = await User.findById(req.user.id);
+      const availablePoints = Number(user?.rewardPoints || 0);
+      const availableRewardValue = availablePoints * pointValue;
+      const maxDiscountByPercent = Math.floor(
+        (subtotal * maxDiscountPercent) / 100,
+      );
+      const maxAllowedDiscount = Math.min(
+        availableRewardValue,
+        maxDiscountByPercent,
+      );
+      const redeemablePoints = Math.floor(maxAllowedDiscount / pointValue);
+      const redeemableDiscount = redeemablePoints * pointValue;
+
+      if (
+        availableRewardValue < minimumRedeem ||
+        redeemableDiscount < minimumRedeem ||
+        redeemablePoints <= 0
+      ) {
+        return res.status(400).json({
+          message: `You need at least Rs. ${minimumRedeem} reward value to redeem points.`,
+        });
+      }
+
+      const redeemed = await User.redeemRewardPoints(
+        req.user.id,
+        redeemablePoints,
+      );
+      if (!redeemed) {
+        return res.status(400).json({message: 'Not enough reward points.'});
+      }
+
+      rewardPointsRedeemed = redeemablePoints;
+      rewardDiscount = redeemableDiscount;
+    }
+
+    const total = Math.max(0, subtotal - rewardDiscount) + shippingCost;
 
     await Shop.createOrder({
       id: orderId,
@@ -74,11 +128,26 @@ export const checkoutShopOrder = async (req, res) => {
       status: 'placed',
       paymentMethod,
       address,
+      rewardPointsEarned: 0,
+      rewardPointsRedeemed,
+      rewardDiscount,
       items: orderItems,
     });
 
     const [order] = await Shop.getOrders({userId: req.user.id});
-    res.status(201).json({message: 'Shop order placed.', order});
+    const updatedUser = await User.findById(req.user.id);
+    res.status(201).json({
+      message: 'Shop order placed.',
+      order,
+      user: updatedUser
+        ? {
+            ...updatedUser,
+            walletBalance: Number(updatedUser.walletBalance || 0),
+            coins: Number(updatedUser.coins || 0),
+            rewardPoints: Number(updatedUser.rewardPoints || 0),
+          }
+        : null,
+    });
   } catch (error) {
     console.error('Shop checkout error:', error);
     res.status(500).json({message: 'Internal server error.'});

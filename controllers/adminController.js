@@ -80,6 +80,9 @@ async function populateAdminOrder(order) {
     total: Number(order.total),
     inspectionFee: Number(order.inspectionFee),
     tax: Number(order.tax),
+    rewardPointsEarned: Number(order.rewardPointsEarned || 0),
+    rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
+    rewardDiscount: Number(order.rewardDiscount || 0),
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
@@ -128,6 +131,9 @@ export const getAdminOrders = async (_req, res) => {
               o.special_instructions as specialInstructions,
               o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
+              o.reward_points_earned as rewardPointsEarned,
+              o.reward_points_redeemed as rewardPointsRedeemed,
+              o.reward_discount as rewardDiscount,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
@@ -155,6 +161,9 @@ export const getAdminOrderById = async (req, res) => {
               o.special_instructions as specialInstructions,
               o.cancel_reason as cancelReason,
               o.inspection_fee as inspectionFee, o.tax,
+              o.reward_points_earned as rewardPointsEarned,
+              o.reward_points_redeemed as rewardPointsRedeemed,
+              o.reward_discount as rewardDiscount,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
@@ -394,6 +403,7 @@ export const getAdminUsers = async (_req, res) => {
   try {
     const [users] = await pool.query(
       `SELECT u.id, u.name, u.phone, u.email,
+              u.reward_points as rewardPoints,
               u.created_at as createdAt,
               COUNT(o.id) as totalOrders,
               COALESCE(SUM(o.total), 0) as totalSpend
@@ -406,6 +416,7 @@ export const getAdminUsers = async (_req, res) => {
     res.json(
       users.map(user => ({
         ...user,
+        rewardPoints: Number(user.rewardPoints || 0),
         totalOrders: Number(user.totalOrders),
         totalSpend: Number(user.totalSpend),
       })),
