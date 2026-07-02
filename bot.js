@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import whatsapp from 'whatsapp-web.js';
@@ -24,6 +25,18 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const browserCandidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+].filter(Boolean);
+
+const browserExecutablePath = browserCandidates.find(candidate =>
+    fs.existsSync(candidate)
+);
+
 // ═══════════════════════════════════════
 // 🤖 WHATSAPP CLIENT
 // ═══════════════════════════════════════
@@ -39,6 +52,7 @@ const client = new Client({
         remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1017054665.html',
     },
     puppeteer: {
+        ...(browserExecutablePath ? { executablePath: browserExecutablePath } : {}),
         headless: true,
         defaultViewport: null,
         timeout: 120000,
