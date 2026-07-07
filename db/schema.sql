@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS shop_order_items CASCADE;
+﻿DROP TABLE IF EXISTS shop_order_items CASCADE;
 DROP TABLE IF EXISTS shop_orders CASCADE;
 DROP TABLE IF EXISTS shop_products CASCADE;
 DROP TABLE IF EXISTS service_reviews CASCADE;
@@ -132,6 +132,17 @@ CREATE TABLE subscriptions (
   perks JSONB NOT NULL
 );
 
+CREATE TABLE service_work_prices (
+  id SERIAL PRIMARY KEY,
+  service_id VARCHAR(50) NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  title VARCHAR(180) NOT NULL,
+  description TEXT,
+  price NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  image_url TEXT,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE orders (
   id VARCHAR(50) PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -150,6 +161,18 @@ CREATE TABLE orders (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE payment_receipts (
+  id SERIAL PRIMARY KEY,
+  order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receipt_url TEXT NOT NULL,
+  amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  account_number VARCHAR(40) NOT NULL,
+  account_title VARCHAR(120) NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'submitted',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
   order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -206,3 +229,5 @@ CREATE TABLE shop_order_items (
   quantity INT NOT NULL,
   price NUMERIC(10, 2) NOT NULL
 );
+
+

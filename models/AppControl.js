@@ -1,4 +1,4 @@
-import pool from '../config/db.js';
+﻿import pool from '../config/db.js';
 
 const defaultSlides = [
   {
@@ -214,9 +214,79 @@ class AppControl {
       'ALTER TABLE services MODIFY COLUMN image_url LONGTEXT NULL',
     );
     await pool.query(
+      `CREATE TABLE IF NOT EXISTS service_work_prices (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        service_id VARCHAR(50) NOT NULL,
+        title VARCHAR(180) NOT NULL,
+        description TEXT NULL,
+        price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        image_url LONGTEXT NULL,
+        sort_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+      )`,
+    );
+
+    const serviceWorkPriceColumns = [['image_url', 'LONGTEXT NULL']];
+
+    for (const [column, definition] of serviceWorkPriceColumns) {
+      const [columns] = await pool.query(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'service_work_prices'
+           AND COLUMN_NAME = ?`,
+        [column],
+      );
+
+      if (!columns.length) {
+        await pool.query(
+          `ALTER TABLE service_work_prices ADD COLUMN ${column} ${definition}`,
+        );
+      }
+    }
+    await pool.query(
       'ALTER TABLE home_slides MODIFY COLUMN image_url LONGTEXT NULL',
     );
 
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS payment_receipts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id VARCHAR(50) NOT NULL,
+        user_id INT NOT NULL,
+        receipt_url LONGTEXT NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        account_number VARCHAR(40) NOT NULL,
+        account_title VARCHAR(120) NOT NULL,
+        status VARCHAR(40) NOT NULL DEFAULT 'submitted',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )`,
+    );
+    const orderItemColumns = [
+      ['service_work_price_id', 'INT NULL'],
+      ['service_work_title', 'VARCHAR(180) NULL'],
+    ];
+
+    for (const [column, definition] of orderItemColumns) {
+      const [columns] = await pool.query(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'order_items'
+           AND COLUMN_NAME = ?`,
+        [column],
+      );
+
+      if (!columns.length) {
+        await pool.query(
+          `ALTER TABLE order_items ADD COLUMN ${column} ${definition}`,
+        );
+      }
+    }
     const userColumns = [['reward_points', 'INT NOT NULL DEFAULT 0']];
 
     for (const [column, definition] of userColumns) {
@@ -482,3 +552,5 @@ class AppControl {
 }
 
 export default AppControl;
+
+
