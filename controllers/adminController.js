@@ -203,7 +203,7 @@ export const updateAdminOrderStatus = async (req, res) => {
     await Order.updateStatus(req.params.id, status, cancelReason);
 
     const [orders] = await pool.query(
-      'SELECT user_id FROM orders WHERE id = ?',
+      'SELECT user_id, payment_method as paymentMethod FROM orders WHERE id = ?',
       [req.params.id],
     );
     const order = orders[0];
@@ -214,6 +214,12 @@ export const updateAdminOrderStatus = async (req, res) => {
       );
       const fcmToken = users[0]?.fcmToken;
       const messaging = getFirebaseMessaging();
+      const isCashPayment = String(order.paymentMethod || '')
+        .toLowerCase()
+        .includes('cash');
+      const completedPaymentBody = isCashPayment
+        ? 'Congrats, your work is completed. Please pay cash to our agent.'
+        : 'Congrats, your work is completed. Please pay us at EasyPaisa.';
 
       if (fcmToken && messaging) {
         try {
@@ -231,7 +237,7 @@ export const updateAdminOrderStatus = async (req, res) => {
             notification: {
               title: status === 'completed' ? 'Work completed' : 'Order Status Updated',
               body: status === 'completed'
-                ? 'Congrats, your work is completed. Please pay us at EasyPaisa.'
+                ? completedPaymentBody
                 : `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
             },
             data: {
@@ -240,6 +246,7 @@ export const updateAdminOrderStatus = async (req, res) => {
               status,
               accountNumber: '03485838593',
               accountTitle: 'Muhammad Ikram',
+              paymentMethod: order.paymentMethod || '',
             },
           });
           console.log(`Push notification sent to user ${order.user_id} for order ${req.params.id}`);
@@ -581,4 +588,5 @@ export const deleteAdminSubscription = async (req, res) => {
     res.status(500).json({message: 'Internal server error.'});
   }
 };
+
 
