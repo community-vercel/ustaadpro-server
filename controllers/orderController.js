@@ -1,7 +1,75 @@
+﻿import fs from 'fs/promises';
+import path from 'path';
+import {fileURLToPath} from 'url';
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
 import AppControl from '../models/AppControl.js';
 import User from '../models/User.js';
+import PaymentReceipt from '../models/PaymentReceipt.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const receiptUploadDir = path.resolve(__dirname, '../uploads/payment-receipts');
+const EASYPAISA_ACCOUNT_NUMBER = '03485838593';
+const EASYPAISA_ACCOUNT_TITLE = 'Muhammad Ikram';
+
+async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
+  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+    const error = new Error('A valid receipt image is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) {
+    const error = new Error('Invalid receipt image format.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const mimeType = match[1];
+  const base64 = match[2];
+  const extension =
+    mimeType === 'image/png'
+      ? 'png'
+      : mimeType === 'image/webp'
+        ? 'webp'
+        : mimeType === 'image/gif'
+          ? 'gif'
+          : 'jpg';
+  const safeName = String(filename).replace(/[^a-zA-Z0-9._-]/g, '-');
+  const storedName = `${Date.now()}-${safeName.replace(/\.[^.]+$/, '')}.${extension}`;
+
+  await fs.mkdir(receiptUploadDir, {recursive: true});
+  await fs.writeFile(path.join(receiptUploadDir, storedName), Buffer.from(base64, 'base64'));
+
+  return `/uploads/payment-receipts/${storedName}`;
+}
+
+function resolveSelectedWork(service, item) {
+  const requestedWorkId =
+    item.serviceWorkPriceId ||
+    item.workPriceId ||
+    item.selectedWorkPriceId ||
+    item.service?.selectedWorkPrice?.id ||
+    item.service?.selectedWorkPriceId;
+
+  const selectedWork = requestedWorkId
+    ? service.workPrices?.find(work => Number(work.id) === Number(requestedWorkId))
+    : null;
+
+  if (requestedWorkId && !selectedWork) {
+    const error = new Error('Selected service work price was not found.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return {
+    serviceWorkPriceId: selectedWork?.id || null,
+    serviceWorkTitle: selectedWork?.title || item.service?.selectedWorkPrice?.title || service.title,
+    price: selectedWork ? selectedWork.price : service.price,
+  };
+}
 
 export const checkout = async (req, res) => {
   try {
@@ -46,14 +114,17 @@ export const checkout = async (req, res) => {
           .json({message: `Service with ID ${cartItem.service.id} not found.`});
       }
 
+      const selectedWork = resolveSelectedWork(service, cartItem);
       const itemTotal =
-        Number(service.price) * cartItem.quantity * occurrenceCount;
+        Number(selectedWork.price) * cartItem.quantity * occurrenceCount;
       total += itemTotal;
 
       itemsToInsert.push({
         serviceId: service.id,
+        serviceWorkPriceId: selectedWork.serviceWorkPriceId,
+        serviceWorkTitle: selectedWork.serviceWorkTitle,
         quantity: cartItem.quantity,
-        price: service.price,
+        price: selectedWork.price,
       });
     }
 
@@ -165,7 +236,7 @@ export const checkout = async (req, res) => {
     });
   } catch (error) {
     console.error('Checkout error:', error);
-    res.status(500).json({message: 'Internal server error.'});
+    res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});
   }
 };
 
@@ -242,11 +313,14 @@ export const updateOrder = async (req, res) => {
           .json({message: `Service with ID ${serviceId} not found.`});
       }
 
-      servicesTotal += Number(service.price) * quantity * occurrenceCount;
+      const selectedWork = resolveSelectedWork(service, item);
+      servicesTotal += Number(selectedWork.price) * quantity * occurrenceCount;
       itemsToInsert.push({
         serviceId: service.id,
+        serviceWorkPriceId: selectedWork.serviceWorkPriceId,
+        serviceWorkTitle: selectedWork.serviceWorkTitle,
         quantity,
-        price: service.price,
+        price: selectedWork.price,
       });
     }
 
@@ -296,7 +370,7 @@ export const updateOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Update order error:', error);
-    res.status(500).json({message: 'Internal server error.'});
+    res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});
   }
 };
 
@@ -330,5 +404,28 @@ export const cancelOrder = async (req, res) => {
   } catch (error) {
     console.error('Cancel order error:', error);
     res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const uploadPaymentReceipt = async (req, res) => {
+  try {
+    const receiptUrl = await saveReceiptImage(req.body?.dataUrl, req.body?.filename);
+    const amount = Number(req.body?.amount || 0);
+
+    await PaymentReceipt.create({
+      orderId: req.params.id,
+      userId: req.user.id,
+      receiptUrl,
+      amount,
+      accountNumber: EASYPAISA_ACCOUNT_NUMBER,
+      accountTitle: EASYPAISA_ACCOUNT_TITLE,
+    });
+
+    res.status(201).json({
+      message: 'Receipt uploaded successfully.',
+      receiptUrl,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});
   }
 };

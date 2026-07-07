@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises';
+﻿import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import bcrypt from 'bcryptjs';
@@ -7,6 +7,7 @@ import Order from '../models/Order.js';
 import Service from '../models/Service.js';
 import AppControl from '../models/AppControl.js';
 import Subscription from '../models/Subscription.js';
+import PaymentReceipt from '../models/PaymentReceipt.js';
 import { getFirebaseMessaging } from '../utils/firebase.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -65,7 +66,8 @@ export const loginAdmin = async (req, res) => {
 
 async function populateAdminOrder(order) {
   const [items] = await pool.query(
-    `SELECT oi.quantity, oi.price, s.id as serviceId, s.title,
+    `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
+            oi.service_work_title as serviceWorkTitle, s.id as serviceId, s.title,
             s.description, s.duration, s.category_id as categoryId,
             s.service_type as serviceType, s.image_url as imageUrl,
             s.detail_description as detailDescription, s.details
@@ -227,12 +229,17 @@ export const updateAdminOrderStatus = async (req, res) => {
               },
             },
             notification: {
-              title: 'Order Status Updated',
-              body: `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
+              title: status === 'completed' ? 'Work completed' : 'Order Status Updated',
+              body: status === 'completed'
+                ? 'Congrats, your work is completed. Please pay us at EasyPaisa.'
+                : `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
             },
             data: {
+              type: status === 'completed' ? 'payment_request' : 'service_order',
               orderId: req.params.id,
               status,
+              accountNumber: '03485838593',
+              accountTitle: 'Muhammad Ikram',
             },
           });
           console.log(`Push notification sent to user ${order.user_id} for order ${req.params.id}`);
@@ -290,31 +297,41 @@ export const sendBroadcastNotification = async (req, res) => {
     let sentCount = 0;
     let failedCount = 0;
 
-    for (let index = 0; index < tokens.length; index += 500) {
-      const tokenBatch = tokens.slice(index, index + 500);
-      const result = await messaging.sendEachForMulticast({
-        tokens: tokenBatch,
-        android: {
-          priority: 'high',
-          notification: {
-            channelId: 'order_updates',
-            icon: 'ic_notification',
-            color: '#006C49',
-            sound: 'default',
-          },
-        },
-        notification: {
-          title,
-          body: message,
-        },
-        data: {
-          type: 'broadcast',
-          notificationId: `${notificationId}-${index}`,
-        },
-      });
+    for (let index = 0; index < tokens.length; index += 100) {
+      const tokenBatch = tokens.slice(index, index + 100);
+      const results = await Promise.allSettled(
+        tokenBatch.map((token, tokenIndex) =>
+          messaging.send({
+            token,
+            android: {
+              priority: 'high',
+              notification: {
+                channelId: 'order_updates',
+                icon: 'ic_notification',
+                color: '#006C49',
+                sound: 'default',
+              },
+            },
+            notification: {
+              title,
+              body: message,
+            },
+            data: {
+              type: 'broadcast',
+              notificationId: `${notificationId}-${index + tokenIndex}`,
+            },
+          }),
+        ),
+      );
 
-      sentCount += result.successCount;
-      failedCount += result.failureCount;
+      sentCount += results.filter(result => result.status === 'fulfilled').length;
+      failedCount += results.filter(result => result.status === 'rejected').length;
+      results
+        .filter(result => result.status === 'rejected')
+        .slice(0, 5)
+        .forEach(result => {
+          console.error('Broadcast token send failed:', result.reason?.message || result.reason);
+        });
     }
 
     res.json({
@@ -325,10 +342,19 @@ export const sendBroadcastNotification = async (req, res) => {
     });
   } catch (error) {
     console.error('Admin broadcast notification error:', error);
-    res.status(500).json({message: 'Could not send broadcast notification.'});
+    res.status(500).json({message: error?.message || 'Could not send broadcast notification.'});
   }
 };
 
+export const getAdminPaymentReceipts = async (_req, res) => {
+  try {
+    const receipts = await PaymentReceipt.getAdminAll();
+    res.json(receipts);
+  } catch (error) {
+    console.error('Admin payment receipts error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
 export const getAdminServices = async (_req, res) => {
   try {
     const services = await Service.getAll();
@@ -555,3 +581,4 @@ export const deleteAdminSubscription = async (req, res) => {
     res.status(500).json({message: 'Internal server error.'});
   }
 };
+

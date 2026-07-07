@@ -43,11 +43,20 @@ class Order {
   }
 
   static async addItems(orderId, items) {
-    // items is an array of { serviceId, quantity, price }
+    // items is an array of { serviceId, serviceWorkPriceId, serviceWorkTitle, quantity, price }
     for (const item of items) {
       await pool.query(
-        'INSERT INTO order_items (order_id, service_id, quantity, price) VALUES (?, ?, ?, ?)',
-        [orderId, item.serviceId, item.quantity, item.price],
+        `INSERT INTO order_items
+         (order_id, service_id, service_work_price_id, service_work_title, quantity, price)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          item.serviceId,
+          item.serviceWorkPriceId || null,
+          item.serviceWorkTitle || null,
+          item.quantity,
+          item.price,
+        ],
       );
     }
   }
@@ -73,7 +82,9 @@ class Order {
     const populatedOrders = [];
     for (const order of orders) {
       const [items] = await pool.query(
-        `SELECT oi.quantity, oi.price, s.id as service_id, s.title, s.description, s.duration, s.category_id,
+        `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
+                oi.service_work_title as serviceWorkTitle,
+                s.id as service_id, s.title, s.description, s.duration, s.category_id,
                 sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
          FROM order_items oi 
          JOIN services s ON oi.service_id = s.id 
@@ -92,6 +103,8 @@ class Order {
           title: item.title,
           description: item.description,
           price: Number(item.price), // use the item's snapped price
+          selectedWorkPriceId: item.serviceWorkPriceId ? Number(item.serviceWorkPriceId) : undefined,
+          selectedWorkTitle: item.serviceWorkTitle || undefined,
           duration: item.duration,
           categoryId: item.category_id,
         },
@@ -250,8 +263,17 @@ class Order {
 
     for (const item of items) {
       await pool.query(
-        'INSERT INTO order_items (order_id, service_id, quantity, price) VALUES (?, ?, ?, ?)',
-        [orderId, item.serviceId, item.quantity, item.price],
+        `INSERT INTO order_items
+         (order_id, service_id, service_work_price_id, service_work_title, quantity, price)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          item.serviceId,
+          item.serviceWorkPriceId || null,
+          item.serviceWorkTitle || null,
+          item.quantity,
+          item.price,
+        ],
       );
     }
   }
