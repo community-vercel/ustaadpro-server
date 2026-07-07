@@ -1,4 +1,4 @@
-import pool from '../config/db.js';
+﻿import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
 async function ensureShopTables() {
@@ -324,7 +324,9 @@ class Shop {
       const rewardValue =
         (subtotal * Math.max(0, Number(settings.shopRewardEarnPercent || 0))) /
         100;
-      const earnedPoints = Math.floor(rewardValue / pointValue);
+      const earnedPoints = rewardValue > 0
+        ? Math.max(1, Math.floor(rewardValue / pointValue))
+        : 0;
 
       if (earnedPoints > 0) {
         await pool.query(
@@ -353,3 +355,4 @@ class Shop {
 }
 
 export default Shop;
+

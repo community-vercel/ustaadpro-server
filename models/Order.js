@@ -1,4 +1,5 @@
-import pool from '../config/db.js';
+﻿import pool from '../config/db.js';
+import PaymentReceipt from './PaymentReceipt.js';
 import AppControl from './AppControl.js';
 
 class Order {
@@ -78,6 +79,11 @@ class Order {
       [userId],
     );
 
+    const receiptsByOrderId = await PaymentReceipt.findLatestByUserOrderIds(
+      userId,
+      orders.map(order => order.id),
+    );
+
     // Populate items for each order
     const populatedOrders = [];
     for (const order of orders) {
@@ -125,6 +131,7 @@ class Order {
         rewardPointsEarned: Number(order.rewardPointsEarned || 0),
         rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
         rewardDiscount: Number(order.rewardDiscount || 0),
+        paymentReceipt: receiptsByOrderId[order.id] || null,
         items: cartItems,
       });
     }
@@ -280,3 +287,4 @@ class Order {
 }
 
 export default Order;
+
