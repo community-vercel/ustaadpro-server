@@ -15,7 +15,10 @@
                    "auth_data/**",
                    "node_modules/**",
                    "uploads/**",
-                   "*.log"
+                   "*.log",
+                   "bot-state.json",
+                   "bot-pid.json",
+                   "bot-error.log"
                ],
     "ext":  "js,mjs,cjs,json",
     "delay":  "500"
