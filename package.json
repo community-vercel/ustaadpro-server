@@ -6,8 +6,8 @@
     "type":  "module",
     "scripts":  {
                     "start":  "node server.js",
-                    "dev":  "concurrently \"nodemon --config nodemon.json server.js\" \"nodemon --config nodemon.json bot.js\"",
-                    "dev:server":  "nodemon --config nodemon.json server.js",
+                    "dev":  "nodemon --config nodemon.json server.js",
+                    "dev:both":  "concurrently \"nodemon --config nodemon.json server.js\" \"nodemon --config nodemon.json bot.js\"",
                     "dev:bot":  "nodemon --config nodemon.json bot.js",
                     "bot":  "node bot.js",
                     "schema":  "node db/run-schema.js",

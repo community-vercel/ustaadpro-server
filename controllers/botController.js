@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,8 +42,52 @@ const isProcessRunning = (pid) => {
     try { process.kill(pid, 0); return true; } catch { return false; }
 };
 
-const killProcess = (pid) => {
-    try { process.kill(pid, 'SIGKILL'); } catch {}
+/**
+ * On Windows, kill the entire process tree rooted at `pid`
+ * (covers both the node bot.js process and its Chrome child).
+ * Falls back to a simple SIGKILL on non-Windows.
+ */
+const killProcessTree = (pid) => {
+    try {
+        if (process.platform === 'win32') {
+            execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' });
+        } else {
+            process.kill(-pid, 'SIGKILL');
+        }
+    } catch (e) {
+        // Process may already be dead — that's fine
+        console.warn(`[botController] killProcessTree(${pid}):`, e.message);
+    }
+};
+
+/**
+ * Wait up to `maxMs` for the process to disappear, polling every `intervalMs`.
+ */
+const waitForProcessDeath = async (pid, maxMs = 5000, intervalMs = 300) => {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+        if (!isProcessRunning(pid)) return true;
+        await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return !isProcessRunning(pid);
+};
+
+/**
+ * Try to delete auth_data, retrying a few times in case Chrome is still
+ * releasing file handles after being killed.
+ */
+const clearAuthData = async (authDataDir) => {
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+            fs.rmSync(authDataDir, { recursive: true, force: true });
+            console.log('[bot] Cleared auth_data for fresh QR');
+            return true;
+        } catch (e) {
+            console.warn(`[bot] auth_data clear attempt ${attempt} failed:`, e.message);
+            await new Promise(r => setTimeout(r, 800));
+        }
+    }
+    return false;
 };
 
 // ─── Public helper (used by other controllers) ────────────────────────────────
@@ -64,50 +108,66 @@ export const getBotStatusPayload = () => {
     return { status: 'offline', qr: null, phone: null };
 };
 
+// ─── Internal: stop any running bot ──────────────────────────────────────────
+
+const stopBotInternal = async () => {
+    const savedPid = getSavedPid();
+    if (savedPid && isProcessRunning(savedPid)) {
+        console.log(`[bot] Killing process tree for PID ${savedPid}…`);
+        killProcessTree(savedPid);
+        const died = await waitForProcessDeath(savedPid, 6000);
+        if (!died) {
+            console.warn(`[bot] PID ${savedPid} still alive after 6 s — forcing again`);
+            killProcessTree(savedPid);
+            await waitForProcessDeath(savedPid, 3000);
+        }
+    }
+    clearPid();
+};
+
 // ─── Start Bot ────────────────────────────────────────────────────────────────
 
 export const startBot = async (req, res) => {
-    // Check if a bot process we previously spawned is still running
     const savedPid = getSavedPid();
-    if (savedPid && isProcessRunning(savedPid)) {
-        const current = getBotStatusPayload();
+    const current = getBotStatusPayload();
+
+    // Only 'online' means the bot is genuinely working — return early
+    if (current.status === 'online' && savedPid && isProcessRunning(savedPid)) {
         return res.json({ success: true, message: 'Bot is already running.', ...current });
     }
 
-    // Check state file (bot may have been started externally)
-    const current = getBotStatusPayload();
-    if (['online', 'connecting', 'authenticated', 'starting'].includes(current.status)) {
-        return res.json({ success: true, message: 'Bot is already running.', ...current });
+    // If stuck at 'authenticated', 'connecting', or 'starting' with a dead/missing process,
+    // kill whatever is left and do a clean restart so Chrome is freed
+    if (['authenticated', 'connecting', 'starting'].includes(current.status) || (savedPid && isProcessRunning(savedPid))) {
+        console.log(`[bot] Stuck at "${current.status}" — killing old process tree and restarting…`);
+        await stopBotInternal();
+        // Give the OS time to release file handles
+        await new Promise(r => setTimeout(r, 2000));
     }
 
     try {
         writeState('starting');
 
-        // Clean up stale auth session so bot always shows a fresh QR
-        // (ignore errors if files are locked by an orphaned Chrome process)
+        // Kill any leftover processes and clear auth_data for a fresh QR
         const authDataDir = path.join(__dirname, '..', 'auth_data');
         if (fs.existsSync(authDataDir)) {
-            try {
-                fs.rmSync(authDataDir, { recursive: true, force: true });
-                console.log('[bot] Cleared auth_data for fresh QR');
-            } catch (e) {
-                console.warn('[bot] Could not clear auth_data (may be locked):', e.message);
+            const cleared = await clearAuthData(authDataDir);
+            if (!cleared) {
+                console.warn('[bot] auth_data still locked — bot will attempt to reuse the existing session');
             }
         }
 
-        // Redirect bot stderr to a log file so we can diagnose failures
-        const logFile  = path.join(__dirname, '..', 'bot-error.log');
+        // Redirect bot output to a log file for diagnostics
+        const logFile   = path.join(__dirname, '..', 'bot-error.log');
         const logStream = fs.openSync(logFile, 'a');
 
         // Spawn as fully detached so it survives server/nodemon restarts
         const child = spawn('node', [botFile], {
             detached: true,
-            stdio:    ['ignore', logStream, logStream],   // stdin ignored, stdout+stderr → log
+            stdio:    ['ignore', logStream, logStream],
             env:      { ...process.env }
         });
 
-        // MUST handle 'error' BEFORE calling unref() — an unhandled 'error' event
-        // on any Node.js EventEmitter crashes the process, even after unref()
         child.on('error', (err) => {
             console.error('[bot] Spawn error:', err.message);
             writeState('offline');
@@ -115,7 +175,7 @@ export const startBot = async (req, res) => {
             try { fs.closeSync(logStream); } catch {}
         });
 
-        child.unref(); // allow server to restart without killing the bot
+        child.unref();
 
         if (!child.pid) {
             writeState('offline');
@@ -124,10 +184,10 @@ export const startBot = async (req, res) => {
         }
 
         savePid(child.pid);
-        console.log(`[bot] Spawned PID ${child.pid} — stderr → bot-error.log`);
+        console.log(`[bot] Spawned PID ${child.pid} — output → bot-error.log`);
 
         // Give bot time to write its initial state (Puppeteer startup is slow)
-        await new Promise(r => setTimeout(r, 1200));
+        await new Promise(r => setTimeout(r, 1500));
 
         const updated = getBotStatusPayload();
         return res.json({ success: true, message: 'Bot started.', ...updated });
@@ -141,21 +201,8 @@ export const startBot = async (req, res) => {
 // ─── Stop Bot ─────────────────────────────────────────────────────────────────
 
 export const stopBot = async (req, res) => {
-    // Immediately mark offline so the next poll returns correct state
     writeState('offline', null, null);
-
-    const savedPid = getSavedPid();
-    if (savedPid && isProcessRunning(savedPid)) {
-        console.log(`[bot] Killing PID ${savedPid}`);
-        killProcess(savedPid);
-        // Wait briefly then verify
-        await new Promise(r => setTimeout(r, 600));
-        if (isProcessRunning(savedPid)) {
-            killProcess(savedPid); // second attempt
-        }
-    }
-
-    clearPid();
+    await stopBotInternal();
     return res.json({ success: true, message: 'Bot stopped' });
 };
 
@@ -164,6 +211,3 @@ export const stopBot = async (req, res) => {
 export const getBotStatus = async (req, res) => {
     res.json(getBotStatusPayload());
 };
-
-
-
