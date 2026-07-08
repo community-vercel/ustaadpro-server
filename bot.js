@@ -325,14 +325,49 @@ client.on('message', async (msg) => {
                     return;
                 }
                 session.orderDetails.time = incomingText;
-                session.state = 'SELECT_ADDRESS';
-                await client.sendMessage(userId,
-                    `Time Confirmed: ${incomingText}\n\n` +
-                    `---------------------------------------\n\n` +
-                    `Address:\nPlease type your complete home address.\n\n` +
-                    `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
-                    `Best Option: Share your Location Map!`
-                );
+                
+                if (userId.endsWith('@c.us')) {
+                    session.orderDetails.customerPhone = userId.split('@')[0];
+                    session.state = 'SELECT_ADDRESS';
+                    await client.sendMessage(userId,
+                        `Time Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Address:\nPlease type your complete home address.\n\n` +
+                        `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
+                        `Best Option: Share your Location Map!`
+                    );
+                } else {
+                    session.state = 'SELECT_PHONE';
+                    await client.sendMessage(userId,
+                        `Time Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Please enter your phone number so our team can contact you:\n\n` +
+                        `Example: 0300 1234567`
+                    );
+                }
+                break;
+            }
+
+            // ═══════════ SELECT PHONE ═══════════
+            case 'SELECT_PHONE': {
+                const phoneStr = incomingText.replace(/[\s-]/g, '');
+                if (phoneStr.length >= 11 && (phoneStr.startsWith('03') || phoneStr.startsWith('+92') || phoneStr.startsWith('92'))) {
+                    session.orderDetails.customerPhone = phoneStr;
+                    session.state = 'SELECT_ADDRESS';
+                    await client.sendMessage(userId,
+                        `Phone Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Address:\nPlease type your complete home address.\n\n` +
+                        `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
+                        `Best Option: Share your Location Map!`
+                    );
+                } else {
+                    await client.sendMessage(userId,
+                        `Invalid Phone Number!\n\n` +
+                        `Please enter a valid 11-digit mobile number:\n\n` +
+                        `Example: 0300 1234567`
+                    );
+                }
                 break;
             }
 

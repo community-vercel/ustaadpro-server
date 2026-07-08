@@ -3,7 +3,7 @@ import db from '../config/db.js';
 class Booking {
     // Get all bot_bookings with optional status filter
     static async findAll(status = null) {
-        let query = 'SELECT id, user_id, main_category, service_type, sub_service, date, time, address, address_type, has_image, status, created_at FROM bot_bookings';
+        let query = 'SELECT id, user_id, main_category, service_type, sub_service, date, time, customer_phone, address, address_type, has_image, status, created_at FROM bot_bookings';
         const params = [];
 
         if (status && status !== 'all') {
@@ -25,6 +25,7 @@ class Booking {
             subService,
             date,
             time,
+            customerPhone,
             address,
             addressType,
             hasImage,
@@ -34,8 +35,8 @@ class Booking {
 
         const query = `
             INSERT INTO bot_bookings (user_id, main_category, service_type, sub_service, 
-                                 date, time, address, address_type, has_image, image_data, image_mime) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+                                 date, time, customer_phone, address, address_type, has_image, image_data, image_mime) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
             RETURNING *
         `;
         const [rows] = await db.query(query, [
@@ -45,6 +46,7 @@ class Booking {
             subService || '',
             date || '',
             time || '',
+            customerPhone || '',
             address || '',
             addressType || 'text',
             hasImage || 'No Picture',
