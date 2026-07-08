@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import { fileURLToPath } from 'node:url';
 import xlsx from 'xlsx';
 import Shop from '../models/Shop.js';
 import pool from '../config/db.js';
@@ -8,9 +8,11 @@ import pool from '../config/db.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
-const defaultWorkbookPath =
-  'C:/Users/Sharplogicians/Downloads/alwaqas_hardware_and_tools_products.xlsx';
-const workbookPath = process.argv[2] || defaultWorkbookPath;
+const workbookFileName = 'alwaqas_hardware_and_tools_products.xlsx';
+const defaultWorkbookPath = path.join(projectRoot, workbookFileName);
+const workbookPath = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : defaultWorkbookPath;
 const uploadDir = path.join(projectRoot, 'uploads', 'shop-products');
 const publicUploadBase = '/uploads/shop-products';
 
@@ -88,7 +90,7 @@ async function writeProductImage(cfb, productId, imageName) {
   const file = getArchiveFile(cfb, imageName);
   if (!file?.content) return '';
 
-  await fs.mkdir(uploadDir, {recursive: true});
+  await fs.mkdir(uploadDir, { recursive: true });
   const ext = path.extname(imageName) || '.png';
   const filename = `${productId}${ext}`;
   await fs.writeFile(path.join(uploadDir, filename), Buffer.from(file.content));
@@ -96,10 +98,20 @@ async function writeProductImage(cfb, productId, imageName) {
 }
 
 async function importProducts() {
+  try {
+    await fs.access(workbookPath);
+  } catch {
+    throw new Error(
+      `Workbook not found: ${workbookPath}\n` +
+        `Put ${workbookFileName} in the backend project root (${projectRoot}) ` +
+        'or pass the file path: npm run seed:shop:alwaqas -- /full/path/to/file.xlsx',
+    );
+  }
+
   const workbook = xlsx.readFile(workbookPath);
   const sheet = workbook.Sheets.Products || workbook.Sheets[workbook.SheetNames[0]];
-  const rows = xlsx.utils.sheet_to_json(sheet, {header: 1, defval: ''});
-  const cfb = xlsx.CFB.read(workbookPath, {type: 'file'});
+  const rows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  const cfb = xlsx.CFB.read(workbookPath, { type: 'file' });
   const imageMap = getImageMapByExcelRow(cfb);
   const seenIds = new Set();
   let imported = 0;
