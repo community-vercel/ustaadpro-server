@@ -46,6 +46,11 @@ class PaymentReceipt {
       throw error;
     }
 
+    await pool.query('DELETE FROM payment_receipts WHERE order_id = ? AND user_id = ?', [
+      orderId,
+      userId,
+    ]);
+
     await pool.query(
       `INSERT INTO payment_receipts
        (order_id, user_id, receipt_url, amount, account_number, account_title, status)
@@ -59,6 +64,29 @@ class PaymentReceipt {
         accountTitle,
       ],
     );
+  }
+
+  static async findLatestByUserOrderIds(userId, orderIds = []) {
+    await AppControl.ensureSchema();
+    if (!orderIds.length) return {};
+
+    const placeholders = orderIds.map(() => '?').join(', ');
+    const [rows] = await pool.query(
+      `SELECT pr.*
+       FROM payment_receipts pr
+       JOIN (
+         SELECT order_id, MAX(id) as latest_id
+         FROM payment_receipts
+         WHERE user_id = ? AND order_id IN (${placeholders})
+         GROUP BY order_id
+       ) latest ON latest.latest_id = pr.id`,
+      [userId, ...orderIds],
+    );
+
+    return rows.reduce((acc, row) => {
+      acc[row.order_id] = mapReceipt(row);
+      return acc;
+    }, {});
   }
 
   static async getAdminAll() {
@@ -110,3 +138,4 @@ class PaymentReceipt {
 }
 
 export default PaymentReceipt;
+

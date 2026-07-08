@@ -1,4 +1,4 @@
-import {copyFile, mkdir} from 'node:fs/promises';
+﻿import {copyFile, mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import pool from './config/db.js';
@@ -9,6 +9,55 @@ const __dirname = path.dirname(__filename);
 const sourceImageDir = path.join(__dirname, 'seedappContent');
 const publicImageDir = path.join(__dirname, 'uploads', 'seedappContent');
 const publicImageBase = '/uploads/seedappContent';
+const workPriceOverrides = {
+  'fan-installation': [
+    {title: 'Fan mounting', description: 'Install or replace ceiling fan on an existing safe hook.', price: 1299},
+    {title: 'Wiring connection', description: 'Connect fan wiring to an existing power point.', price: 799},
+    {title: 'Regulator check', description: 'Inspect and connect existing regulator for speed control.', price: 499},
+    {title: 'Speed test', description: 'Test speed levels, noise and running condition after fitting.', price: 399},
+    {title: 'Basic balancing check', description: 'Visible wobble check and minor balancing guidance.', price: 599},
+  ],
+  'breaker-replacement': [
+    {title: 'Breaker inspection', description: 'Inspect faulty breaker point and tripping symptoms.', price: 1199},
+    {title: 'Load advice', description: 'Review connected load and advise correct breaker rating.', price: 699},
+    {title: 'Loose connection check', description: 'Check accessible loose wiring near breaker point.', price: 499},
+    {title: 'Replacement support', description: 'Replace breaker if customer provides suitable material.', price: 899},
+    {title: 'Safety test', description: 'Final power safety check after inspection or replacement.', price: 399},
+  ],
+  'switch-board-repair': [
+    {title: 'Switch board inspection', description: 'Inspect faulty board, sockets and spark symptoms.', price: 999},
+    {title: 'Socket and switch check', description: 'Check socket and switch condition for visible faults.', price: 699},
+    {title: 'Loose wire tightening', description: 'Tighten accessible loose wiring where safe.', price: 599},
+    {title: 'Breaker load advice', description: 'Advise breaker load and safety condition.', price: 499},
+    {title: 'Repair estimate', description: 'Share repair and material estimate before extra work.', price: 299},
+  ],
+};
+
+function defaultWorkPrice(service, title, index) {
+  const detail = service.details?.[index] || service.detailDescription || service.description;
+  const step = Math.max(100, Math.round(Number(service.price || 0) * 0.15));
+  const calculatedPrice = Math.max(100, Number(service.price || 0) + index * step);
+
+  return {
+    title,
+    description: detail,
+    price: index === 0 ? Number(service.price || 0) : calculatedPrice,
+  };
+}
+
+function getServiceWorkPrices(service) {
+  const imageUrl = `${publicImageBase}/${service.publicFile}`;
+  const source = workPriceOverrides[service.id] ||
+    (service.includes || []).map((title, index) => defaultWorkPrice(service, title, index));
+
+  return source.map((item, index) => ({
+    title: item.title,
+    description: item.description || service.details?.[index] || service.description,
+    price: Number(item.price || service.price || 0),
+    imageUrl: item.imageUrl || imageUrl,
+    sortOrder: index,
+  }));
+}
 
 const categories = [
   {
@@ -854,6 +903,20 @@ async function ensureTables() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS service_work_prices (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      service_id VARCHAR(50) NOT NULL,
+      title VARCHAR(150) NOT NULL,
+      description TEXT NULL,
+      price DECIMAL(10, 2) NOT NULL,
+      image_url LONGTEXT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS home_slides (
       id VARCHAR(80) PRIMARY KEY,
       badge VARCHAR(80) NOT NULL,
@@ -970,6 +1033,23 @@ async function seedServices() {
         JSON.stringify(service.excludes),
       ],
     );
+    await pool.query('DELETE FROM service_work_prices WHERE service_id = ?', [service.id]);
+
+    for (const work of getServiceWorkPrices(service)) {
+      await pool.query(
+        `INSERT INTO service_work_prices
+         (service_id, title, description, price, image_url, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          service.id,
+          work.title,
+          work.description,
+          work.price,
+          work.imageUrl,
+          work.sortOrder,
+        ],
+      );
+    }
   }
 }
 
@@ -1052,3 +1132,5 @@ async function seed() {
 }
 
 seed();
+
+
