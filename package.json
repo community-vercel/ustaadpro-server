@@ -14,6 +14,7 @@
                     "seed":  "node db/seed.js",
                     "seedPassword":  "node db/seedPassword.js",
                     "seed:password":  "node db/seedPassword.js",
+                    "seed:shop:alwaqas":  "node scripts/importAlwaqasProducts.js",
                     "seed:services":  "node serviceSeed.js",
                     "migrate:mysql-to-postgres":  "node db/migrate-mysql-to-postgres.js"
                 },
@@ -29,7 +30,8 @@
                          "pg":  "^8.13.1",
                          "puppeteer":  "^25.3.0",
                          "qrcode-terminal":  "^0.12.0",
-                         "whatsapp-web.js":  "^1.34.7"
+                         "whatsapp-web.js":  "^1.34.7",
+                         "xlsx":  "^0.18.5"
                      },
     "devDependencies":  {
                             "concurrently":  "^10.0.3",
