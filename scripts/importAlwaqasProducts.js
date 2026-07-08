@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 const defaultWorkbookPath =
-  '/alwaqas_hardware_and_tools_products.xlsx';
+  'alwaqas_hardware_and_tools_products.xlsx';
 const workbookPath = process.argv[2] || defaultWorkbookPath;
 const uploadDir = path.join(projectRoot, 'uploads', 'shop-products');
 const publicUploadBase = '/uploads/shop-products';
