@@ -8,11 +8,9 @@ import pool from '../config/db.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
-const workbookFileName = 'alwaqas_hardware_and_tools_products.xlsx';
-const defaultWorkbookPath = path.join(projectRoot, workbookFileName);
-const workbookPath = process.argv[2]
-  ? path.resolve(process.argv[2])
-  : defaultWorkbookPath;
+const defaultWorkbookPath =
+  '/alwaqas_hardware_and_tools_products.xlsx';
+const workbookPath = process.argv[2] || defaultWorkbookPath;
 const uploadDir = path.join(projectRoot, 'uploads', 'shop-products');
 const publicUploadBase = '/uploads/shop-products';
 
@@ -98,16 +96,6 @@ async function writeProductImage(cfb, productId, imageName) {
 }
 
 async function importProducts() {
-  try {
-    await fs.access(workbookPath);
-  } catch {
-    throw new Error(
-      `Workbook not found: ${workbookPath}\n` +
-        `Put ${workbookFileName} in the backend project root (${projectRoot}) ` +
-        'or pass the file path: npm run seed:shop:alwaqas -- /full/path/to/file.xlsx',
-    );
-  }
-
   const workbook = xlsx.readFile(workbookPath);
   const sheet = workbook.Sheets.Products || workbook.Sheets[workbook.SheetNames[0]];
   const rows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
