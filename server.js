@@ -67,7 +67,7 @@ app.get('/admin', (req, res) => {
 
 // Root test route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to UstaadPro (Theka Online) API server.' });
+  res.json({ message: 'Welcome to UstaadPro API server.' });
 });
 
 // Health check

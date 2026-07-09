@@ -5,9 +5,22 @@ import { getFirebaseMessaging } from '../utils/firebase.js';
 
 const SHOP_STATUSES = ['placed', 'processing', 'shipped', 'delivered', 'cancelled'];
 
-export const getShopProducts = async (_req, res) => {
+export const getShopProducts = async (req, res) => {
   try {
-    res.json(await Shop.getProducts({activeOnly: true}));
+    const limit = Math.min(30, Math.max(1, Number(req.query.limit || 15)));
+    const offset = Math.max(0, Number(req.query.offset || 0));
+    const [products, total] = await Promise.all([
+      Shop.getProducts({activeOnly: true, limit, offset}),
+      Shop.countProducts({activeOnly: true}),
+    ]);
+
+    res.json({
+      products,
+      limit,
+      offset,
+      total,
+      hasMore: offset + products.length < total,
+    });
   } catch (error) {
     console.error('Shop products error:', error);
     res.status(500).json({message: 'Internal server error.'});
