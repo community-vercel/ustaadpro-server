@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
 async function ensureShopTables() {
@@ -107,17 +107,38 @@ class Shop {
     await ensureShopTables();
   }
 
-  static async getProducts({activeOnly = true} = {}) {
+  static async getProducts({activeOnly = true, limit, offset = 0} = {}) {
     await ensureShopTables();
+    const whereClause = activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : '';
+    const params = [];
+    let paginationClause = '';
+
+    if (Number.isFinite(Number(limit)) && Number(limit) > 0) {
+      paginationClause = 'LIMIT ? OFFSET ?';
+      params.push(Math.max(1, Math.floor(Number(limit))), Math.max(0, Math.floor(Number(offset) || 0)));
+    }
+
     const [rows] = await pool.query(
       `SELECT id, title, category, description, price,
               original_price as originalPrice, image_url as imageUrl,
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
-       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}
-       ORDER BY created_at DESC`,
+       ${whereClause}
+       ORDER BY created_at DESC
+       ${paginationClause}`,
+      params,
     );
     return rows.map(normalizeProduct);
+  }
+
+  static async countProducts({activeOnly = true} = {}) {
+    await ensureShopTables();
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) as total
+       FROM shop_products
+       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}`,
+    );
+    return Number(rows[0]?.total || rows[0]?.count || 0);
   }
 
   static async findProductById(id) {
