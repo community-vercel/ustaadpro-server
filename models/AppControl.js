@@ -106,6 +106,24 @@ function mapSlide(row) {
   };
 }
 
+async function tableExists(tableName) {
+  const [rows] = await pool.query(
+    `SELECT table_name
+     FROM information_schema.tables
+     WHERE table_schema = current_schema()
+       AND table_name = ?`,
+    [tableName],
+  );
+
+  return rows.length > 0;
+}
+
+async function ensureTable(tableName, createSql) {
+  if (!(await tableExists(tableName))) {
+    await pool.query(createSql);
+  }
+}
+
 class AppControl {
   static async ensureSchema() {
     await pool.query(`
@@ -266,6 +284,22 @@ class AppControl {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )`,
     );
+
+    await ensureTable(
+      'order_items',
+      `CREATE TABLE IF NOT EXISTS order_items (
+        id SERIAL PRIMARY KEY,
+        order_id VARCHAR(50) NOT NULL,
+        service_id VARCHAR(50) NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        price NUMERIC(10, 2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+      )`,
+    );
+
     const orderItemColumns = [
       ['service_work_price_id', 'INT NULL'],
       ['service_work_title', 'VARCHAR(180) NULL'],

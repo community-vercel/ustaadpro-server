@@ -1,19 +1,10 @@
 node_modules/
 .env
 .env.*
-.npmrc
 firebase-service-account.json
 *.log
-
-# Build/test output
 dist/
 build/
 coverage/
-
-# Runtime browser/WhatsApp session data
 auth_data/
-
-# Runtime uploads, except seeded shop product assets
-uploads/*
-!uploads/shop-products/
-!uploads/shop-products/**
+auth_data\*

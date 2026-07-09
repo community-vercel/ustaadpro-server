@@ -17,6 +17,7 @@ export const buildConfirmationPreview = (session) => {
         `Detail:     ${session.orderDetails.subService}\n` +
         `Date:       ${session.orderDetails.date}\n` +
         `Time:       ${session.orderDetails.time}\n` +
+        `Phone:      ${session.orderDetails.customerPhone}\n` +
         `Address:    ${session.orderDetails.address}\n` +
         `================================\n\n` +
         `Confirm this booking?\n\n` +

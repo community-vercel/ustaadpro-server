@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import whatsapp from 'whatsapp-web.js';
 const { Client, LocalAuth } = whatsapp;
 import qrcode from 'qrcode-terminal';
+import QRCode from 'qrcode';
 import { 
     getCategories, 
     getServicesForCategory, 
@@ -40,6 +41,36 @@ const browserExecutablePath = browserCandidates.find(candidate =>
 // ═══════════════════════════════════════
 // 🤖 WHATSAPP CLIENT
 // ═══════════════════════════════════════
+let isShuttingDown = false;
+
+const setBotState = (status, qr = null, phone = null) => {
+    global.botStatus = status;
+    global.botQR = qr;
+    global.botPhone = phone;
+    
+    // Write state to file so server.js can read it across processes
+    try {
+        fs.writeFileSync(path.join(__dirname, 'bot-state.json'), JSON.stringify({ status, qr, phone }));
+    } catch (err) {
+        console.error('Failed to write bot state to file:', err);
+    }
+};
+
+const shutdownBot = async (signal) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    setBotState('stopping');
+    console.log(`🛑 Received ${signal}; shutting down bot...`);
+
+    try {
+        await client.destroy();
+    } catch (error) {
+        console.error('Error while stopping bot client:', error);
+    }
+
+    process.exit(0);
+};
+
 const client = new Client({
     authStrategy: new LocalAuth({ 
         clientId: 'raja-sajawal-home-services', 
@@ -62,19 +93,39 @@ const client = new Client({
         ]
     }
 });
-client.on('qr', (qr) => {
+setBotState('starting');
+
+client.on('qr', async (qr) => {
     qrcode.generate(qr, { small: true });
     console.log('📱 Scan QR code to start:');
+    try {
+        const qrImageBase64 = await QRCode.toDataURL(qr);
+        setBotState('connecting', qrImageBase64);
+    } catch (err) {
+        console.error('Failed to generate QR image:', err);
+        setBotState('connecting', null);
+    }
 });
 
 client.on('ready', () => {
+    setBotState('online', null, client.info?.wid?.user || 'Connected');
     console.log('✅ Bot Ready!');
 });
 
-client.on('authenticated', () => console.log('✅ Authenticated!'));
+client.on('authenticated', () => {
+    setBotState('authenticated');
+    console.log('✅ Authenticated!');
+});
 
 client.on('disconnected', async (reason) => {
+    if (isShuttingDown) return;
+    setBotState('offline');
     console.log('⚠️ Disconnected:', reason);
+
+    if (process.env.NODE_ENV === 'development') {
+        return;
+    }
+
     setTimeout(async () => {
         try { await client.initialize(); } catch (e) { process.exit(1); }
     }, 10000);
@@ -274,14 +325,49 @@ client.on('message', async (msg) => {
                     return;
                 }
                 session.orderDetails.time = incomingText;
-                session.state = 'SELECT_ADDRESS';
-                await client.sendMessage(userId,
-                    `Time Confirmed: ${incomingText}\n\n` +
-                    `---------------------------------------\n\n` +
-                    `Address:\nPlease type your complete home address.\n\n` +
-                    `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
-                    `Best Option: Share your Location Map!`
-                );
+                
+                if (userId.endsWith('@c.us')) {
+                    session.orderDetails.customerPhone = userId.split('@')[0];
+                    session.state = 'SELECT_ADDRESS';
+                    await client.sendMessage(userId,
+                        `Time Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Address:\nPlease type your complete home address.\n\n` +
+                        `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
+                        `Best Option: Share your Location Map!`
+                    );
+                } else {
+                    session.state = 'SELECT_PHONE';
+                    await client.sendMessage(userId,
+                        `Time Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Please enter your phone number so our team can contact you:\n\n` +
+                        `Example: 0300 1234567`
+                    );
+                }
+                break;
+            }
+
+            // ═══════════ SELECT PHONE ═══════════
+            case 'SELECT_PHONE': {
+                const phoneStr = incomingText.replace(/[\s-]/g, '');
+                if (phoneStr.length >= 11 && (phoneStr.startsWith('03') || phoneStr.startsWith('+92') || phoneStr.startsWith('92'))) {
+                    session.orderDetails.customerPhone = phoneStr;
+                    session.state = 'SELECT_ADDRESS';
+                    await client.sendMessage(userId,
+                        `Phone Confirmed: ${incomingText}\n\n` +
+                        `---------------------------------------\n\n` +
+                        `Address:\nPlease type your complete home address.\n\n` +
+                        `Must include:\nHouse number, Street/Gali, Area and City name.\n\n` +
+                        `Best Option: Share your Location Map!`
+                    );
+                } else {
+                    await client.sendMessage(userId,
+                        `Invalid Phone Number!\n\n` +
+                        `Please enter a valid 11-digit mobile number:\n\n` +
+                        `Example: 0300 1234567`
+                    );
+                }
                 break;
             }
 
@@ -450,7 +536,12 @@ client.on('message', async (msg) => {
 // ═══════════════════════════════════════
 // 🚀 INITIALIZE
 // ═══════════════════════════════════════
+process.once('SIGINT', () => { void shutdownBot('SIGINT'); });
+process.once('SIGTERM', () => { void shutdownBot('SIGTERM'); });
+
 client.initialize().catch((error) => {
+    setBotState('offline');
     console.error('❌ Bot failed:', error);
     process.exit(1);
 });
+export { client };
