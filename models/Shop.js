@@ -107,17 +107,27 @@ class Shop {
     await ensureShopTables();
   }
 
-  static async getProducts({activeOnly = true, limit, offset = 0} = {}) {
+  static async getProducts({activeOnly = true, category = null, limit, offset = 0} = {}) {
     await ensureShopTables();
-    const whereClause = activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : '';
+    const conditions = [];
     const params = [];
     let paginationClause = '';
+
+    if (activeOnly) {
+      conditions.push("is_active::text IN ('1', 'true', 't')");
+    }
+
+    if (category && category !== 'All') {
+      conditions.push('LOWER(category) = LOWER(?)');
+      params.push(category);
+    }
 
     if (Number.isFinite(Number(limit)) && Number(limit) > 0) {
       paginationClause = 'LIMIT ? OFFSET ?';
       params.push(Math.max(1, Math.floor(Number(limit))), Math.max(0, Math.floor(Number(offset) || 0)));
     }
 
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows] = await pool.query(
       `SELECT id, title, category, description, price,
               original_price as originalPrice, image_url as imageUrl,
@@ -131,14 +141,43 @@ class Shop {
     return rows.map(normalizeProduct);
   }
 
-  static async countProducts({activeOnly = true} = {}) {
+  static async countProducts({activeOnly = true, category = null} = {}) {
     await ensureShopTables();
+    const conditions = [];
+    const params = [];
+
+    if (activeOnly) {
+      conditions.push("is_active::text IN ('1', 'true', 't')");
+    }
+
+    if (category && category !== 'All') {
+      conditions.push('LOWER(category) = LOWER(?)');
+      params.push(category);
+    }
+
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows] = await pool.query(
       `SELECT COUNT(*) as total
        FROM shop_products
-       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}`,
+       ${whereClause}`,
+      params,
     );
     return Number(rows[0]?.total || rows[0]?.count || 0);
+  }
+
+  static async getCategories({activeOnly = true} = {}) {
+    await ensureShopTables();
+    const [rows] = await pool.query(
+      `SELECT category, COUNT(*) as total
+       FROM shop_products
+       ${activeOnly ? "WHERE is_active::text IN ('1', 'true', 't')" : ''}
+       GROUP BY category
+       ORDER BY category ASC`,
+    );
+    return rows.map(row => ({
+      name: row.category || 'General',
+      total: Number(row.total || row.count || 0),
+    }));
   }
 
   static async findProductById(id) {

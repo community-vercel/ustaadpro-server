@@ -9,16 +9,21 @@ export const getShopProducts = async (req, res) => {
   try {
     const limit = Math.min(30, Math.max(1, Number(req.query.limit || 15)));
     const offset = Math.max(0, Number(req.query.offset || 0));
-    const [products, total] = await Promise.all([
-      Shop.getProducts({activeOnly: true, limit, offset}),
-      Shop.countProducts({activeOnly: true}),
+    const category = String(req.query.category || 'All').trim() || 'All';
+    const categoryFilter = category === 'All' ? null : category;
+    const [products, total, categories] = await Promise.all([
+      Shop.getProducts({activeOnly: true, category: categoryFilter, limit, offset}),
+      Shop.countProducts({activeOnly: true, category: categoryFilter}),
+      Shop.getCategories({activeOnly: true}),
     ]);
 
     res.json({
       products,
+      categories,
       limit,
       offset,
       total,
+      category,
       hasMore: offset + products.length < total,
     });
   } catch (error) {
