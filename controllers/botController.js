@@ -6,8 +6,8 @@ import { spawn, execSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const stateFile = path.join(__dirname, '..', 'bot-state.json');
-const pidFile   = path.join(__dirname, '..', 'bot-pid.json');
-const botFile   = path.join(__dirname, '..', 'bot.js');
+const pidFile = path.join(__dirname, '..', 'bot-pid.json');
+const botFile = path.join(__dirname, '..', 'bot.js');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -22,11 +22,11 @@ const writeState = (status, qr = null, phone = null) => {
 const savePid = (pid) => {
     try {
         fs.writeFileSync(pidFile, JSON.stringify({ pid }));
-    } catch {}
+    } catch { }
 };
 
 const clearPid = () => {
-    try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+    try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch { }
 };
 
 const getSavedPid = () => {
@@ -34,7 +34,7 @@ const getSavedPid = () => {
         if (fs.existsSync(pidFile)) {
             return JSON.parse(fs.readFileSync(pidFile, 'utf8')).pid || null;
         }
-    } catch {}
+    } catch { }
     return null;
 };
 
@@ -98,8 +98,8 @@ export const getBotStatusPayload = () => {
             const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
             return {
                 status: state.status || 'offline',
-                qr:     state.qr    || null,
-                phone:  state.phone || null,
+                qr: state.qr || null,
+                phone: state.phone || null,
             };
         }
     } catch (e) {
@@ -158,28 +158,28 @@ export const startBot = async (req, res) => {
         }
 
         // Redirect bot output to a log file for diagnostics
-        const logFile   = path.join(__dirname, '..', 'bot-error.log');
+        const logFile = path.join(__dirname, '..', 'bot-error.log');
         const logStream = fs.openSync(logFile, 'a');
 
         // Spawn as fully detached so it survives server/nodemon restarts
         const child = spawn('node', [botFile], {
             detached: true,
-            stdio:    ['ignore', logStream, logStream],
-            env:      { ...process.env }
+            stdio: ['ignore', logStream, logStream],
+            env: { ...process.env }
         });
 
         child.on('error', (err) => {
             console.error('[bot] Spawn error:', err.message);
             writeState('offline');
             clearPid();
-            try { fs.closeSync(logStream); } catch {}
+            try { fs.closeSync(logStream); } catch { }
         });
 
         child.unref();
 
         if (!child.pid) {
             writeState('offline');
-            try { fs.closeSync(logStream); } catch {}
+            try { fs.closeSync(logStream); } catch { }
             return res.status(500).json({ success: false, message: 'Failed to spawn bot process' });
         }
 

@@ -65,7 +65,7 @@ class Service {
 
     // Find bot_services by category
     static async findByCategory(category) {
-        const query = 'SELECT * FROM bot_services WHERE active = true AND category = $1 ORDER BY name';
+        const query = 'SELECT * FROM bot_services WHERE active = true AND category = $1 ORDER BY id';
         const [rows] = await db.query(query, [category]);
         return rows;
     }
