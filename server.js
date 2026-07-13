@@ -24,6 +24,7 @@ import Shop from './models/Shop.js';
 import { initFirebase } from './utils/firebase.js';
 import db from './config/db.js';
 import botRoutes from './routes/botRoutes.js';
+import { resetStateIfDead } from './controllers/botController.js';
 
 // Initialize Firebase
 initFirebase();
@@ -114,6 +115,9 @@ try {
 }
 
 // Start Server
+// First: reset any stale bot state from a previous server process
+resetStateIfDead();
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
