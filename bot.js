@@ -27,7 +27,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const browserCandidates = [
+    // ── Env override (set PUPPETEER_EXECUTABLE_PATH on any platform) ──
     process.env.PUPPETEER_EXECUTABLE_PATH,
+    // ── Linux / Ubuntu / Debian (production VPS) ──
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/snap/bin/chromium',
+    '/usr/lib/chromium-browser/chromium-browser',
+    // ── Windows (local development) ──
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',

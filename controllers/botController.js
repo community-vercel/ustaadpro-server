@@ -162,7 +162,9 @@ export const startBot = async (req, res) => {
         const logStream = fs.openSync(logFile, 'a');
 
         // Spawn as fully detached so it survives server/nodemon restarts
-        const child = spawn('node', [botFile], {
+        // Use process.execPath (not 'node') so the correct Node binary is used
+        // in production environments where PATH may differ (nvm, n, etc.)
+        const child = spawn(process.execPath, [botFile], {
             detached: true,
             stdio: ['ignore', logStream, logStream],
             env: { ...process.env }
@@ -186,8 +188,9 @@ export const startBot = async (req, res) => {
         savePid(child.pid);
         console.log(`[bot] Spawned PID ${child.pid} — output → bot-error.log`);
 
-        // Give bot time to write its initial state (Puppeteer startup is slow)
-        await new Promise(r => setTimeout(r, 1500));
+        // Give bot time to write its initial state.
+        // Linux Chrome launch is significantly slower than Windows — use 3 s.
+        await new Promise(r => setTimeout(r, 3000));
 
         const updated = getBotStatusPayload();
         return res.json({ success: true, message: 'Bot started.', ...updated });
@@ -210,4 +213,68 @@ export const stopBot = async (req, res) => {
 
 export const getBotStatus = async (req, res) => {
     res.json(getBotStatusPayload());
+};
+
+// ─── Startup: reset stale state ───────────────────────────────────────────────
+// Called once from server.js on startup.
+// If bot-state.json says 'online'/'connecting'/'starting' but the saved PID is
+// no longer running (e.g. server restarted after deploy), reset to 'offline' so
+// the admin UI shows the correct state and the "Show QR" button appears.
+
+export const resetStateIfDead = () => {
+    try {
+        const savedPid = getSavedPid();
+        const state = getBotStatusPayload();
+        const liveStatuses = ['online', 'connecting', 'starting', 'authenticated'];
+
+        if (liveStatuses.includes(state.status)) {
+            if (!savedPid || !isProcessRunning(savedPid)) {
+                console.log(`[bot] Startup check: state was "${state.status}" but PID ${savedPid} is dead — resetting to offline.`);
+                writeState('offline', null, null);
+                clearPid();
+            } else {
+                console.log(`[bot] Startup check: state is "${state.status}" and PID ${savedPid} is alive — keeping.`);
+            }
+        }
+    } catch (e) {
+        console.error('[bot] resetStateIfDead error:', e.message);
+    }
+};
+
+// ─── Diagnostics ──────────────────────────────────────────────────────────────
+// GET /api/bot/diagnostics — use this to remotely confirm Chrome is found,
+// Node version, OS platform, and the current bot state. No SSH needed.
+
+export const getBotDiagnostics = (req, res) => {
+    // Resolve which Chrome candidate exists
+    const candidates = [
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium',
+        '/snap/bin/chromium',
+        '/usr/lib/chromium-browser/chromium-browser',
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    ].filter(Boolean);
+
+    const foundChrome = candidates.find(p => {
+        try { return fs.existsSync(p); } catch { return false; }
+    }) || null;
+
+    const savedPid = getSavedPid();
+    const botState = getBotStatusPayload();
+
+    res.json({
+        platform: process.platform,
+        nodeVersion: process.version,
+        nodeExecPath: process.execPath,
+        puppeteerExecPathEnv: process.env.PUPPETEER_EXECUTABLE_PATH || null,
+        chromeCandidates: candidates,
+        chromeFoundAt: foundChrome,
+        botState,
+        savedPid,
+        pidAlive: savedPid ? isProcessRunning(savedPid) : false,
+    });
 };
