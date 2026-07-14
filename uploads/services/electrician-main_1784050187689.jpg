@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" prefix="content: http://purl.org/rss/1.0/modules/content/  dc: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  og: http://ogp.me/ns#  rdfs: http://www.w3.org/2000/01/rdf-schema#  schema: http://schema.org/  sioc: http://rdfs.org/sioc/ns#  sioct: http://rdfs.org/sioc/types#  skos: http://www.w3.org/2004/02/skos/core#  xsd: http://www.w3.org/2001/XMLSchema# ">
+  <head>
+    <meta charset="utf-8" />
+<meta name="Generator" content="Drupal 10 (https://www.drupal.org)" />
+<meta name="MobileOptimized" content="width" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="/sites/default/files/electrician-in-aberdeen-icon.jpg" type="image/jpeg" />
+<link rel="canonical" href="https://www.hardieelectrical.co.uk/photo/changeover-switch-installation-back-generator" />
+<link rel="shortlink" href="https://www.hardieelectrical.co.uk/node/62" />
+
+    <title>Changeover Switch Installation for Back-up Generator | Hardie Electrical Ltd</title>
+    <link rel="stylesheet" media="all" href="/libraries/drupal-superfish/css/superfish.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/core/components/progress.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/core/components/ajax-progress.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/align.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/fieldgroup.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/container-inline.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/clearfix.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/details.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/hidden.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/item-list.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/js.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/nowrap.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/position-container.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/reset-appearance.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/resize.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/system-status-counter.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/system-status-report-counters.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/system-status-report-general-info.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/system/components/tablesort.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/fivestar/widgets/basic/basic.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/fivestar/css/fivestar.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/views/views.module.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/webform/css/webform.element.details.toggle.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/webform/css/webform.element.message.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/webform/css/webform.form.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/paragraphs/css/paragraphs.unpublished.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/modules/contrib/webform/css/webform.theme.classy.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/core/assets/vendor/normalize-css/normalize.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/stable/css/core/normalize-fixes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/bootstrap/css/bootstrap.min.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/base/typography.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/base/custom.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/base/elements.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/base/layout.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/base/local-base.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/action-links.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/button.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/collapse-processed.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/container-inline.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/details.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/exposed-filters.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/field.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/form.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/icons.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/inline-form.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/item-list.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/link.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/links.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/menu.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/more-link.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/tabledrag.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/tableselect.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/tablesort.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/tabs.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/textarea.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/ui-dialog.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/messages.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/node.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/contrib/classy/css/components/progress.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/js/animate/animate.min.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/banner-area.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/fixed-header.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/alert.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/accordion.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/block.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/buttons.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/better-exposed-filters.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/contact-info.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/call-to-action.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/credit-cards.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/dropdowns.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/fancy-block.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/fancy-block-2.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/highlights.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/more-links.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/fa-icons-list.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/forms.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/field-taxonomy-term.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/icons-list.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/social-links.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/social-media.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/item-list.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/inline-list.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/image-overlay.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-links.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/separators.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/subscribe-forms.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/search.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/site-branding.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/static-promoted-images-grid.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/pricing-tables.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/text-blocks.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/tables.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/tabs.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/team-members.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/pills.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/progress-bars.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/layout-switcher.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/language-switcher.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/menu.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/username.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/view-filters.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/views.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/juicer.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/commerce.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/in-page-navigation.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/logo-links-block.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/js/magnific-popup/magnific-popup.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/messages.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/mobile-menu-widget.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/mt-count-down.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-field.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-images.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-showcase.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-view-mode-teaser-tile.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/node-view-mode-teaser-tile-text.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/to-top.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/tooltip.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/view-top-stories.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/components/local-components.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/base-color.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="//use.fontawesome.com/releases/v5.11.2/css/all.css" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css?family=DM+Serif+Display:400,400i&amp;display=swap&amp;subset=latin-ext" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css?family=PT+Serif:400,700,400italic,700italic&amp;subset=latin,latin-ext" />
+<link rel="stylesheet" media="all" href="//fonts.googleapis.com/css?family=Source+Code+Pro&amp;subset=latin,latin-ext" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/animations.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/color-hardie.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/button-shapes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/form-shapes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/image-shapes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/menu-shapes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/custom-elements-shapes.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/link-styles.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/utility.css?sx2fd3" />
+<link rel="stylesheet" media="all" href="/themes/electrician-theme/css/theme/local-theme.css?sx2fd3" />
+
+    <script src="https://use.fontawesome.com/releases/v5.13.1/js/all.js" defer crossorigin="anonymous"></script>
+<script src="https://use.fontawesome.com/releases/v5.13.1/js/v4-shims.js" defer crossorigin="anonymous"></script>
+
+  </head>
+  <body class="page-node-62 page-node-type-mt_showcase layout-one-sidebar layout-sidebar-second mt-color-scheme-hardie mt-style-rounded mt-style-button-global mt-style-form-global mt-style-image-global mt-style-menu-global mt-style-custom-global mt-link-style-animated-underline-3 wide hff-54 pff-54 sff-54 slff-54 paragraph-responsive-typography-enabled fixed-header-enabled--scroll-up fixed-header-enabled slideout-side-right path-node page-node-type-mt-showcase">
+        <a href="#main-content" class="visually-hidden focusable skip-link">
+      Skip to main content
+    </a>
+    
+      <div class="dialog-off-canvas-main-canvas" data-off-canvas-main-canvas>
+    
+<div class="page-container">
+
+    
+          <div class="header-container">
+
+                      <div class="clearfix header-top-highlighted region--light-typography region--dark-colored-background region--no-paddings">
+          <div class="container">
+                        <div class="clearfix header-top-highlighted__container mlt-no-opacity"
+                              data-animate-effect="fadeIn"
+              >
+              <div class="row">
+                                  <div class="col-12">
+                                        <div class="clearfix header-top-highlighted__section header-top-highlighted-first">
+                        <div class="region region-header-top-highlighted-first">
+    <div id="block-contactinfoheadertop" class="clearfix block block-block-content block-block-content0da947d4-18b6-4e75-800e-820873042aca">
+  
+    
+      <div class="content">
+      
+            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><ul class="inline-list">
+<li class="inline-list__item">
+<ul class="icons-list">
+<li><a href="https://facebook.com/Hardie-Electrical-Ltd-103303421448718" target="_blank"><i class="fa fa-facebook"><span class="sr-only">facebook</span></i></a></li>
+<li><a href="https://instagram.com/hardieelectrical/" target="_blank"><i class="fa fa-instagram"><span class="sr-only">instagram</span></i></a></li>
+<li><a href="https://twitter.com/hardielectrical" target="_blank"><i class="fa fa-twitter"><span class="sr-only">twitter</span></i></a></li>
+<li><a href="https://www.linkedin.com/in/andy-hardie-ab795471/" target="_blank"><i class="fa fa-linkedin"><span class="sr-only">linkedin</span></i></a></li>
+</ul>
+</li>
+<li class="inline-list__item hidden-sm tagline">Your Local Electrician in Aberdeen<a href="tel:01224600105"> 01224 600105</a> & Ellon<a href="tel:01358 289066"> 01358 289066</a></li>
+</ul>
+</li>
+</ul></div>
+      
+    </div>
+  </div>
+
+  </div>
+
+                    </div>
+                                      </div>
+                                              </div>
+            </div>
+                      </div>
+        </div>
+              
+      
+                                      <header role="banner" class="clearfix header region--dark-typography region--bright-background fixed-width two-columns region--no-paddings">
+          <div class="container ">
+                        <div class="clearfix header__container">
+              <div class="row align-items-center">
+                                  <div class="col-lg-3">
+                                        <div class="clearfix header__section header-first">
+                        <div class="region region-header-first">
+    <div id="block-electrician-branding" class="clearfix site-branding logo-enabled block block-system block-system-branding-block">
+  
+    
+    <div class="logo-and-site-name-wrapper clearfix">
+          <div class="logo">
+        <a href="/" title="Home" rel="home" class="site-branding__logo">
+          <img src="/sites/default/files/electrician-in-aberdeen-logo.png" alt="Home" />
+        </a>
+      </div>
+              </div>
+</div>
+
+  </div>
+
+                    </div>
+                                      </div>
+                                                  <div class="col-lg-9">
+                                        <div class="clearfix header__section header-second">
+                        <div class="region region-header">
+    <div id="block-mainnavigation-2" class="clearfix block block-superfish block-superfishmain">
+  
+    
+      <div class="content">
+      
+<ul id="superfish-main" class="menu sf-menu sf-main sf-horizontal sf-style-none cta-active" role="menu" aria-label="Menu">
+  
+
+  
+  <li id="main-standardfront-page" class="sf-depth-1 sf-no-children sf-first" role="none">
+    
+          <a href="/" class="sf-depth-1" role="menuitem">Home</a>
+    
+    
+    
+    
+      </li>
+
+
+            
+  <li id="main-views-viewviewsservicespage-1" class="sf-depth-1 menuparent" role="none">
+    
+          <a href="/services" class="sf-depth-1 menuparent" role="menuitem" aria-haspopup="true" aria-expanded="false">Services</a>
+    
+    
+    
+              <ul role="menu">
+      
+      
+
+  
+  <li id="main-views-viewviewsareas-i-coverpage-1" class="sf-depth-2 sf-no-children sf-first" role="none">
+    
+          <a href="/areas" class="sf-depth-2" role="menuitem">Areas I cover</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewsmeet-the-teampage-1" class="sf-depth-2 sf-no-children" role="none">
+    
+          <a href="/meet-the-team" class="sf-depth-2" role="menuitem">Meet the team</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-menu-link-content49fba1f8-177d-4f10-a57f-e3c0f1fdceb0" class="sf-depth-2 sf-no-children sf-last" role="none">
+    
+          <a href="/about-us" class="sf-depth-2" role="menuitem">About us</a>
+    
+    
+    
+    
+      </li>
+
+
+
+              </ul>
+      
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewsfrequently-asked-questionspage-1" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/frequently-asked-questions" class="sf-depth-1" role="menuitem">FAQ&#039;s</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewsmt-posts-gridpage-2" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/blog" class="sf-depth-1" role="menuitem">Blog</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewshelpful-downloadspage-1" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/downloads" class="sf-depth-1" role="menuitem">Helpful downloads</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewsphotospage-1" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/photos" class="sf-depth-1" role="menuitem">Photos</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewsvideospage-1" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/videos" class="sf-depth-1" role="menuitem">Videos</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-views-viewviewstestimonialspage-1" class="sf-depth-1 sf-no-children" role="none">
+    
+          <a href="/testimonials" class="sf-depth-1" role="menuitem">Testimonials</a>
+    
+    
+    
+    
+      </li>
+
+
+  
+  <li id="main-menu-link-content86d07bfa-7209-49fa-aa94-6eff2e938c7b" class="sf-depth-1 sf-no-children sf-last" role="none">
+    
+          <a href="/contact" class="sf-depth-1" role="menuitem">Request a call back</a>
+    
+    
+    
+    
+      </li>
+
+
+</ul>
+
+    </div>
+  </div>
+
+  </div>
+
+                    </div>
+                                      </div>
+                                              </div>
+            </div>
+                      </div>
+        </header>
+              
+    </div>
+      
+    
+   
+    
+  
+        
+    <div class="internal-banner-container  region--light-typography region--dark-colored-background">
+                    <div id="hero-top" class="clearfix hero-top d-flex align-items-end  region--no-paddings">
+          <div class="internal-banner d-flex align-items-end internal-banner--plain">
+                      <div class="container">
+                            <div class="clearfix hero-top__container"
+                >
+                <div class="row">
+                  <div class="col-12">
+                    <div class="hero-top__section">
+                        <div class="region region-hero-top">
+    <div id="block-electrician-page-title" class="clearfix block block-core block-page-title-block">
+  
+    
+      
+  <h1 class="title page-title"><span class="field field--name-title field--type-string field--label-hidden">Changeover Switch Installation for Back-up Generator</span>
+</h1>
+
+
+      </div>
+
+  </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+                          </div>
+          </div>
+                  </div>
+                </div>
+  
+  
+  
+  
+  
+        <div id="main-content" class="clearfix main-content region--dark-typography region--default-background region--no-separator">
+      <div class="container">
+        <div class="clearfix main-content__container">
+          <div class="row">
+            <section class="col-lg-8 ">
+                            <div class="clearfix main-content__section mlt-no-opacity"
+                                  data-animate-effect="fadeIn"
+                >
+                                    <div class="region region-content">
+    <div data-drupal-messages-fallback class="hidden"></div><div id="block-electrician-content" class="clearfix block block-system block-system-main-block">
+  
+    
+      <div class="content">
+      
+
+
+<article data-history-node-id="62" about="/photo/changeover-switch-installation-back-generator" class="node node--type-mt-showcase node--view-mode-full clearfix">
+  <div class="node__container">
+    <div class="node__main-content clearfix">
+      <header class="node__header">
+          
+    
+        </header>
+        
+  
+  
+      <div class="field field--name-field-mt-shw-image field--type-image field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/sites/default/files/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%204.jpg"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%204.jpg?itok=RIZItSQB" width="1350" height="730" alt="Changeover Switch Installation for Back-up Generator by Hardie Electrical, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+                  <div class="image-listing-items clearfix">
+                                                                    <div class="image-listing-item">
+                  <div class="field__item">  <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/sites/default/files/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%203.jpg"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%203.jpg?itok=3_NP--Z8" width="1350" height="730" alt="Changeover Switch Installation for Back-up Generator by Hardie Electrical, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+</div>
+                </div>
+                                                        <div class="image-listing-item">
+                  <div class="field__item">  <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/sites/default/files/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%202.jpg"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch%202.jpg?itok=4Xbt1opt" width="1350" height="730" alt="Changeover Switch Installation for Back-up Generator by Hardie Electrical, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+</div>
+                </div>
+                                                        <div class="image-listing-item">
+                  <div class="field__item">  <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/sites/default/files/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch.jpg"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2024-07/Hardie%20Electrical%2C%20Aberdeen%20-%20Change%20Over%20Switch.jpg?itok=ToUdpHUC" width="1350" height="730" alt="Changeover Switch Installation for Back-up Generator by Hardie Electrical, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+</div>
+                </div>
+                                    </div>
+              </div>
+    </div>
+  
+            <div class="clearfix text-formatted field field--name-field-mt-shw-body field--type-text-with-summary field--label-hidden field__item"><p>This customer has had a lot of power cuts over the past few years, so decided to take matters into their own hands by getting us to install a changeover switch to allow them to plug in a generator when the power goes out.</p><p>If you want to get your home winter ready - <a href="/contact">contact us</a> today.</p></div>
+            <div class="field--entity-reference-target-type-taxonomy-term--tags field field--name-field-mt-shw-tags field--type-entity-reference field--label-hidden field--entity-reference-target-type-taxonomy-term clearfix field__items">
+              <div class="field__item"><a href="/service/fuse-board-upgrades" class="mt-style-custom-all" hreflang="und">Fuse board upgrades</a></div>
+              <div class="field__item"><a href="/service/new-installations" class="mt-style-custom-all" hreflang="und">New Installations</a></div>
+          </div>
+        <div class="field--entity-reference-target-type-taxonomy-term--tags field field--name-field-mt-pst-tags field--type-entity-reference field--label-hidden field--entity-reference-target-type-taxonomy-term clearfix field__items">
+              <div class="field__item"><a href="/electrician-in-aberdeen" class="mt-style-custom-all" hreflang="und">Aberdeen</a></div>
+              <div class="field__item"><a href="/electrician-in-aberdeen-city-centre" class="mt-style-custom-all" hreflang="und">Aberdeen city centre</a></div>
+              <div class="field__item"><a href="/electrician-in-aberdeen-west-end" class="mt-style-custom-all" hreflang="und">Aberdeen west end</a></div>
+              <div class="field__item"><a href="/electrician-in-balmedie" class="mt-style-custom-all" hreflang="und">Balmedie</a></div>
+              <div class="field__item"><a href="/electrician-in-bieldside" class="mt-style-custom-all" hreflang="und">Bieldside</a></div>
+              <div class="field__item"><a href="/electrician-in-blackdog" class="mt-style-custom-all" hreflang="und">Blackdog</a></div>
+              <div class="field__item"><a href="/electrician-in-bridge-don" class="mt-style-custom-all" hreflang="und">Bridge of Don</a></div>
+              <div class="field__item"><a href="/electrician-in-bucksburn" class="mt-style-custom-all" hreflang="und">Bucksburn</a></div>
+              <div class="field__item"><a href="/electrician-in-collieston" class="mt-style-custom-all" hreflang="und">Collieston</a></div>
+              <div class="field__item"><a href="/electrician-in-cove" class="mt-style-custom-all" hreflang="und">Cove</a></div>
+              <div class="field__item"><a href="/electrician-in-cruden-bay" class="mt-style-custom-all" hreflang="und">Cruden Bay</a></div>
+              <div class="field__item"><a href="/electrician-in-cults" class="mt-style-custom-all" hreflang="und">Cults</a></div>
+              <div class="field__item"><a href="/electrician-in-dyce" class="mt-style-custom-all" hreflang="und">Dyce</a></div>
+              <div class="field__item"><a href="/electrician-in-ellon" class="mt-style-custom-all" hreflang="und">Ellon</a></div>
+              <div class="field__item"><a href="/electrician-in-hilton" class="mt-style-custom-all" hreflang="und">Hilton</a></div>
+              <div class="field__item"><a href="/electrician-in-inverurie" class="mt-style-custom-all" hreflang="und">Inverurie</a></div>
+              <div class="field__item"><a href="/electrician-in-kemnay" class="mt-style-custom-all" hreflang="und">Kemnay</a></div>
+              <div class="field__item"><a href="/electrician-in-kincorth" class="mt-style-custom-all" hreflang="und">Kincorth</a></div>
+              <div class="field__item"><a href="/electrician-in-kingswells" class="mt-style-custom-all" hreflang="und">Kingswells</a></div>
+              <div class="field__item"><a href="/electrician-in-kintore" class="mt-style-custom-all" hreflang="und">Kintore</a></div>
+              <div class="field__item"><a href="/electrician-in-milltimber" class="mt-style-custom-all" hreflang="und">Milltimber </a></div>
+              <div class="field__item"><a href="/electrician-in-newburgh" class="mt-style-custom-all" hreflang="und">Newburgh</a></div>
+              <div class="field__item"><a href="/electrician-in-oldmeldrum" class="mt-style-custom-all" hreflang="und">Oldmeldrum</a></div>
+              <div class="field__item"><a href="/electrician-in-peterculter" class="mt-style-custom-all" hreflang="und">Peterculter</a></div>
+              <div class="field__item"><a href="/electrician-in-pitmedden" class="mt-style-custom-all" hreflang="und">Pitmedden</a></div>
+              <div class="field__item"><a href="/electrician-in-rothienorman" class="mt-style-custom-all" hreflang="und">Rothienorman</a></div>
+              <div class="field__item"><a href="/electrician-in-seaton" class="mt-style-custom-all" hreflang="und">Seaton</a></div>
+              <div class="field__item"><a href="/electrician-in-sheddocksley" class="mt-style-custom-all" hreflang="und">Sheddocksley</a></div>
+              <div class="field__item"><a href="/electrician-in-tillydrone" class="mt-style-custom-all" hreflang="und">Tillydrone</a></div>
+              <div class="field__item"><a href="/electrician-in-torry" class="mt-style-custom-all" hreflang="und">Torry</a></div>
+              <div class="field__item"><a href="/electrician-in-tullos" class="mt-style-custom-all" hreflang="und">Tullos</a></div>
+              <div class="field__item"><a href="/electrician-in-udny" class="mt-style-custom-all" hreflang="und">Udny</a></div>
+              <div class="field__item"><a href="/electrician-in-westhill" class="mt-style-custom-all" hreflang="und">Westhill</a></div>
+              <div class="field__item"><a href="/electrician-in-woodside" class="mt-style-custom-all" hreflang="und">Woodside</a></div>
+          </div>
+  
+    </div>
+          </div>
+</article>
+
+    </div>
+  </div>
+
+  </div>
+
+                              </div>
+                          </section>
+                                      <aside class="col-lg-4 ">
+                                <section class="sidebar__section sidebar-second clearfix mlt-no-opacity"
+                                      data-animate-effect="fadeIn"
+                  >
+                    <div class="region region-sidebar-second">
+    <div id="block-andyelectricianinbridgeofdonaberdeen" class="clearfix block block-block-content block-block-content83e520f8-1f3a-46ab-b225-537a666f7040">
+  
+    
+      <div class="content">
+      
+            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><img alt="Andy - Electrician in Bridge of Don Aberdeen" data-entity-type="file" data-entity-uuid="16194699-d4e8-48b9-ac57-4d8ea1c9eed2" src="/sites/default/files/inline-images/andy-electrician-in-bridge-of-don-aberdeen.jpg" class="align-center" width="3000" height="3000" loading="lazy">
+</div>
+      
+    </div>
+  </div>
+<div id="block-webform-2" class="clearfix block block-webform block-webform-block">
+  
+      <h2 class="title">Contact us for a FREE quote</h2>
+    
+      <div class="content">
+      <form class="webform-submission-form webform-submission-add-form webform-submission-contact-form webform-submission-contact-add-form webform-submission-contact-node-62-form webform-submission-contact-node-62-add-form js-webform-submit-once js-webform-details-toggle webform-details-toggle" data-recaptcha-id="webform_submission_contact_node_62_add_form" data-drupal-selector="webform-submission-contact-node-62-add-form" action="/photo/changeover-switch-installation-back-generator" method="post" id="webform-submission-contact-node-62-add-form" accept-charset="UTF-8">
+  
+  <div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-name form-item-name form-no-label">
+      <label for="edit-name" class="visually-hidden js-form-required form-required">First Name</label>
+        <input data-drupal-selector="edit-name" type="text" id="edit-name" name="name" value="" size="60" maxlength="255" placeholder="First name" class="form-text required" required="required" aria-required="true" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-last-name form-item-last-name form-no-label">
+      <label for="edit-last-name" class="visually-hidden js-form-required form-required">Last name</label>
+        <input data-drupal-selector="edit-last-name" type="text" id="edit-last-name" name="last_name" value="" size="60" maxlength="255" placeholder="Last name" class="form-text required" required="required" aria-required="true" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-email form-type-email js-form-item-email form-item-email form-no-label">
+      <label for="edit-email" class="visually-hidden js-form-required form-required">Email</label>
+        <input data-drupal-selector="edit-email" type="email" id="edit-email" name="email" value="" size="60" maxlength="254" placeholder="Your Email" class="form-email required" required="required" aria-required="true" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-tel form-type-tel js-form-item-telephone-number form-item-telephone-number form-no-label">
+      <label for="edit-telephone-number" class="visually-hidden js-form-required form-required">Phone</label>
+        <input data-drupal-selector="edit-telephone-number" type="tel" id="edit-telephone-number" name="telephone_number" value="" size="30" maxlength="128" placeholder="Your Telephone Number" class="form-tel required" required="required" aria-required="true" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-mobile form-item-mobile form-no-label">
+      <label for="edit-mobile" class="visually-hidden js-form-required form-required">Mobile</label>
+        <input data-drupal-selector="edit-mobile" type="text" id="edit-mobile" name="mobile" value="" size="60" maxlength="255" placeholder="Mobile number" class="form-text required" required="required" aria-required="true" />
+
+        </div>
+<div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-job-address form-item-job-address form-no-label">
+      <label for="edit-job-address" class="visually-hidden js-form-required form-required">Job Address</label>
+        <div class="form-textarea-wrapper">
+  <textarea data-drupal-selector="edit-job-address" id="edit-job-address" name="job_address" rows="2" cols="60" placeholder="Address" class="form-textarea required resize-vertical" required="required" aria-required="true"></textarea>
+</div>
+
+        </div>
+<div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-message form-item-message form-no-label">
+      <label for="edit-message" class="visually-hidden js-form-required form-required">Job Description</label>
+        <div class="form-textarea-wrapper">
+  <textarea data-drupal-selector="edit-message" id="edit-message" name="message" rows="3" cols="60" placeholder="Please tell me how I can help you today?" class="form-textarea required resize-vertical" required="required" aria-required="true"></textarea>
+</div>
+
+        </div>
+<div data-drupal-selector="edit-actions" class="form-actions webform-actions js-form-wrapper form-wrapper" id="edit-actions"><div id="webform_submission_contact_node_62_add_form-captcha" class="recaptcha-v3 recaptcha-v3-wrapper js-form-wrapper form-wrapper" data-drupal-selector="edit-captcha"></div>
+<input class="webform-button--submit button button--primary js-form-submit form-submit" data-drupal-selector="edit-actions-submit" type="submit" id="edit-actions-submit" name="op" value="Request a call back" />
+
+</div>
+<input data-drupal-selector="edit-simple-recaptcha-token" type="hidden" name="simple_recaptcha_token" value="" />
+<input data-drupal-selector="edit-simple-recaptcha-type" type="hidden" name="simple_recaptcha_type" value="v3" />
+<input data-drupal-selector="edit-simple-recaptcha-score" type="hidden" name="simple_recaptcha_score" value="60" />
+<input data-drupal-selector="edit-simple-recaptcha-message" type="hidden" name="simple_recaptcha_message" value="" />
+<input autocomplete="off" data-drupal-selector="form-1xerqesc4a19fj7cwhjmh0mr9xrvwcqefbj-vqy3dfs" type="hidden" name="form_build_id" value="form-1xeRQesc4a19Fj7cwhJMh0MR9xrVWcQEfBJ_vqY3DFs" />
+<input data-drupal-selector="edit-webform-submission-contact-node-62-add-form" type="hidden" name="form_id" value="webform_submission_contact_node_62_add_form" />
+
+
+  
+</form>
+
+    </div>
+  </div>
+
+  </div>
+
+                </section>
+                              </aside>
+                      </div>
+        </div>
+      </div>
+    </div>
+    
+          <div id="content-bottom" class="clearfix content-bottom region--dark-typography region--default-background region--no-separator region--no-paddings">
+      <div class="container">
+                <div class="clearfix content-bottom__container mlt-no-opacity"
+                      data-animate-effect="fadeIn"
+          >
+          <div class="row">
+                          <div class="col-12">
+                                <div class="clearfix content-bottom__section content-bottom-first">
+                    <div class="region region-content-bottom-first">
+    
+<div id="block-accreditationselectricianinaberdeen" class="clearfix block block-block-content block-block-contentc0fffaa5-a97d-4bf5-b02f-5ea5069c3f17 block-mt-logo-links mt-logo-links-large">
+  
+    
+      <div class="content">
+      
+      <div class="field field--name-field-mt-logo-links-logo field--type-entity-reference-revisions field--label-hidden field__items row justify-content-center text-center">
+              <div class="field__item col-6 col-lg-auto">  <div class="paragraph paragraph--type--mt-image-link paragraph--view-mode--default">
+          <div class="logo-container">
+                  
+            <div class="field field--name-field-mt-il-image field--type-image field--label-hidden field__item">  <img loading="lazy" src="/sites/default/files/2023-10/Which%20Trusted%20Trader%20logo_page-0001_2.jpg" width="350" height="277" alt="Hardie Electrical, Which Trusted Trader in Aberdeen" title="Hardie Electrical, Which Trusted Trader in Aberdeen" typeof="foaf:Image" />
+
+</div>
+      
+              </div>
+      </div>
+</div>
+              <div class="field__item col-6 col-lg-auto">  <div class="paragraph paragraph--type--mt-image-link paragraph--view-mode--default">
+          <div class="logo-container">
+                  
+            <div class="field field--name-field-mt-il-image field--type-image field--label-hidden field__item">  <img loading="lazy" src="/sites/default/files/2022-03/registered-electrician-in-aberdeen.png" width="310" height="173" alt="Registered Electrician in Aberdeen" title="Registered Electrician in Aberdeen" typeof="foaf:Image" />
+
+</div>
+      
+              </div>
+      </div>
+</div>
+              <div class="field__item col-6 col-lg-auto">  <div class="paragraph paragraph--type--mt-image-link paragraph--view-mode--default">
+          <div class="logo-container">
+                  
+            <div class="field field--name-field-mt-il-image field--type-image field--label-hidden field__item">  <img loading="lazy" src="/sites/default/files/2022-03/niceic-approved-electrician-in-aberdeen.jpg" width="300" height="173" alt="NICEIC Electrician in Aberdeen" title="NICEIC Electrician in Aberdeen" typeof="foaf:Image" />
+
+</div>
+      
+              </div>
+      </div>
+</div>
+          </div>
+  
+    </div>
+  </div>
+
+  </div>
+
+                </div>
+                              </div>
+                                  </div>
+        </div>
+              </div>
+    </div>
+      
+  
+          <div id="featured-top" class="clearfix featured-top region--light-typography region--dark-colored-background region--no-separator region--no-paddings">
+      <div class="container">
+                <div class="clearfix featured-top__container mlt-no-opacity"
+                      data-animate-effect="fadeIn"
+          >
+          <div class="row">
+            <div class="col-12">
+              <div class="clearfix featured-top__section">
+                  <div class="region region-featured-top">
+    <div id="block-calltoaction" class="clearfix block block-block-content block-block-content15fbac8b-b137-475f-81b0-6246436049be">
+  
+    
+      <div class="content">
+      
+            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><h3 class="text-align-center"><strong>Call me today&nbsp;on&nbsp;<a href="tel:01224600105">01224 600105</a> or <a href="tel:01358 289066">01358 289066</a>&nbsp;for a free, no obligation, quotation for your project. Your call matters to me, and I WILL respond.</strong></h3>
+<div class="homepagemtbutton">
+<a class="mt-button mt-button--outline" href="tel:01224600105">Aberdeen: 01224 600105</a>
+<a class="mt-button mt-button--outline" href="tel:01358 289066">Ellon: 01358 289066</a>
+</div>
+<div class="homepagetopfirstemail">
+<a class="mt-button mt-button--outline" href="/contact">OR REQUEST A FREE QUOTE</a>
+</div></div>
+      
+    </div>
+  </div>
+
+  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+              </div>
+    </div>
+      
+  
+  
+          <div id="sub-featured" class="clearfix sub-featured region--dark-typography region--default-background region--no-separator">
+      <div class="container">
+                <div class="clearfix sub-featured__container"
+          >
+          <div class="row">
+            <div class="col-12">
+              <div class="clearfix sub-featured__section">
+                  <div class="region region-sub-featured">
+    <div class="views-element-container clearfix block block-views block-views-blocktestimonials-block-1 mt-view-header-enabled" id="block-views-block-testimonials-block-1">
+  
+      <h2 class="title">Testimonials</h2>
+    
+      <div class="mt-view-header">Here are some of the things that my current and past customers have to say about me and my company.</div>
+        <div><div class="view view-testimonials view-id-testimonials view-display-id-block_1 js-view-dom-id-bebe8213fcf43cd305f66437fdc4e7ea1de45a92197e30c0c64c67982b90514e">
+  
+    
+      <div class="view-header">
+      <div class="mt-view-header">Here are some of the things that my current and past customers have to say about me and my company.</div>
+    </div>
+      
+      <div class="view-content">
+      <div>
+  
+  <ul class="row list-unstyled">
+
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="72" about="/testimonial/5-google-review-2" class="node node--type-mt-testimonial node--view-mode-mt-teaser-tile-text clearfix node--view-mode-mt-teaser-tile-text-2">
+  
+  
+
+  <div class="node__container">
+    <div class="node__main-content clearfix">
+
+        
+        <div class="mt-style-custom-all region--bright-background p-4">
+                      <div class="teaser-tile-text-content">
+              
+            <div class="clearfix text-formatted field field--name-field-mt-tst-body field--type-text-with-summary field--label-hidden field__item"><p>Would definately recommend Hardie Electrical. All round great experience, professional and reasonably priced.</p></div>
+      
+            </div>
+            
+            <div class="field field--name-field-mt-tst-rating field--type-fivestar field--label-hidden field__item"><form class="fivestar-form-1" id="vote" data-drupal-selector="fivestar-form-1" action="/photo/changeover-switch-installation-back-generator" method="post" accept-charset="UTF-8">
+  <div class="clearfix fivestar-none-text fivestar-average-stars fivestar-form-item fivestar-basic"><div class="js-form-item form-item js-form-type-fivestar form-type-fivestar js-form-item-vote form-item-vote form-no-label">
+        
+<div class="fivestar-static-form-item">
+  <div class="js-form-item form-item js-form-type-item form-type-item js-form-item- form-item-">
+      
+        <div class="fivestar-basic">
+  <div class="fivestar-widget-static fivestar-widget-static-vote fivestar-widget-static-5 clearfix">
+                            <div class="star star-1 star-odd star-first">
+                                          
+        <span class="on">
+                      5
+                  </span>
+      </div>
+                            <div class="star star-2 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-3 star-odd">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-4 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-5 star-odd star-last">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+      </div>
+</div>
+
+        </div>
+
+</div>
+
+        </div>
+</div><input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-submit" type="submit" id="edit-submit--2" name="op" value="Rate" />
+<input autocomplete="off" data-drupal-selector="form-joavgob4heqyywipxty04ruolbukkdwmpmmxqxxe-vy" type="hidden" name="form_build_id" value="form-jOAvgOB4HeqyYwiPXtY04RuoLbuKkdwmpMmXQXXE-VY" />
+<input data-drupal-selector="edit-fivestar-form-1" type="hidden" name="form_id" value="fivestar_form_1" />
+
+</form>
+</div>
+      
+          
+          <div class="teaser-tile-text-footer">
+            <h4 class="node__title mt-0">
+              <a href="/testimonial/5-google-review-2" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">5⭐️ Google Review</span>
+</a>
+            </h4>
+            
+            <div class="field field--name-field-mt-tst-subtitle field--type-string field--label-hidden field__item"> Shirley Church</div>
+      
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+</article>
+</li>
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="71" about="/testimonial/5-google-review-3" class="node node--type-mt-testimonial node--view-mode-mt-teaser-tile-text clearfix node--view-mode-mt-teaser-tile-text-2">
+  
+  
+
+  <div class="node__container">
+    <div class="node__main-content clearfix">
+
+        
+        <div class="mt-style-custom-all region--bright-background p-4">
+                      <div class="teaser-tile-text-content">
+              
+            <div class="clearfix text-formatted field field--name-field-mt-tst-body field--type-text-with-summary field--label-hidden field__item"><p>We were delighted with the small job Andy did for us recently.</p></div>
+      
+            </div>
+            
+            <div class="field field--name-field-mt-tst-rating field--type-fivestar field--label-hidden field__item"><form class="fivestar-form-1" id="vote" data-drupal-selector="fivestar-form-1" action="/photo/changeover-switch-installation-back-generator" method="post" accept-charset="UTF-8">
+  <div class="clearfix fivestar-none-text fivestar-average-stars fivestar-form-item fivestar-basic"><div class="js-form-item form-item js-form-type-fivestar form-type-fivestar js-form-item-vote form-item-vote form-no-label">
+        
+<div class="fivestar-static-form-item">
+  <div class="js-form-item form-item js-form-type-item form-type-item js-form-item- form-item-">
+      
+        <div class="fivestar-basic">
+  <div class="fivestar-widget-static fivestar-widget-static-vote fivestar-widget-static-5 clearfix">
+                            <div class="star star-1 star-odd star-first">
+                                          
+        <span class="on">
+                      5
+                  </span>
+      </div>
+                            <div class="star star-2 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-3 star-odd">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-4 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-5 star-odd star-last">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+      </div>
+</div>
+
+        </div>
+
+</div>
+
+        </div>
+</div><input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-submit" type="submit" id="edit-submit" name="op" value="Rate" />
+<input autocomplete="off" data-drupal-selector="form-oizko2vy3n7t3cd3ucf08clxmd4oirmtb1y2uod8esw" type="hidden" name="form_build_id" value="form-oiZKO2VY3n7t3CD3ucF08clxmd4oIrmtb1Y2UOd8esw" />
+<input data-drupal-selector="edit-fivestar-form-1" type="hidden" name="form_id" value="fivestar_form_1" />
+
+</form>
+</div>
+      
+          
+          <div class="teaser-tile-text-footer">
+            <h4 class="node__title mt-0">
+              <a href="/testimonial/5-google-review-3" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">5⭐️ Google Review</span>
+</a>
+            </h4>
+            
+            <div class="field field--name-field-mt-tst-subtitle field--type-string field--label-hidden field__item">Rachel Skene</div>
+      
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+</article>
+</li>
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="70" about="/testimonial/5-google-review-1" class="node node--type-mt-testimonial node--view-mode-mt-teaser-tile-text clearfix node--view-mode-mt-teaser-tile-text-2">
+  
+  
+
+  <div class="node__container">
+    <div class="node__main-content clearfix">
+
+        
+        <div class="mt-style-custom-all region--bright-background p-4">
+                      <div class="teaser-tile-text-content">
+              
+            <div class="clearfix text-formatted field field--name-field-mt-tst-body field--type-text-with-summary field--label-hidden field__item"><p>We can highly recommend Hardie Electrical. Very professional man who runs his business really well.</p></div>
+      
+            </div>
+            
+            <div class="field field--name-field-mt-tst-rating field--type-fivestar field--label-hidden field__item"><form class="fivestar-form-3" id="vote--3" data-drupal-selector="fivestar-form-3" action="/photo/changeover-switch-installation-back-generator" method="post" accept-charset="UTF-8">
+  <div class="clearfix fivestar-none-text fivestar-average-stars fivestar-form-item fivestar-basic"><div class="js-form-item form-item js-form-type-fivestar form-type-fivestar js-form-item-vote form-item-vote form-no-label">
+        
+<div class="fivestar-static-form-item">
+  <div class="js-form-item form-item js-form-type-item form-type-item js-form-item- form-item-">
+      
+        <div class="fivestar-basic">
+  <div class="fivestar-widget-static fivestar-widget-static-vote fivestar-widget-static-5 clearfix">
+                            <div class="star star-1 star-odd star-first">
+                                          
+        <span class="on">
+                      5
+                  </span>
+      </div>
+                            <div class="star star-2 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-3 star-odd">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-4 star-even">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+                            <div class="star star-5 star-odd star-last">
+                                          
+        <span class="on">
+                  </span>
+      </div>
+      </div>
+</div>
+
+        </div>
+
+</div>
+
+        </div>
+</div><input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-submit" type="submit" id="edit-submit--4" name="op" value="Rate" />
+<input autocomplete="off" data-drupal-selector="form-gkm4wigtghhr7fwugxu-isw2oun6ej13bxrpothzeso" type="hidden" name="form_build_id" value="form-Gkm4wiGTGHhr7fWUgxU_ISW2OuN6EJ13BxRPotHZEso" />
+<input data-drupal-selector="edit-fivestar-form-3" type="hidden" name="form_id" value="fivestar_form_3" />
+
+</form>
+</div>
+      
+          
+          <div class="teaser-tile-text-footer">
+            <h4 class="node__title mt-0">
+              <a href="/testimonial/5-google-review-1" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">5⭐️ Google Review</span>
+</a>
+            </h4>
+            
+            <div class="field field--name-field-mt-tst-subtitle field--type-string field--label-hidden field__item"> Ava Macgregor</div>
+      
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+</article>
+</li>
+    
+  </ul>
+
+</div>
+
+    </div>
+  
+          <div class="more-link"><a href="/testimonials" class="mt-link-stylable">Read all testimonials</a></div>
+
+      </div>
+</div>
+
+  </div>
+
+  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+              </div>
+    </div>
+      
+          <div id="highlighted-top" class="clearfix highlighted-top region--dark-typography region--default-background region--no-separator">
+      <div class="container">
+                <div class="clearfix highlighted-top__container mlt-no-opacity"
+                      data-animate-effect="fadeIn"
+          >
+          <div class="row">
+            <div class="col-12">
+              <div class="clearfix highlighted-top__section">
+                  <div class="region region-highlighted-top">
+    <div class="views-element-container clearfix block block-views block-views-blockmt-posts-grid-block-3 mt-view-header-enabled" id="block-views-block-mt-posts-grid-block-3">
+  
+      <h2 class="title">My Latest Blogs</h2>
+    
+      <div class="mt-view-header">Read my latest news and announcements</div>
+        <div><div class="view view-mt-posts-grid view-id-mt_posts_grid view-display-id-block_3 js-view-dom-id-028d01646aff08b9230250ebe6e197dfb429f9a13c0c6b9bbe70135d4aadadcd">
+  
+    
+      <div class="view-header">
+      <div class="mt-view-header">Read my latest news and announcements</div>
+    </div>
+      
+      <div class="view-content">
+      <div>
+  
+  <ul class="row list-unstyled mb-0">
+
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="35" about="/blog/why-use-niceic-registered-electrician" class="node node--type-mt-post node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-pst-image field--type-entity-reference field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/blog/why-use-niceic-registered-electrician"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2022-03/niceic-approved-electrician-in-aberdeen_0.jpg?itok=b1lDYxe0" width="1350" height="730" alt="Why Use an NICEIC Registered Electrician?" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+      <div class="teaser-tile-pre-content">
+              <span class="node__submitted-date">
+          07 Mar 2022
+        </span>
+                </div>
+  
+      <h4 class="mt-0 node__title">
+      <a href="/blog/why-use-niceic-registered-electrician" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">Why Use an NICEIC Registered Electrician?</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/blog/why-use-niceic-registered-electrician">Read more</a>      
+              <div class="teaser-tile-footer ml-auto d-flex align-items-center">
+          <span class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang="" about="/andy" typeof="schema:Person" property="schema:name" datatype="">Andy</span></span>
+
+          <article typeof="schema:Person" about="/andy" class="profile">
+  </article>
+
+        </div>
+          </div>
+  
+</article>
+</li>
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="34" about="/blog/my-electrician-didnt-turn-today" class="node node--type-mt-post node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-pst-image field--type-entity-reference field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/blog/my-electrician-didnt-turn-today"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2022-03/depositphotos_40400523-stock-photo-hand-of-an-electrician-with.jpg?itok=Ap0SZO9Z" width="1350" height="730" alt="My Electrician Didn’t Turn Up Today" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+      <div class="teaser-tile-pre-content">
+              <span class="node__submitted-date">
+          07 Mar 2022
+        </span>
+                </div>
+  
+      <h4 class="mt-0 node__title">
+      <a href="/blog/my-electrician-didnt-turn-today" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">My Electrician Didn’t Turn Up Today...</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/blog/my-electrician-didnt-turn-today">Read more</a>      
+              <div class="teaser-tile-footer ml-auto d-flex align-items-center">
+          <span class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang="" about="/andy" typeof="schema:Person" property="schema:name" datatype="">Andy</span></span>
+
+          <article typeof="schema:Person" about="/andy" class="profile">
+  </article>
+
+        </div>
+          </div>
+  
+</article>
+</li>
+          <li class="col-lg-4 col-md-6 views-row">
+<article data-history-node-id="33" about="/blog/diy-electrical-work" class="node node--type-mt-post node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-pst-image field--type-entity-reference field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/blog/diy-electrical-work"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2022-03/diy-electrical-work.png?itok=uL2xfKrD" width="1350" height="730" alt="DIY Electrical Work" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+      <div class="teaser-tile-pre-content">
+              <span class="node__submitted-date">
+          07 Mar 2022
+        </span>
+                </div>
+  
+      <h4 class="mt-0 node__title">
+      <a href="/blog/diy-electrical-work" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">DIY Electrical Work</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/blog/diy-electrical-work">Read more</a>      
+              <div class="teaser-tile-footer ml-auto d-flex align-items-center">
+          <span class="field field--name-uid field--type-entity-reference field--label-hidden"><span lang="" about="/andy" typeof="schema:Person" property="schema:name" datatype="">Andy</span></span>
+
+          <article typeof="schema:Person" about="/andy" class="profile">
+  </article>
+
+        </div>
+          </div>
+  
+</article>
+</li>
+    
+  </ul>
+
+</div>
+
+    </div>
+  
+          <div class="more-link"><a href="/blog" class="mt-link-stylable">View all blog posts</a></div>
+
+      </div>
+</div>
+
+  </div>
+<div class="views-element-container clearfix block block-views block-views-blockphotos-block-1 mt-view-header-enabled" id="block-views-block-photos-block-1">
+  
+      <h2 class="title">Latest Photos</h2>
+    
+      <div class="mt-view-header">Browse My Portfolio Of Projects I Have Carried Out For Other Satisfied Customers.</div>
+        <div><div class="view view-photos view-id-photos view-display-id-block_1 js-view-dom-id-ea307f2434487ca5ec889c0d163d8ba1bb6ea7a31fa1b28ad80183822f2be1f4">
+  
+    
+      <div class="view-header">
+      <div class="mt-view-header">Browse My Portfolio Of Projects I Have Carried Out For Other Satisfied Customers.</div>
+    </div>
+      
+      <div class="view-content">
+      <div>
+  
+  <ul class="row list-unstyled mb-0">
+
+          <li class="col-lg-3 col-md-6 views-row">
+<article data-history-node-id="73" about="/photo/back-generator-changeover-switch-installation-aberdeenshire" class="node node--type-mt-showcase node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-shw-image field--type-image field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/photo/back-generator-changeover-switch-installation-aberdeenshire"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2026-04/651360284_1409533600975670_4597967748746452922_n.jpg?itok=6r0Rio7b" width="1350" height="730" alt="Back up generator changeover switch installation in Aberdeenshire" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+  
+      <h4 class="mt-0 node__title">
+      <a href="/photo/back-generator-changeover-switch-installation-aberdeenshire" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">Back up generator changeover switch installation in Aberdeenshire</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/photo/back-generator-changeover-switch-installation-aberdeenshire">Read more</a>      
+          </div>
+  
+</article>
+</li>
+          <li class="col-lg-3 col-md-6 views-row">
+<article data-history-node-id="67" about="/photo/kitchen-showroom-project-aberdeen" class="node node--type-mt-showcase node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-shw-image field--type-image field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/photo/kitchen-showroom-project-aberdeen"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2025-12/Kitchen%20Showroom%20Project%2C%20Aberdeen.jpg?itok=6XCLsP2z" width="1350" height="730" alt="Kitchen Showroom Project, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+  
+      <h4 class="mt-0 node__title">
+      <a href="/photo/kitchen-showroom-project-aberdeen" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">Kitchen Showroom Project, Aberdeen</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/photo/kitchen-showroom-project-aberdeen">Read more</a>      
+          </div>
+  
+</article>
+</li>
+          <li class="col-lg-3 col-md-6 views-row">
+<article data-history-node-id="66" about="/photo/local-electrician-aberdeen" class="node node--type-mt-showcase node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-shw-image field--type-image field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/photo/local-electrician-aberdeen"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2025-12/Local%20Electrician%2C%20Aberdeen.jpg?itok=Jk17keWd" width="1350" height="730" alt="Local Electrician Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+  
+      <h4 class="mt-0 node__title">
+      <a href="/photo/local-electrician-aberdeen" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">Local Electrician Aberdeen</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/photo/local-electrician-aberdeen">Read more</a>      
+          </div>
+  
+</article>
+</li>
+          <li class="col-lg-3 col-md-6 views-row">
+<article data-history-node-id="65" about="/photo/consumer-unit-replacement-aberdeen" class="node node--type-mt-showcase node--view-mode-mt-teaser-tile mt-style-custom-all region--bright-background px-4 pt-4 pb-3">
+  
+  
+
+      <div class="teaser-tile-image-container">
+              <div class="teaser-tile-image">
+          
+      <div class="field field--name-field-mt-shw-image field--type-image field--label-hidden field__items">
+      <div class="images-container clearfix">
+        <div class="image-preview clearfix">
+          <div class="image-wrapper clearfix">
+            <div class="field__item">
+                <div class="overlay-container">
+    <span class="overlay overlay--colored">
+      <a class="overlay-target-link image-popup" href="/photo/consumer-unit-replacement-aberdeen"></a>
+    </span>
+    <img loading="lazy" src="/sites/default/files/styles/mt_large/public/2025-12/Consumer%20Unit%20Replacement%2C%20Aberdeen.jpg?itok=SEzRayAA" width="1350" height="730" alt="Consumer Unit Replacement, Aberdeen" typeof="foaf:Image" class="image-style-mt-large" />
+
+
+  </div>
+
+            </div>
+          </div>
+                  </div>
+              </div>
+    </div>
+  
+        </div>
+                      </div>
+  
+  
+      <h4 class="mt-0 node__title">
+      <a href="/photo/consumer-unit-replacement-aberdeen" rel="bookmark"><span class="field field--name-title field--type-string field--label-hidden">Consumer Unit Replacement, Aberdeen</span>
+</a>
+    </h4>
+  
+  
+  <div class="node__content">
+    
+  </div>
+
+      <div class="teaser-tile-footer-wrapper row m-0 align-items-center">
+              <a class="mt-link-stylable mb-0" href="/photo/consumer-unit-replacement-aberdeen">Read more</a>      
+          </div>
+  
+</article>
+</li>
+    
+  </ul>
+
+</div>
+
+    </div>
+  
+          <div class="more-link"><a href="/photos" class="mt-link-stylable">More photos &gt;</a></div>
+
+      </div>
+</div>
+
+  </div>
+
+  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+              </div>
+    </div>
+      
+          <div id="highlighted" class="clearfix highlighted region--dark-typography region--default-background region--no-separator">
+      <div class="container">
+                <div class="clearfix highlighted__container mlt-no-opacity"
+                      data-animate-effect="fadeIn"
+          >
+          <div class="row">
+            <div class="col-12">
+              <div class="clearfix highlighted__section">
+                  <div class="region region-highlighted">
+    <div class="views-element-container clearfix block block-views block-views-blockareas-i-cover-block-1" id="block-views-block-areas-i-cover-block-1">
+  
+      <h2 class="title">Areas I cover</h2>
+    
+        <div><div class="view view-areas-i-cover view-id-areas_i_cover view-display-id-block_1 js-view-dom-id-c24d429b1f02ee584afd409c003a6b61a807d14bfffce484238ef97d9cbd2bfc">
+  
+    
+      
+      <div class="view-content">
+      <div>
+  
+  <ul class="list--fa-check-circle">
+
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-aberdeen-west-end" hreflang="und">Aberdeen west end</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-woodside" hreflang="und">Woodside</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-torry" hreflang="und">Torry</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-seaton" hreflang="und">Seaton</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-cove" hreflang="und">Cove</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-kintore" hreflang="und">Kintore</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-hilton" hreflang="und">Hilton</a></span></div></li>
+          <li class="col-lg-3 col-md-6 views-row"><div class="views-field views-field-name"><span class="field-content"><a href="/electrician-in-rothienorman" hreflang="und">Rothienorman</a></span></div></li>
+    
+  </ul>
+
+</div>
+
+    </div>
+  
+          <div class="more-link"><a href="/areas" class="mt-link-stylable">more</a></div>
+
+        <div class="view-footer">
+      <h2>Call me today and speak directly to a trained, professional electrician, or request a callback.</h2>
+<div class="homepagemtbutton">
+<a class="mt-button mt-button--outline" href="tel:01224600105">Aberdeen: 01224 600105</a>
+<a class="mt-button mt-button--outline" href="tel:01358 289066">Ellon: 01358 289066</a>
+</div>
+<div class="homepagetopfirstemail">
+<a class="mt-button mt-button--outline" href="/contact">OR REQUEST A FREE QUOTE</a>
+</div>
+    </div>
+    </div>
+</div>
+
+  </div>
+
+  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+              </div>
+    </div>
+      
+    
+  
+  
+  
+  
+  
+          <div id="subfooter" class="clearfix subfooter region--light-typography region--dark-background region--no-separator ">
+      <div class="container">
+                <div class="clearfix subfooter__container">
+          <div class="row align-items-center">
+                          <div class="col-lg-6">
+                                <div class="clearfix subfooter__section subfooter-first">
+                    <div class="region region-sub-footer-first">
+    <div id="block-tokenblock" class="clearfix block block-token-block">
+  
+    
+      <div class="content">
+      <p><strong>Copyright -</strong> 2026 | <strong>Site name -</strong> Hardie Electrical Ltd | Electrician in Aberdeen | <strong>Current Page -</strong> Changeover Switch Installation for Back-up Generator</p><p>Hardie Electrical Ltd, 63 Craigend Rd, Ellon AB41 8FD | <strong>Registered in Scotland </strong>|<strong> Company Registration Number: SC365908 </strong>| <a href="/privacy-policy">Privacy policy</a>&nbsp;|&nbsp;<a href="/terms-and-conditions">Terms &amp; conditions</a>&nbsp;| <a href="/complaints-policy">Complaints policy</a></p>
+    </div>
+  </div>
+
+  </div>
+
+                </div>
+                              </div>
+                                      <div class="col-lg-6">
+                                <div class="clearfix subfooter__section subfooter-second">
+                    <div class="region region-footer">
+    <div id="block-subfootersecondinformation" class="clearfix block block-block-content block-block-contentcb68d576-621b-439c-9df4-8153c5342e96">
+  
+    
+      <div class="content">
+      
+            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><p><small>This website design, software, structure and the way it has been packaged, including it's custom code outside of Drupal open source software, is protected by&nbsp;<a href="https://www.gov.uk/copyright">copyright</a>. This software can only be managed by My Local Trades, or customers of&nbsp;<a href="https://www.my-local-trades.co.uk/">My Local Trades</a></small></p></div>
+      
+    </div>
+  </div>
+
+  </div>
+
+                </div>
+                              </div>
+                      </div>
+        </div>
+              </div>
+    </div>
+      
+          <div class="clearfix mt-mobile-menu-widget-wrapper">
+      <div class="mt-mobile-menu-overlay" style="display:none">
+                <button type="button" class="mt-dismiss-button mt-button region--light-typography mt-dismiss-button--sticky">
+          <span class="sr-only">Dismiss mobile overlay area</span><i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form method="get" action="https://www.hardieelectrical.co.uk/search/node">
+        <div class="clearfix mt-mobile-menu-widget mt-container mt-sticky">
+          <div class="mt-search-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <input type="text" name="keys" class="mt-input" placeholder="Search...">
+          <div class="mt-clear-icon">
+            <span class="sr-only">Clear keys input element</span><i class="fas fa-times-circle"></i>
+          </div>
+          <button type="submit" class="mt-submit-button mt-button">
+            <span class="sr-only">Submit search</span><i class="fas fa-arrow-right"></i>
+          </button>
+          <button type="button" class="mt-menu-button mt-button">
+            <span class="sr-only">Open mobile overlay area</span><i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+    
+        <div class="to-top region--default-background"><i class="fas fa-angle-double-up"></i></div>
+    
+</div>
+
+  </div>
+
+    
+    <script type="application/json" data-drupal-selector="drupal-settings-json">{"path":{"baseUrl":"\/","pathPrefix":"","currentPath":"node\/62","currentPathIsAdmin":false,"isFront":false,"currentLanguage":"en"},"pluralDelimiter":"\u0003","suppressDeprecationErrors":true,"ajaxPageState":{"libraries":"eJyNlFt2nDAMhjc0hoe265kjjAA1xvKxBGSy-gqYXAw07QuI_5ONrIt9AJFH3YDgze_2iCLQo7x_R26NcUaz8giB3vCGAb1m8gSxhkgjKLo-cAOhQA3EiNlBRih1ZhXNkArVc-DsBsgt4QFMUZ2yo0hakI5esXUDQou5BBwVFhQe0XmRExNHrfv180JP6gQzdRdIeMoeveUjZS74fnYn-ggU-wJRdMnS6SLM1IMSxwIH9s-FKAOiyoH27GzLF3GNeb4UcIQ-UkfeJU5Tch1haN1o4Q-Ls5LYP0_5-qhtIXJDAd2IcXILtT0e1qjbC9DyUsa-dcZR2OM4y1tEctZl4MWv7XciM-HixtVSNIfs1ML8TzezX8tjWPsop4PEQanUtt3M0UrCmQ4BL_BITGsr7E1vxZQ9yR3NKAp5nSTyn5_vRrVN2Jeu_Nqhlcz9d6ySgcZbggy9zcwgdZunBKH6VKoppqkJZC3U3oTGFPCe0UNSP0B9FO7zj5tMCXNnC-oP60q7DzzbNETFqJdc7EYI4jNivOarJVMjf6OJhbapWDMvW_6lgt_wWghW38mKv2DT2SVUP9-VFcfaVqsWFShIJTD_20m577_Z6zkjJ74-LsXKjjeS3jn68yodbNdqv0r_AKBtHJk","theme":"electrician","theme_token":null},"ajaxTrustedUrl":{"form_action_p_pvdeGsVG5zNF_XLGPTvYSKCf43t8qZYSwcfZl2uzM":true,"\/photo\/changeover-switch-installation-back-generator?ajax_form=1":true},"multiselect":{"widths":375},"electrician":{"purechatInit":{"purechatKey":""},"slideshowCaptionOpacity":0,"slideshowBackgroundOpacity":0.5,"sliderRevolutionFullWidthInit":{"slideshowFullWidthEffectTime":10000,"slideshowFullWidthInitialHeight":500,"slideshowFullWidthAutoHeight":0,"slideshowFullWidthNavigationStyle":"bullets","slideshowFullWidthBulletsPosition":"right","slideshowFullWidthTouchSwipe":"on"},"sliderRevolutionFullScreenInit":{"slideshowFullScreenEffectTime":10000,"slideshowFullScreenNavigationStyle":"bullets","slideshowFullScreenBulletsPosition":"right","slideshowFullScreenTouchSwipe":"on"},"sliderRevolutionBoxedWidthInit":{"slideshowBoxedWidthEffectTime":10000,"slideshowBoxedWidthInitialHeight":500,"slideshowBoxedWidthAutoHeight":0,"slideshowBoxedWidthNavigationStyle":"bullets","slideshowBoxedWidthBulletsPosition":"center","slideshowBoxedWidthTouchSwipe":"on"},"sliderRevolutionInternalBannerInit":{"slideshowInternalBannerEffectTime":10000,"slideshowInternalBannerInitialHeight":450,"slideshowInternalBannerAutoHeight":0,"slideshowInternalBannerNavigationStyle":"bullets","slideshowInternalBannerBulletsPosition":"left","slideshowInternalBannerLayout":"fullscreen","slideshowInternalBannerTouchSwipe":"on"},"sliderRevolutionInternalBannerCarouselInit":{"carouselInternalBannerInitialHeight":540,"carouselInternalBannerBulletsPosition":"center","carouselInternalBannerTouchSwipe":"on"},"owlCarouselProductsInit":{"owlProductsAutoPlay":1,"owlProductsEffectTime":5000},"owlCarouselAlbumsInit":{"owlAlbumsAutoPlay":1,"owlAlbumsEffectTime":5000},"owlCarouselArticlesInit":{"owlArticlesAutoPlay":1,"owlArticlesEffectTime":5000},"owlCarouselTestimonialsInit":{"owlTestimonialsAutoPlay":1,"owlTestimonialsEffectTime":5000},"owlCarouselRelatedNodesInit":{"owlRelatedNodesAutoPlay":0,"owlRelatedNodesEffectTime":5000},"owlCarouselCollectionsInit":{"owlCollectionsAutoPlay":0,"owlCollectionsEffectTime":5000},"owlCarouselTeamMembersInit":{"owlTeamMembersAutoPlay":1,"owlTeamMembersEffectTime":5000},"flexsliderInPageInit":{"inPageSliderEffect":"fade"},"flexsliderBreakingSliderInit":{"breakingEffect":"fade","breakingEffectTime":5000},"flexsliderMainInit":{"slideshowEffect":"fade","slideshowEffectTime":5000},"inPageNavigation":{"inPageNavigationOffset":69},"transparentHeader":{"transparentHeaderOpacity":0},"isotopeFiltersGridInit":{"isotopeFiltersText":"All","isotopeLayoutMode":"fitRows"},"slideoutInit":{"slideoutSide":"right","slideoutTouchSwipe":false}},"ajax":{"edit-submit--4":{"event":"click","callback":"::fivestarAjaxVote","method":"replaceWith","wrapper":"vote--3","effect":"fade","url":"\/photo\/changeover-switch-installation-back-generator?ajax_form=1","httpMethod":"POST","dialogType":"ajax","submit":{"_triggering_element_name":"op","_triggering_element_value":"Rate"}},"edit-submit":{"event":"click","callback":"::fivestarAjaxVote","method":"replaceWith","wrapper":"vote","effect":"fade","url":"\/photo\/changeover-switch-installation-back-generator?ajax_form=1","httpMethod":"POST","dialogType":"ajax","submit":{"_triggering_element_name":"op","_triggering_element_value":"Rate"}},"edit-submit--2":{"event":"click","callback":"::fivestarAjaxVote","method":"replaceWith","wrapper":"vote","effect":"fade","url":"\/photo\/changeover-switch-installation-back-generator?ajax_form=1","httpMethod":"POST","dialogType":"ajax","submit":{"_triggering_element_name":"op","_triggering_element_value":"Rate"}}},"simple_recaptcha_v3":{"sitekey":"6LeSru4eAAAAAIF4FZhVFpjYJlfW83t3F2QNfo5K","forms":{"webform_submission_contact_node_62_add_form":{"form_id":"webform_submission_contact_node_62_add_form","score":"60","error_message":"There was an error during validation of your form submission, please try to reload the page and submit form again.","action":"contact"}}},"superfish":{"superfish-main":{"id":"superfish-main","sf":{"animation":{"opacity":"show","height":"show"},"speed":"fast","autoArrows":true,"dropShadows":true},"plugins":{"smallscreen":{"cloneParent":0,"mode":"window_width"},"supposition":true,"supersubs":true}}},"views":{"ajax_path":"\/views\/ajax","ajaxViews":{"views_dom_id:028d01646aff08b9230250ebe6e197dfb429f9a13c0c6b9bbe70135d4aadadcd":{"view_name":"mt_posts_grid","view_display_id":"block_3","view_args":"","view_path":"\/node\/9","view_base_path":"blog","view_dom_id":"028d01646aff08b9230250ebe6e197dfb429f9a13c0c6b9bbe70135d4aadadcd","pager_element":0}}},"user":{"uid":0,"permissionsHash":"e65f3b23e01a092fa62030eba80fb5cb4137d74dba43ac90c633cefe942bc9da"}}</script>
+<script src="/sites/default/files/js/js_VNEwCGd1aHRf3K4oJwpJcR98fqO5AsytRqItxloidk4.js?scope=footer&amp;delta=0&amp;language=en&amp;theme=electrician&amp;include=eJyFkV1ywyAMhC9k4KEHyshYYHUAMUjG6e1rpz8TJ077Inb2E7MCYUKvjTxBcSOzijaoA965npeiRtlQIT2QQFeczIwwYTsAKqZCRFOgUwQlLgecIRYK5E3lulQTCNNkshqZV0N5v_gUlXmkhCZjWcxKU8Qj3qZTrg8WJ6Wjt8JHZSoqBsoWtA8mX1mBOopCcz_CjiA4BC4KKwpndHfaSo9_MSsz5UEo14SXhh6q-hnco3Hpb4MsFVsgmd2vOvMuM3ds2-hY9JRLhpTEN8RyznclyyivaGWh26Y64SruVi28w3VYcQzcsvs-7faj2x7UTqhASaxAx3-blGNMr9syimyLf-J7OTXt9pZMeuHi8RN1nRYv"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=6LeSru4eAAAAAIF4FZhVFpjYJlfW83t3F2QNfo5K" defer async></script>
+<script src="/sites/default/files/js/js_ES0_K3rfHxnMru6DyFrnYw_oduG3WdBDpnJ8AHnQKq8.js?scope=footer&amp;delta=2&amp;language=en&amp;theme=electrician&amp;include=eJyFkV1ywyAMhC9k4KEHyshYYHUAMUjG6e1rpz8TJ077Inb2E7MCYUKvjTxBcSOzijaoA965npeiRtlQIT2QQFeczIwwYTsAKqZCRFOgUwQlLgecIRYK5E3lulQTCNNkshqZV0N5v_gUlXmkhCZjWcxKU8Qj3qZTrg8WJ6Wjt8JHZSoqBsoWtA8mX1mBOopCcz_CjiA4BC4KKwpndHfaSo9_MSsz5UEo14SXhh6q-hnco3Hpb4MsFVsgmd2vOvMuM3ds2-hY9JRLhpTEN8RyznclyyivaGWh26Y64SruVi28w3VYcQzcsvs-7faj2x7UTqhASaxAx3-blGNMr9syimyLf-J7OTXt9pZMeuHi8RN1nRYv"></script>
+
+  </body>
+</html>

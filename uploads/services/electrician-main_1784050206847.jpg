@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=0.9">
+<!--  -->
+<title>Precautions of dc to ac solar power inverter installation for home</title>
+<meta name="description" content="Solar power inverters are electrical equipment, improper installation will cause serious consequences. This article mainly talks about some precautions when installing home inverters"/>
+<meta name="author" content="Xindun"/>
+<meta name="keywords" content="dc to ac inverter,solar power inverter installation,power inverter installation for home,inverter installation for home"/> 
+<script src="/res/magic/js/jquery.min.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/res/magic/css/public.css?v=20220908">
+<link rel='stylesheet' type='text/css' href='/res/magic/css/style.css'  >
+<script src="/res/magic/js/publicScript.js?v=2" type="text/javascript"></script>
+<link rel="stylesheet" href="/public/resource2/css/index.css">
+<link rel="stylesheet" href="/public/resource2/css/page.css?v=5">
+<link rel="stylesheet" href="/res/magic/css/public1.css?v=20220908">
+<script type="text/javascript" src="/public/js/jquery.cookie.1.4.1.js"></script>
+<script type="text/javascript" src="/public/resource2/js/productList.js?v=20220913"></script>
+<script src="/public/resource2/js/ny_public.js" type="text/javascript"></script>
+<link rel="stylesheet" href="/res/magic/css/swiper.min.css" type="text/css">
+<script src="/res/magic/js/swiper.min.js" type="text/javascript"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){
+        dataLayer.push(arguments);
+    }
+    gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied'
+    });
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-146892672-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-146892672-1');
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-7ESN4LH65S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7ESN4LH65S');
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-200858597-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-200858597-1');
+</script>
+<script src="//code.tidio.co/dket6maywdlhapy5wdg19veeefep1gcc.js" async=""></script>
+<script>
+    window.addEventListener('load', function(e) {
+        document.querySelectorAll('.btn-extra').forEach(function(item){
+            item.addEventListener("click", function(e){
+                gtag('event', 'btn-extra_click', {'event_category' : 'btn-extra_click'});
+            })
+        })
+    });
+</script>
+<script>
+    window.addEventListener('load', function(e) {
+        document.querySelectorAll('.whatsappbox').forEach(function(item){
+            item.addEventListener("click", function(e){
+                gtag('event', 'whatsappbox_click', {'event_category' : 'whatsappbox_click'});
+            })
+        })
+    });
+</script>
+<script>
+    window.addEventListener('load', function(e) {
+        document.querySelectorAll('.bottom-whatsapp').forEach(function(item){
+            item.addEventListener("click", function(e){
+                gtag('event', 'bottom-whatsapp_click', {'event_category' : 'bottom-whatsapp_click'});
+            })
+        })
+    });
+</script>
+<script>
+    window.addEventListener('load', function(e) {
+        document.querySelectorAll('.company_email').forEach(function(item){
+            item.addEventListener("click", function(e){
+                gtag('event', 'company_email_click', {'event_category' : 'company_email_click'});
+            })
+        })
+    });
+</script>
+
+<script src="https://www.googleoptimize.com/optimize.js?id=OPT-TC65ZJC"></script>
+
+<!-- Cookie Consent by TermsFeed https://www.TermsFeed.com -->
+<script type="text/javascript" src="//www.termsfeed.com/public/cookie-consent/4.1.0/cookie-consent.js" charset="UTF-8"></script>
+<script type="text/javascript" charset="UTF-8">
+    document.addEventListener('DOMContentLoaded', function () {
+        cookieconsent.run({
+            "notice_banner_type":"simple",
+            "consent_type":"express",
+            "palette":"light",
+            "language":"en",
+            "page_load_consent_levels":[
+                "strictly-necessary"
+            ],
+            "notice_banner_reject_button_hide":false,
+            "preferences_center_close_button_hide":false,
+            "page_refresh_confirmation_buttons":false,
+            "website_privacy_policy_url":"https://www.xindun-power.com/cookies/",
+
+            "callbacks": {
+                "scripts_specific_loaded": (level) => {
+                    switch(level) {
+                        case 'targeting':
+                            gtag('consent', 'update', {
+                                'ad_storage': 'granted',
+                                'ad_user_data': 'granted',
+                                'ad_personalization': 'granted',
+                                'analytics_storage': 'granted'
+                            });
+                            break;
+                    }
+                }
+            },
+            "callbacks_force": true
+
+        });
+    });
+</script>
+
+<noscript>Free cookie consent management tool by <a href="https://www.termsfeed.com/">TermsFeed</a></noscript>
+<!-- End Cookie Consent by TermsFeed https://www.TermsFeed.com -->
+
+<!-- Below is the link that users can use to open Preferences Center to change their preferences. Do not modify the ID parameter. Place it where appropriate, style it as needed. -->
+<a href="#" id="open_preferences_center" style="position: fixed;
+    left: 10px;
+    bottom: 60px;
+    background: green;
+    color: #fff;
+    padding: 10px;
+    z-index: 99999;
+    border-radius: 20px;">Cookies</a>
+<style>.termsfeed-com---nb-simple{left:0;right:auto !important;}</style>
+
+
+
+
+<!-- Hotjar Tracking Code for https://www.xindun-power.com -->
+<script type="text/plain" data-cookie-consent="targeting">
+    (function(h,o,t,j,a,r){
+        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+        h._hjSettings={hjid:3380447,hjsv:6};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+</script>
+<script type="text/plain" data-cookie-consent="targeting" src="https://estat14.waimaoniu.com/stat.js?id=3747" id="gdstat" async></script></head>
+<body>
+    <header><!-- Top Start -->
+<header>
+<div class="marginAuto autoWidth relative topBox">
+    <div class="absolute iconfont hidden-lg hidden-md xs-top-showNav" id="xsShowNav">&#xe65f;</div>
+    <div class="absolute iconfont hidden-lg hidden-md xs-top-closeNav" id="xsCloseNav">&#xe652;</div>
+    <div class="absolute iconfont hidden-lg hidden-md xs-top-share animated" id="xsShare">&#xe631;</div>
+    <div class="container-fluid">
+        <div class="topLogo">
+                        <a href="/">
+            <img src="/uploadfile/2022/08/30/20220830093935S970wx.png" alt="Guangdong XINDUN Power Technology Co., Ltd. " />
+            <!--<img src="/uploadfile/2022/08/30/20220830093935S970wx.png" alt="Guangdong XINDUN Power Technology Co., Ltd. " />-->
+            </a>
+                    </div>
+        <div class="pull-left top-loft visible-lg-block">
+            30000 hours of trouble-free  operation inverter manufacturers        </div>
+        <div class="topNav padding15 min992Nav">
+                        <ul>
+                <li class="" >
+                    <span class="relative Block"><a href="/" class="noneLine">Home</a><i class="absolute"></i></span>
+                </li>
+                                                                <li class="relative relative">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/products/" class="noneLine">Product</a>
+                                                <i class="absolute" style="display:block;"></i>
+                                            </span>
+                                        <div class="topSubnavBox overflow hidden-md">
+                        <ul>
+                                                                                                                                                <li><a href="/inverter-with-charge-controller/" class="Block noneLine">Inverter With Charge Controller </a></li>
+                                                                                                                                                                                                                                    <li><a href="/three-phase-inverter/" class="Block noneLine">Three Phase Inverter</a></li>
+                                                                                                                                                                            <li><a href="/pure-sine-wave-inverter/" class="Block noneLine">Pure Sine Wave Inverter</a></li>
+                                                                                                                    <li><a href="/solar-generator/" class="Block noneLine">Solar Generator</a></li>
+                                                                                                                                                                                                                                    <li><a href="/solar-controller/" class="Block noneLine">Solar Controller</a></li>
+                                                                                                                                                                                                                                    <li><a href="/solar-system-solution/" class="Block noneLine">Solar System Solution</a></li>
+                                                                                                                    <li><a href="/types-of-battery/" class="Block noneLine">Battery</a></li>
+                                                                                                                                                                            <li><a href="/monocrystalline-and-polycrystalline-solar-panel/" class="Block noneLine">Solar Panel</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/solar-kits/" class="Block noneLine">Solar kits</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/ups/" class="Block noneLine">UPS  </a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/others/" class="Block noneLine">Others</a></li>
+                                                                                </ul>
+                        </div>
+                                    </li>
+                                                                                                <li class="relative relative">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/about-us/" class="noneLine">About Us</a>
+                                                <i class="absolute" style="display:block;"></i>
+                                            </span>
+                                        <div class="topSubnavBox overflow hidden-md">
+                        <ul>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li><a href="/solar-inverter-dealer-power-inverter-distributor/" class="Block noneLine">Inverter Dealers & Distributors</a></li>
+                                                                                                                                                                                                                                    <li><a href="https://www.xindun-power.com/about-us/" class="Block noneLine">Company Profile</a></li>
+                                                                                                                                                                                                                                    <li><a href="/history/" class="Block noneLine">History</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/certificate/" class="Block noneLine">Certificate</a></li>
+                                                                                                                                                                                                                                                                                                                                                                                                            <li><a href="/factory-show/" class="Block noneLine">Factory Show</a></li>
+                                                                                                                                                                            <li><a href="/team/" class="Block noneLine">Our Team</a></li>
+                                                                                                                                        </ul>
+                        </div>
+                                    </li>
+                                                                <li class="relative relative">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/services/" class="noneLine">Services</a>
+                                                <i class="absolute" style="display:block;"></i>
+                                            </span>
+                                        <div class="topSubnavBox overflow hidden-md">
+                        <ul>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li><a href="https://www.xindun-power.com/services/" class="Block noneLine">Service System</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/why-choose-us/" class="Block noneLine">Why Choose Us</a></li>
+                                                                                                                                                                            <li><a href="/video/" class="Block noneLine">Video</a></li>
+                                                                                                                                                                                                                                                                                                                                                                        </ul>
+                        </div>
+                                    </li>
+                                                                                                <li class="relative relative">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/case/" class="noneLine">Case</a>
+                                            </span>
+                                    </li>
+                                                                                                                                <li class="relative active">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/news/" class="noneLine">News</a>
+                                                <i class="absolute" style="display:block;"></i>
+                                            </span>
+                                        <div class="topSubnavBox overflow hidden-md">
+                        <ul>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <li><a href="/company-news/" class="Block noneLine">Company News</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/industry-news/" class="Block noneLine">Industry News</a></li>
+                                                                                                                                                                                                                                                                                            <li><a href="/faq/" class="Block noneLine">FAQ</a></li>
+                                                                                                                                                                                                </ul>
+                        </div>
+                                    </li>
+                                                                                                                                <li class="relative relative">
+                    <span class="relative Block" style="padding-right:20px;">
+                        <a href="/contact-us/" class="noneLine">Contact us</a>
+                                            </span>
+                                    </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <li class="last hidden-lg hidden-md">
+                    <form name="search" action="/index.php">
+                        <input type="hidden" name="f" value="search">
+                        <input type="hidden" name="v" value="index">
+                        <input type="hidden" name="modelid" value="1008">
+                        <input type="text" name="keywords" id="q"  class="width100 input" placeholder="Please enter a keyword">
+                    </form>
+                </li>
+                <div class="pull-left visible-lg-block visible-lg-search cursor" data-toggle="modal" data-target="#mySearchBox">
+                    <img src="/public/resource2/images/navsearchbtn.png" alt=""style="width: 60%;height: auto;margin-top: 3px;margin-left: 10px;">
+                </div>
+            </ul>
+        </div>
+    </div> 
+</div>
+<!-- SearchBoxForm Start -->
+<div class="modal fade bs-example-modal-sm" id="mySearchBox" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Please input keywords</h4>
+            </div>
+            <form name="search" action="/index.php">
+                <input type="hidden" name="f" value="search">
+                <input type="hidden" name="v" value="index">
+                <input type="hidden" name="modelid" value="1008">
+                <div class="modal-body">
+                    <div class="input-group" style="width:100%;">
+                        <input type="text" class="form-control" name="keyword" id="q"  placeholder="Please input keywords..." style="border-radius:5px;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</header>
+</header>
+        <!--  -->
+         
+    <div class="marginAuto">
+        <div class="thumbnail clearPic">
+                        <img src="/uploadfile/upload/2021-03/12/xindunpowernews.jpg" alt="News" />
+                    </div>
+    </div>
+    <!--  --><div class="max1440 marginAuto pageBg">
+<div class="maxwidthFree marginAuto">
+    <!--  -->
+<div class="container-fluid clearfix">
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <ol class="breadcrumb padding">
+                <li><a href="/" class="AHover" title="Home">Home </a></li>
+                &nbsp;&nbsp;/&nbsp;&nbsp;<a href="/news/" >News</a>            </ol>
+        </div>
+    </div>
+</div>
+<!--  -->
+    <!--网页描述开始 -->
+    <div class="container-fluid clearfix">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="pagePublicTile" title="News">
+                                        Solar power inverters are electrical equipment, improper installation will cause serious consequences. This article mainly talks about some precautions when installing home inverters                                    </div>
+                <span class="pagePublicTileLine Block"></span>
+            </div>
+        </div>
+    </div>
+    <div class="leftrightbox row" style="margin:0;">
+        <div class="leftbox col-lg-2 col-md-2 col-sm-12 col-xs-12">
+            <style type="text/css">
+                @media screen and (max-width: 767px) {
+                    .pcdisplay{display: none;}
+                }
+            </style>
+            <div class="page-left-ProductSort pcdisplay ">
+                <div class="top-title text-uppercase"><p style="font-size: 23px;">News</p></div>
+                                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/company-news/" class="sortName noneLine">Company News</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/industry-news/" class="sortName noneLine">Industry News</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/faq/" class="sortName noneLine">FAQ</a></h2>
+                                            </div>
+                                    </div>
+                                                                <br>
+                <br>
+                <div class="top-title text-uppercase"><p style="font-size: 23px;">Product</p></div>
+                                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/inverter-with-charge-controller/" class="sortName noneLine">Inverter With Charge Controller </a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/three-phase-inverter/" class="sortName noneLine">Three Phase Inverter</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/pure-sine-wave-inverter/" class="sortName noneLine">Pure Sine Wave Inverter</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/solar-generator/" class="sortName noneLine">Solar Generator</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/solar-controller/" class="sortName noneLine">Solar Controller</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/solar-system-solution/" class="sortName noneLine">Solar System Solution</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/types-of-battery/" class="sortName noneLine">Battery</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/monocrystalline-and-polycrystalline-solar-panel/" class="sortName noneLine">Solar Panel</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/solar-kits/" class="sortName noneLine">Solar kits</a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/ups/" class="sortName noneLine">UPS  </a></h2>
+                                            </div>
+                                    </div>
+                                <div class="list">
+                    <div class="relative">
+                        <h2><a href="/others/" class="sortName noneLine">Others</a></h2>
+                                            </div>
+                                    </div>
+                                                            </div>
+        </div>
+        <div class="rightbox col-lg-10 col-md-10 col-sm-12 col-xs-12">
+            <!-- 新闻标题开始 -->
+            <div class="text-center pageNewsDetailsTitle">
+                <h1>Precautions&nbsp;of&nbsp;dc&nbsp;to&nbsp;ac&nbsp;solar&nbsp;power&nbsp;inverter&nbsp;installation&nbsp;for&nbsp;home</h1>
+                <div class="publish marginAuto">
+                    <ul>
+                        <li class="pull-left t1"><a class="post-981"></a></li>
+                        <span class="pull-left hidden-xs"></span>
+                        <li class="pull-left padding hidden-xs">Published by</li>
+                        <li class="pull-left t2">Xindun</li>
+                        <li class="pull-left t3">September 25, 2020</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 新闻标题结束 -->
+            <!-- 搜索及分享开始 -->
+                        <!-- 搜索及分享结束 -->
+                <style>
+                    .addthis_inline_share_toolbox_q1or{
+                        float: right;
+                    }
+                </style>
+            <!-- 新闻内容开始 -->
+            <div class="container-fluid clearfix">
+                <div class="row pageNewsDetailsBox">
+                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="thumbnail clearPic">
+                                                                                    <p class="MsoNormal" style="">
+	<span style="font-size:14px;"><a href="https://www.xindun-power.com/pure-sine-wave-inverter/LS-Inverter-For-Solar-System-1KW-2KW-3KW.html" target="_blank">Solar power inverters</a> are electrical equipment, improper installation will cause serious consequences. Installation precautions when installing the inverter mainly include:</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">1) The installation place should be well ventilated, away from water, flammable gas and corrosive agents.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">2) Do not put it on its side. Keep the air inlet under the front panel, the fan outlet of the rear cover and the air inlet on the side of the box unobstructed.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">3) The ambient temperature is maintained at 0-40 degrees.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">4) If it is disassembled and used at low temperature, water droplets may condense. You must wait until the inside and outside are completely dry before installing and using, otherwise there is a danger of electric shock.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">5) If the machine is placed out of use for a long time, it can be installed and used after confirming that the machine is completely dry and free of corrosion.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">6) Please leave a space of 10 cm around the inverter to make the air unblocked.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;">7) Other precautions of dc to ac solar power inverter installation for home, read the manual for details.</span><o:p></o:p>
+</p>
+<p class="MsoNormal" style="">
+	<span style="font-size:14px;"><br />
+</span>
+</p>
+<p class="MsoNormal" style="text-align:center;">
+	<span style="font-size:14px;"><a href="https://www.xindun-power.com/pure-sine-wave-inverter/LS-Inverter-For-Solar-System-1KW-2KW-3KW.html" target="_blank"><img src="/uploadfile/upload/2020-09/25/anzhuang.jpg" title="安装" alt="安装" /></a><br />
+</span>
+</p>                                                    </div>
+                    </div>
+                    <div class="paging pull-right">
+                        <a href="/news/Xindun-recruits-solar-inverter-distributors.html" title="Xindun sincerely recruits global solar inverter distributors." class="pull-left left"></a>                        <a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html" title="Should 12v 220v inverter 500w choose high frequency or low frequency?" class="pull-left right"></a>                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                        <div class="width100 gap"></div>
+                    </div>
+                </div>
+        </div>
+            <!-- 新闻内容结束 -->
+            <!-- 关联ID -->
+                        <!-- 推荐位 -->
+            <!--  -->
+            <!-- 更新时间 -->
+                                                            <div class="container-fluid clearfix">
+                    <div class="row pageLatest">
+                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 explain">Related posts</div>
+                        <div id="pageLatestTab" class="clearfix">
+                                                        <div class="item">
+                                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                    <div class="thumbnail clearPic"><a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html"><img src="/uploadfile/upload/2020-09/25/500wgaopindipin.jpg" alt="Should 12v 220v inverter 500w choose high frequency or low frequency?" w='370' h='280' /></a></div>
+                                    <div class="title"><h3><a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html">Should 12v 220v inverter 500w choose high frequency or low frequency?</a></h3></div>
+                                    <p><a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html">This article gives a brief introduction to high frequency inverter and low frequency inverter. After reading it, I believe you will know which one is more suitable for you.
+
+</a></p>
+                                    <div class="ditails">
+                                        <div class="like pull-left"><span class="hidden-xs hidden-md">Do you like it?</span><a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html">1932</a></div>
+                                        <div class="more pull-right"><a href="/news/12v-220v-inverter-500w-high-frequency-low-frequency.html" class="Block width100">Read more</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                                                    </div>
+                    </div>
+                </div>
+                        </div>
+    </div>
+</div>
+</div>
+<script>
+var id = '981';
+$.ajax({
+    url:'/index.php?m=magic&f=index&v=SeePost',
+    type:'get',
+    data:{id:id},
+    success:function (res) {
+    }
+});
+</script>
+<script>
+var id = '981';
+    $.ajax({
+        url:'/index.php?m=pne&f=index&v=GetPostView',
+        type:'get',
+        data:{id:id},
+        success:function (res) {
+        var data = JSON.parse(res);
+        if(data.code == 200){
+            var view = data.view;
+            $.each(view, function(index, item){
+                $(".post-"+item.id).text(item.view);
+            });
+        }
+        }
+    });
+</script>
+<footer><!-- Foot Start -->
+<footer class="clearfix marginAuto max1920">
+    <div class="autoWidth marginAuto footBox">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 leftBox">
+                    <a href="/" style="display:block;">
+                        <img src="/uploadfile/2022/08/30/20220830093935S970wx.png" alt="Guangdong XINDUN Power Technology Co., Ltd. " style="width:60%;margin-bottom:20px;"/>
+                    </a>
+                    <ul>
+                        <li class="clearfix iconBg">
+                            <p><a href="tel:+86 18924874907" content="nofollow" class="AHover noneLine">+86 18924874907</a></p>
+                        </li>
+                        <li class="clearfix iconBg"><a content="nofollow" class="AHover noneLine">xindun-power</a></li>
+                        <li class="clearfix iconBg"><a href="mailto:sales@gdxindun.com" content="nofollow" class="AHover noneLine">sales@gdxindun.com</a></li>
+                        <li class="clearfix iconBg"> 3-6/F, Bldg. 03, No. 60, Langbao WestRoad, Chancheng Dist., Foshan, Guangdong, China (Mainland)</li>
+                        <li class="clearfix">
+                                                        		 
+                                    <a href="https://www.pinterest.com/xindunpower/"><img  src="/uploadfile/2023/05/30/20230530161059V9CZ7z.png" alt="Pinterest" width="35" /></a>
+                                 
+                                    <a href="https://www.instagram.com/xindunsolar/"><img  src="/uploadfile/2023/05/30/20230530161027V51Bwu.png" alt="Instagram" width="35" /></a>
+                                 
+                                    <a href="https://twitter.com/xindunsolar"><img  src="/uploadfile/2023/05/30/20230530160955t8fZO3.png" alt="Twitter" width="35" /></a>
+                                 
+                                    <a href="https://www.tiktok.com/@xindunpower"><img  src="/uploadfile/2023/05/30/20230530160911zInWtd.png" alt="Tiktok" width="35" /></a>
+                                 
+                                    <a href="https://www.youtube.com/@xindupower"><img  src="/uploadfile/2023/05/30/20230530153201ZL3Pn1.png" alt="Youtube" width="35" /></a>
+                                 
+                                    <a href="https://www.facebook.com/XindunSolar"><img  src="/uploadfile/2023/03/20/20230320093729C6O4wy.png" alt="Facebook" width="35" /></a>
+                                                                                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12 rightBox">
+                   <ul style="display:flex;justify-content:space-between;">
+                                                                                   <li>
+                           <dl>
+                               <dt><a href="/products/" style="font-size:18px;margin:20px 0;">Product</a></dt>
+                                                                                                                                                                                                                                <dd><a href="/inverter-with-charge-controller/" style="margin-bottom:10px;font-size:13px;">Inverter With Charge Controller </a></dd>
+                                                                                                                                                                                                                                                                                                                    <dd><a href="/three-phase-inverter/" style="margin-bottom:10px;font-size:13px;">Three Phase Inverter</a></dd>
+                                                                                                                                                                                                                                        <dd><a href="/pure-sine-wave-inverter/" style="margin-bottom:10px;font-size:13px;">Pure Sine Wave Inverter</a></dd>
+                                                                                                                                                            <dd><a href="/solar-generator/" style="margin-bottom:10px;font-size:13px;">Solar Generator</a></dd>
+                                                                                                                                                                                                                                                                                                                    <dd><a href="/solar-controller/" style="margin-bottom:10px;font-size:13px;">Solar Controller</a></dd>
+                                                                                                                                                                                                                                                                                                                    <dd><a href="/solar-system-solution/" style="margin-bottom:10px;font-size:13px;">Solar System Solution</a></dd>
+                                                                                                                                                            <dd><a href="/types-of-battery/" style="margin-bottom:10px;font-size:13px;">Battery</a></dd>
+                                                                                                                                                                                                                                        <dd><a href="/monocrystalline-and-polycrystalline-solar-panel/" style="margin-bottom:10px;font-size:13px;">Solar Panel</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/solar-kits/" style="margin-bottom:10px;font-size:13px;">Solar kits</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/ups/" style="margin-bottom:10px;font-size:13px;">UPS  </a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/others/" style="margin-bottom:10px;font-size:13px;">Others</a></dd>
+                                                                                                                                       </dl>
+                       </li>
+                                                                                                                              <li>
+                           <dl>
+                               <dt><a href="/about-us/" style="font-size:18px;margin:20px 0;">About Us</a></dt>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/solar-inverter-dealer-power-inverter-distributor/" style="margin-bottom:10px;font-size:13px;">Inverter Dealers & Distributors</a></dd>
+                                                                                                                                                                                                                                                                                                                    <dd><a href="https://www.xindun-power.com/about-us/" style="margin-bottom:10px;font-size:13px;">Company Profile</a></dd>
+                                                                                                                                                                                                                                                                                                                    <dd><a href="/history/" style="margin-bottom:10px;font-size:13px;">History</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/certificate/" style="margin-bottom:10px;font-size:13px;">Certificate</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <dd><a href="/factory-show/" style="margin-bottom:10px;font-size:13px;">Factory Show</a></dd>
+                                                                                                                                                                                                                                        <dd><a href="/team/" style="margin-bottom:10px;font-size:13px;">Our Team</a></dd>
+                                                                                                                                                                                                                   </dl>
+                       </li>
+                                                                                      <li>
+                           <dl>
+                               <dt><a href="/services/" style="font-size:18px;margin:20px 0;">Services</a></dt>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="https://www.xindun-power.com/services/" style="margin-bottom:10px;font-size:13px;">Service System</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/why-choose-us/" style="margin-bottom:10px;font-size:13px;">Why Choose Us</a></dd>
+                                                                                                                                                                                                                                        <dd><a href="/video/" style="margin-bottom:10px;font-size:13px;">Video</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   </dl>
+                       </li>
+                                                                                                                              <li>
+                           <dl>
+                               <dt><a href="/case/" style="font-size:18px;margin:20px 0;">Case</a></dt>
+                                                           </dl>
+                       </li>
+                                                                                                                                                                      <li>
+                           <dl>
+                               <dt><a href="/news/" style="font-size:18px;margin:20px 0;">News</a></dt>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <dd><a href="/company-news/" style="margin-bottom:10px;font-size:13px;">Company News</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/industry-news/" style="margin-bottom:10px;font-size:13px;">Industry News</a></dd>
+                                                                                                                                                                                                                                                                                                                                                                                                <dd><a href="/faq/" style="margin-bottom:10px;font-size:13px;">FAQ</a></dd>
+                                                                                                                                                                                                                                                                                               </dl>
+                       </li>
+                                                                                                                                                                      <li>
+                           <dl>
+                               <dt><a href="/contact-us/" style="font-size:18px;margin:20px 0;">Contact us</a></dt>
+                                                           </dl>
+                       </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="copyRightBg">
+        <div class="autoWidth marginAuto clearfix">
+            <div class="container-fluid">
+                <a href="/sitemap.html" target="_blank">SITEMAP</a>
+                <a href="http://www.baiila.com/" target="_blank"></a>
+                <span>All rights reserved @ 2026 Guangdong XINDUN Power Technology Co., Ltd.</span>
+                <div class="foot-linksBox text-left cursor relative">
+                    <i class="Block">LINKS</i>
+                    <div class="absolute linkListBox border">
+                        <ul>
+                                                                                                            </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<style type='text/css'>
+.relative{position:relative}
+.absolute{position:absolute}
+.clearfix{clear:both}
+.cursor{cursor:pointer}
+.overflow{overflow:hidden}
+.marginAuto{margin-left:auto;margin-right:auto;}
+.pageBg{overflow: hidden;}
+.textHidden{overflow:hidden;text-overflow:ellipsis;word-break:keep-all;white-space:nowrap}
+.clearPic{background:0 0;margin:0;border:0;padding:0;border-radius:0}
+.padding{padding:0!important}
+.margin{margin:0!important}
+.noneLine{text-decoration:none!important}
+@media screen and (max-width:768px){.footBox .rightBox{display:none}
+}
+</style>
+<script src="/res/magic/js/public.js?v=7" type="text/javascript"></script>
+<style>
+.footer-mob{position:fixed;bottom:0;width:100%}
+.footer-mob div{display:flex;width:100%}
+.footer-mob div a{text-align:center;padding:10px 0;text-align:center;color:#fff;font-size:16px;margin:auto}
+.footer-mob{display:none}
+.whatsappbox{position:fixed;right:25px;bottom:20%;z-index:99999}
+@media(max-width:767px){.footer-mob{display:block;z-index:99999}
+.copyRightBg{margin-bottom:40px}
+.at-share-dock-outer{display:none!important}
+.whatsappbox{display:none}
+#tidio-chat #tidio-chat-iframe{
+    bottom:10% !important;
+}
+}
+</style>
+<div class="whatsappbox">
+    <a href="https://api.whatsapp.com/send?phone=8618924874907&text=Hello" title="whatsapp">
+        <img src="/res/magic/images/whatsapp.png" alt="" />
+    </a>
+</div>
+<script type="text/javascript" src="/public/js/area/country.js"></script>
+<script>
+    createCounrty();
+    function createCounrty()
+    {
+    var $country = $("select[name='form[address]']");
+    $(countryInfos).each(function(k,v){
+        $country.append("<option value=\""+v.name+"\">"+v.name+"</option>");
+    });
+    }
+</script>
+<div class="footer-mob">
+    <div class="">
+        <div style="background-color:#078d2e;" class="bottom-whatsapp"><a href="https://wa.me/8618924874907">Chat with Whatsapp</a></div>
+        <div style="background-color:#c30019" class="company_email"><a href="mailto:sales@gdxindun.com">Send Us E-mail</a></div>
+    </div>
+</div></footer>
+</html>
