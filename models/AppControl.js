@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 
 const defaultSlides = [
   {
@@ -7,8 +7,8 @@ const defaultSlides = [
     title: 'Flat 15% Off\nDeep Cleaning',
     subtitle: 'Quality service guaranteed.\nStarting from PKR 2,500.',
     buttonLabel: 'Book Now',
-    categoryId: 'cleaning',
-    categoryTitle: 'Cleaning',
+    categoryId: 'home-cleaning',
+    categoryTitle: 'Home Cleaning',
     visual: '15%',
     imageUrl: '',
     primaryColor: '#131b2e',
@@ -22,8 +22,8 @@ const defaultSlides = [
     title: 'AC Repair\nAt Your Doorstep',
     subtitle: 'Book verified cooling experts.\nSame-day slots available.',
     buttonLabel: 'Fix AC',
-    categoryId: 'home',
-    categoryTitle: 'Home',
+    categoryId: 'ac-services',
+    categoryTitle: 'AC Services',
     visual: 'AC',
     imageUrl: '',
     primaryColor: '#0f766e',
@@ -66,25 +66,46 @@ const defaultSettings = {
 
 const defaultCategories = [
   {
-    id: 'home',
-    title: 'Home Services',
-    subtitle: 'AC, plumbing, electrical',
-    icon: 'tools',
-    tint: '#0b1c30',
+    id: 'ac-services',
+    title: 'AC Services',
+    subtitle: 'Maintenance, installation, gas refill and dismounting',
+    icon: 'air-conditioner',
+    tint: '#4F46E5',
   },
   {
-    id: 'cleaning',
-    title: 'Cleaning',
-    subtitle: 'Deep clean and sofa care',
-    icon: 'sparkle',
+    id: 'electrician',
+    title: 'Electrician',
+    subtitle: 'Wiring, fans, lights, sockets and breaker repairs',
+    icon: 'lightning-bolt',
+    tint: '#F59E0B',
+  },
+  {
+    id: 'plumbers',
+    title: 'Plumbers',
+    subtitle: 'Leakage, taps, geyser and pipe repair work',
+    icon: 'wrench',
     tint: '#0891B2',
+  },
+  {
+    id: 'home-cleaning',
+    title: 'Home Cleaning',
+    subtitle: 'Deep cleaning, kitchen, bathroom and water tank care',
+    icon: 'sparkles',
+    tint: '#006C49',
+  },
+  {
+    id: 'dry-cleaning',
+    title: 'Dry Cleaning',
+    subtitle: 'Sofa, carpet, rug and fabric shampoo cleaning',
+    icon: 'sparkle',
+    tint: '#213145',
   },
   {
     id: 'subscriptions',
     title: 'Subscriptions',
-    subtitle: 'Monthly care bundles',
+    subtitle: 'Monthly home and office maintenance plans',
     icon: 'calendar',
-    tint: '#7C3AED',
+    tint: '#213145',
   },
 ];
 
