@@ -16,6 +16,20 @@ class Booking {
         return rows;
     }
 
+    // Get bookings timeline (last 7 days)
+    static async getTimeline() {
+        const query = `
+            SELECT DATE(created_at) as date, COUNT(*) as count 
+            FROM bot_bookings 
+            WHERE created_at >= CURRENT_DATE - INTERVAL '6 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `;
+        const [rows] = await db.query(query);
+        return rows;
+    }
+
+
     // Create new booking (bot.js se call hota hai)
     static async create(userId, orderDetails) {
         // bot.js camelCase bhejta hai, hum snake_case mein convert karte hain

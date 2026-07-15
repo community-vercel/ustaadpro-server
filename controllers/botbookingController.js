@@ -12,6 +12,19 @@ export const getAllBookings = async (req, res, next) => {
     }
 };
 
+// @desc    Get bookings timeline
+// @route   GET /api/bot/bookings-timeline (or similar)
+export const getTimeline = async (req, res, next) => {
+    try {
+        const timeline = await Booking.getTimeline();
+        // Format to [{ date: "MM/DD", count: 3 }, ...] or return as-is
+        res.json(timeline);
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 // @desc    Update booking status
 // @route   PATCH /api/bookings/:id
 export const updateBookingStatus = async (req, res, next) => {
