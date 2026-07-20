@@ -1,37 +1,21 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import xlsx from 'xlsx';
 import Shop from '../models/Shop.js';
 import pool from '../config/db.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..');
-const defaultWorkbookPath =
-  'alwaqas_hardware_and_tools_products.xlsx';
+const defaultWorkbookPath = 'alwaqas_hardware_and_tools_products.xlsx';
 const workbookPath = process.argv[2] || defaultWorkbookPath;
-const uploadDir = path.join(projectRoot, 'uploads', 'shop-products');
-const publicUploadBase = '/uploads/shop-products';
+
+function cleanText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
 
 function slugify(value) {
-  return String(value || 'product')
+  return cleanText(value)
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
     .slice(0, 80);
-}
-
-function uniqueSlug(base, seen) {
-  let slug = base || 'product';
-  let suffix = 2;
-  while (seen.has(slug)) {
-    slug = `${base}-${suffix}`;
-    suffix += 1;
-  }
-  seen.add(slug);
-  return slug;
 }
 
 function numberValue(value, fallback = 0) {
@@ -44,99 +28,168 @@ function numberValue(value, fallback = 0) {
 }
 
 function titleCaseCategory(value) {
-  const text = String(value || 'Tools').trim() || 'Tools';
+  const text = cleanText(value) || 'Tools';
   return text
     .split(/[\s_-]+/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
 }
 
-function getArchiveFile(cfb, name) {
-  return cfb.FileIndex.find(file => file.name === name);
+function normalizedHeader(value) {
+  return cleanText(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
-function bufferToString(file) {
-  return Buffer.from(file?.content || []).toString('utf8');
+function getColumnIndex(headers, name) {
+  return headers.findIndex(header => normalizedHeader(header) === normalizedHeader(name));
 }
 
-function getImageMapByExcelRow(cfb) {
-  const drawing = bufferToString(getArchiveFile(cfb, 'drawing1.xml'));
-  const rels = bufferToString(getArchiveFile(cfb, 'drawing1.xml.rels'));
-  const relMap = new Map();
-
-  for (const match of rels.matchAll(/<Relationship\b[^>]*Id="([^"]+)"[^>]*Target="\.\.\/media\/([^"]+)"/g)) {
-    relMap.set(match[1], match[2]);
-  }
-
-  const imageMap = new Map();
-  const anchorRegex =
-    /<xdr:oneCellAnchor>[\s\S]*?<xdr:row>(\d+)<\/xdr:row>[\s\S]*?<a:blip[^>]*r:embed="([^"]+)"[\s\S]*?<\/xdr:oneCellAnchor>/g;
-
-  for (const match of drawing.matchAll(anchorRegex)) {
-    const excelRow = Number(match[1]) + 1;
-    const imageName = relMap.get(match[2]);
-    if (imageName) {
-      imageMap.set(excelRow, imageName);
-    }
-  }
-
-  return imageMap;
-}
-
-async function writeProductImage(cfb, productId, imageName) {
-  if (!imageName) return '';
-  const file = getArchiveFile(cfb, imageName);
-  if (!file?.content) return '';
-
-  await fs.mkdir(uploadDir, { recursive: true });
-  const ext = path.extname(imageName) || '.png';
-  const filename = `${productId}${ext}`;
-  await fs.writeFile(path.join(uploadDir, filename), Buffer.from(file.content));
-  return `${publicUploadBase}/${filename}`;
+function getValue(row, index) {
+  return index >= 0 ? row[index] : '';
 }
 
 async function importProducts() {
   const workbook = xlsx.readFile(workbookPath);
   const sheet = workbook.Sheets.Products || workbook.Sheets[workbook.SheetNames[0]];
-  const rows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-  const cfb = xlsx.CFB.read(workbookPath, { type: 'file' });
-  const imageMap = getImageMapByExcelRow(cfb);
-  const seenIds = new Set();
-  let imported = 0;
-  let withImages = 0;
+  const rows = xlsx.utils.sheet_to_json(sheet, {header: 1, defval: ''});
+  const headers = rows[0] || [];
+  const columns = {
+    id: getColumnIndex(headers, 'Product ID'),
+    title: getColumnIndex(headers, 'Product Name'),
+    category: getColumnIndex(headers, 'Category'),
+    currentPrice: getColumnIndex(headers, 'Current Price'),
+    updatedPrice: getColumnIndex(headers, 'Updated Price'),
+    unit: getColumnIndex(headers, 'Unit'),
+    availability: getColumnIndex(headers, 'Availability'),
+    shortDescription: getColumnIndex(headers, 'Short Description'),
+    detailDescription: getColumnIndex(headers, 'Detail Description'),
+    imageUrl: getColumnIndex(headers, 'Image URL'),
+  };
 
-  for (let index = 1; index < rows.length; index += 1) {
-    const row = rows[index];
-    const title = String(row[2] || '').replace(/\s+/g, ' ').trim();
-    if (!title) continue;
+  if (columns.id < 0 || columns.title < 0 || columns.updatedPrice < 0) {
+    throw new Error('Workbook must include Product ID, Product Name, and Updated Price columns.');
+  }
 
-    const baseId = slugify(title);
-    const id = uniqueSlug(baseId, seenIds);
-    const currentPrice = numberValue(row[4]);
-    const updatedPrice = numberValue(row[5], currentPrice);
-    const stock =
-      String(row[7] || '').toLowerCase().includes('out') ? 0 : Math.max(0, Math.floor(numberValue(row[6], 100)));
-    const excelRow = index + 1;
-    const imageUrl = await writeProductImage(cfb, id, imageMap.get(excelRow));
-    if (imageUrl) withImages += 1;
+  await Shop.ensureTables();
+  const [existingRows] = await pool.query('SELECT id, price FROM shop_products');
+  const existingMap = new Map(existingRows.map(product => [product.id, Number(product.price)]));
+  const operations = [];
+  let priceUpdated = 0;
+  let created = 0;
+  let skipped = 0;
+  let unchanged = 0;
 
-    await Shop.saveProduct({
+  for (const row of rows.slice(1)) {
+    const sourceId = cleanText(getValue(row, columns.id));
+    const title = cleanText(getValue(row, columns.title));
+    const id = slugify(sourceId);
+    const currentPrice = numberValue(getValue(row, columns.currentPrice));
+    const updatedPrice = numberValue(
+      getValue(row, columns.updatedPrice),
+      currentPrice,
+    );
+    const price = updatedPrice || currentPrice;
+
+    if (!sourceId || !title || price <= 0) {
+      skipped += 1;
+      continue;
+    }
+
+    const availability = cleanText(getValue(row, columns.availability)).toLowerCase();
+    const category = titleCaseCategory(getValue(row, columns.category));
+    const description =
+      cleanText(getValue(row, columns.detailDescription)) ||
+      cleanText(getValue(row, columns.shortDescription)) ||
+      title;
+    const imageUrl = cleanText(getValue(row, columns.imageUrl));
+    const stock = availability.includes('out')
+      ? 0
+      : Math.max(0, Math.floor(numberValue(getValue(row, columns.unit), 100)));
+
+    const existingId = existingMap.has(sourceId)
+      ? sourceId
+      : existingMap.has(id)
+        ? id
+        : null;
+
+    if (existingId) {
+      const oldPrice = existingMap.get(existingId);
+      // Update price and all product details for existing products
+      operations.push(async () => {
+        await pool.query(
+          `UPDATE shop_products
+           SET price = $1, title = $2, category = $3, description = $4,
+               original_price = $5, image_url = $6, stock = $7,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $8`,
+          [price, title, category, description, oldPrice || price, imageUrl, stock, existingId],
+        );
+        if (oldPrice !== price) {
+          priceUpdated += 1;
+        } else {
+          unchanged += 1;
+        }
+      });
+      continue;
+    }
+
+    // New product — insert with full details from the spreadsheet
+    const product = {
       id,
       title,
-      category: titleCaseCategory(row[3]),
-      description: String(row[9] || row[8] || title).trim(),
-      price: updatedPrice || currentPrice,
-      originalPrice: currentPrice || updatedPrice,
+      category,
+      description,
+      price,
+      originalPrice: currentPrice || price,
       imageUrl,
       stock,
       isActive: true,
+    };
+    operations.push(async () => {
+      await pool.query(
+        `INSERT INTO shop_products
+         (id, title, category, description, price, original_price, image_url, stock, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title,
+           category = EXCLUDED.category,
+           description = EXCLUDED.description,
+           price = EXCLUDED.price,
+           original_price = EXCLUDED.original_price,
+           image_url = EXCLUDED.image_url,
+           stock = EXCLUDED.stock,
+           is_active = EXCLUDED.is_active,
+           updated_at = CURRENT_TIMESTAMP`,
+        [
+          product.id,
+          product.title,
+          product.category,
+          product.description,
+          product.price,
+          product.originalPrice,
+          product.imageUrl,
+          product.stock,
+          1,
+        ],
+      );
+      created += 1;
     });
-    imported += 1;
   }
 
-  console.log(`Imported ${imported} Alwaqas shop products.`);
-  console.log(`Attached ${withImages} embedded product images.`);
-  console.log(`Images folder: ${uploadDir}`);
+  // The remote database is much faster with small concurrent batches than one
+  // request per product, while keeping the import load bounded.
+  const batchSize = 20;
+  for (let index = 0; index < operations.length; index += batchSize) {
+    await Promise.all(operations.slice(index, index + batchSize).map(run => run()));
+  }
+
+  console.log('');
+  console.log('=== Alwaqas Product Import Summary ===');
+  console.log(`  Updated prices : ${priceUpdated} products`);
+  console.log(`  Newly created  : ${created} products`);
+  console.log(`  Unchanged      : ${unchanged} products`);
+  console.log(`  Skipped (empty): ${skipped} rows`);
+  console.log(`  Total processed: ${operations.length} products`);
+  console.log('======================================');
 }
 
 importProducts()

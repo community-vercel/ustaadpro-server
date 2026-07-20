@@ -1,0 +1,90 @@
+================================================================================
+  REVIEW API
+================================================================================
+
+1. GET REVIEWS FOR A SERVICE
+   GET /api/services/:serviceId/reviews
+   Auth: None (public)
+   Example: GET /api/services/ac-general-service/reviews
+
+   Response:
+   [
+     {
+       "id": 1,
+       "serviceId": "ac-general-service",
+       "orderId": "ORD-123456",
+       "userId": 5,
+       "rating": 5,
+       "comment": "Great service!",
+       "customerName": "Ali Khan",
+       "createdAt": "2026-07-20T10:00:00Z"
+     }
+   ]
+
+
+2. SUBMIT A REVIEW
+   POST /api/reviews
+   Auth: 🔒 Bearer Token required
+
+   Payload:
+   {
+     "serviceId": "ac-general-service",
+     "orderId": "ORD-123456",
+     "rating": 5,            // 1-5 stars (integer, required)
+     "comment": "Excellent!"  // required, non-empty string
+   }
+
+   Success Response (201):
+   { "message": "Review submitted successfully." }
+
+   Error Responses:
+   400 — Missing serviceId/orderId, invalid rating, or empty comment
+   409 — Already reviewed this service booking
+
+
+================================================================================
+  SHOP PRODUCT SEARCH / LISTING
+================================================================================
+
+GET /api/shop/products
+Auth: None (public)
+
+Query Params:
+  ?category=Tools        Filter by category (default: "All")
+  &limit=15              Products per page (max 30, default 15)
+  &offset=0              Pagination offset (default 0)
+
+Examples:
+  GET /api/shop/products
+  GET /api/shop/products?category=Hardware&limit=20&offset=0
+  GET /api/shop/products?category=Paint&limit=10&offset=20
+
+Response:
+{
+  "products": [
+    {
+      "id": "captain-brushe-5-inch",
+      "title": "Captain Brushes",
+      "category": "Tools",
+      "description": "Premium painting brushes...",
+      "price": 750,
+      "originalPrice": 750,
+      "imageUrl": "https://alwaqaspaint.com/tools/captain-brush.webp",
+      "stock": 100,
+      "isActive": true,
+      "createdAt": "2026-07-20T10:00:00Z"
+    }
+  ],
+  "categories": [
+    { "name": "Hardware", "total": 524 },
+    { "name": "Paint", "total": 81 },
+    { "name": "Tools", "total": 88 }
+  ],
+  "limit": 15,
+  "offset": 0,
+  "total": 693,
+  "category": "All",
+  "hasMore": true
+}
+
+NOTE: No text search (q=keyword) exists yet. Only category filtering is supported.

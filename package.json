@@ -15,6 +15,7 @@
         "seedPassword": "node db/seedPassword.js",
         "seed:password": "node db/seedPassword.js",
         "seed:shop:alwaqas": "node scripts/importAlwaqasProducts.js",
+        "seed:shop:prices": "node scripts/importAlwaqasProducts.js",
         "seed:services": "node serviceSeed.js",
         "migrate:mysql-to-postgres": "node db/migrate-mysql-to-postgres.js"
     },

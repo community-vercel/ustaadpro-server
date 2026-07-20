@@ -134,7 +134,7 @@ class Shop {
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
        ${whereClause}
-       ORDER BY created_at DESC
+       ORDER BY created_at DESC, id ASC
        ${paginationClause}`,
       params,
     );
