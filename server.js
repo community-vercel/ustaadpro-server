@@ -47,7 +47,7 @@ app.use('/api/bot', botRoutes);
 app.use('/api/bot/services', botServiceRoutes);
 app.use('/api/bookings', botBookingRoutes);
 app.use('/api/sessions', botSessionRoutes);
-app.use('/api/stats', botStatsRoutes);
+app.use('/api/bot/stats', botStatsRoutes);
 
 
 // ═══════════════ USTADPRO ROUTES ═══════════════
