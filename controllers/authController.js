@@ -137,19 +137,32 @@ export const signup = async (req, res) => {
       },
     });
 
-    await sendOtp({
-      channel,
-      to: otpIdentifier,
-      code: otpCode,
-      purpose: 'signup',
-    });
+    // Try to send OTP — if email delivery fails, log the code as a fallback
+    let emailWarning = null;
+    try {
+      await sendOtp({
+        channel,
+        to: otpIdentifier,
+        code: otpCode,
+        purpose: 'signup',
+      });
+    } catch (emailError) {
+      console.error('[Signup] Failed to send OTP email to', otpIdentifier);
+      console.error('[Signup] Email error details:', emailError.message || emailError);
+      // ── FALLBACK: print OTP to console so dev can manually verify ──
+      console.warn(`[Signup] FALLBACK OTP for ${otpIdentifier}: ${otpCode}`);
+      emailWarning = 'Could not send verification email. Please check the server console for the OTP code.';
+    }
 
     res.status(200).json({
-      message: `Verification code sent to your ${channel}.`,
+      message: emailWarning
+        ? 'Account created but email delivery failed. See server console for OTP.'
+        : `Verification code sent to your ${channel}.`,
       email: normalizedEmail,
       phone: normalizedPhone,
       verificationChannel: channel,
       expiresInMinutes: OTP_EXPIRY_MINUTES,
+      ...(emailWarning && { emailWarning }),
     });
   } catch (error) {
     console.error('Signup OTP error:', error);
