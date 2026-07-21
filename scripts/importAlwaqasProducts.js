@@ -38,11 +38,13 @@ function numberValue(value, fallback = 0) {
 }
 
 function titleCaseCategory(value) {
-  const text = cleanText(value) || 'Tools';
-  return text
+  let text = cleanText(value) || 'Tools';
+  text = text
     .split(/[\s_-]+/)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
+  if (text === 'Paint') return 'Paints';
+  return text;
 }
 
 function normalizedHeader(value) {
