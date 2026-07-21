@@ -87,4 +87,41 @@ Response:
   "hasMore": true
 }
 
-NOTE: No text search (q=keyword) exists yet. Only category filtering is supported.
+
+================================================================================
+  GLOBAL SEARCH (SERVICES + SHOP)
+================================================================================
+
+GET /api/search
+Auth: None (public)
+
+Query Params:
+  ?q=hammer              Search keyword (required)
+  &limit=30              Results per page (max 50, default 30)
+  &offset=0              Pagination offset (default 0)
+
+Examples:
+  GET /api/search?q=paint
+
+Response:
+{
+  "results": [
+    {
+      "resultType": "shop_product",    // or "service"
+      "id": "commander-paint-roller",
+      "title": "Commander Paint Roller",
+      "description": "Pakistan-made Commander paint roller...",
+      "price": 500,
+      "originalPrice": 500,
+      "imageUrl": "/uploads/shop-products/commander-paint-roller.webp",
+      "category": "Tools",             // null for services
+      "stock": 100,                    // null for services
+      "exactMatch": false,
+      "partialTitleMatch": true
+    }
+  ],
+  "limit": 30,
+  "offset": 0,
+  "total": 125,
+  "hasMore": true
+}
