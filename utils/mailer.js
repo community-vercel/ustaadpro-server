@@ -49,3 +49,33 @@ export async function sendOtpEmail({ to, code, purpose = 'verification' }) {
 
   return info;
 }
+
+export async function sendContactEmail({ name, email, message }) {
+  const transporter = createTransporter();
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'UstaadPro <no-reply@ustaadpro.local>';
+  const to = process.env.CONTACT_EMAIL || from;
+
+  const info = await transporter.sendMail({
+    from,
+    to,
+    replyTo: email,
+    subject: `New Contact Form Submission from ${name}`,
+    text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0b1c30;max-width:600px;">
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <div style="margin-top:20px;padding:15px;background:#f5f7fb;border-left:4px solid #006c49;">
+          <p style="margin:0;white-space:pre-wrap;">${message}</p>
+        </div>
+      </div>
+    `,
+  });
+
+  if (!hasSmtpConfig()) {
+    console.log('SMTP is not configured. Contact email payload:', info.message);
+  }
+
+  return info;
+}
