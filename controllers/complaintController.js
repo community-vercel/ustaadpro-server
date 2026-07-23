@@ -77,7 +77,7 @@ export const getComplaints = async (req, res) => {
     const whereClause = status ? `WHERE status = $3` : '';
     const params = status ? [limit, offset, status] : [limit, offset];
 
-    const [[{ total }], rows] = await Promise.all([
+    const [countResult, dataResult] = await Promise.all([
       pool.query(
         `SELECT COUNT(*) as total FROM complaints ${status ? 'WHERE status = $1' : ''}`,
         status ? [status] : []
@@ -88,12 +88,16 @@ export const getComplaints = async (req, res) => {
       ),
     ]);
 
+    const rows = countResult[0];       // countRows = [{ total: '5' }]
+    const total = rows[0]?.total ?? 0; // the COUNT value
+    const complaints = dataResult[0];  // dataRows = [{id, name, ...}, ...]
+
     res.json({
-      complaints: rows,
+      complaints,
       total: Number(total),
       limit,
       offset,
-      hasMore: offset + rows.length < Number(total),
+      hasMore: offset + complaints.length < Number(total),
     });
   } catch (error) {
     console.error('Error fetching complaints:', error);
