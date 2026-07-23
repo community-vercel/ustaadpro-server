@@ -310,3 +310,68 @@ Base URL: `http://localhost:5000` (or your live server URL)
 - **Endpoint**: `GET /api/complaints/my-services`
 - **Auth**: Bearer Token required
 - **Response**: `{ "services": [{ "service": "AC Service", "sub_service": "Master Wash" }] }`
+
+
+
+User: Submit a Complaint (Mobile/Web)
+Endpoint: POST /api/complaints Format: multipart/form-data (Because of image uploads) Payload (Form Data):
+
+name (Text, Required) - e.g. "John Doe"
+phone (Text, Required) - e.g. "+923001234567"
+service (Text, Required) - e.g. "AC Repair"
+subService (Text, Optional) - e.g. "Gas Refill"
+email (Text, Optional) - e.g. "john@example.com"
+description (Text, Optional) - e.g. "The AC is still not cooling."
+images (File Array, Optional) - Up to 5 image files.
+2. User: Get My Complaints (Mobile/Web)
+Endpoint: GET /api/complaints/me Headers: Authorization: Bearer <token> Payload: None Response:
+
+json
+{
+  "complaints": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "phone": "+923001234567",
+      "service": "AC Repair",
+      "sub_service": "Gas Refill",
+      "description": "The AC is still not cooling.",
+      "images": ["/uploads/complaints/file1.jpg"],
+      "status": "pending",
+      "created_at": "2026-07-23T12:00:00Z"
+    }
+  ]
+}
+3. User: Get Past Booked Services (Mobile/Web Dropdown)
+This is used to populate the dropdown on the "File a Complaint" screen. Endpoint: GET /api/complaints/my-services Headers: Authorization: Bearer <token> Payload: None Response:
+
+json
+{
+  "services": [
+    {
+      "service": "AC Repair",
+      "sub_service": "Gas Refill"
+    }
+  ]
+}
+4. Admin: Get All Complaints (Admin Dashboard)
+Endpoint: GET /api/complaints Query Parameters (Optional):
+
+limit (Number) - e.g. 20 (default)
+offset (Number) - e.g. 0 (default)
+status (String) - Filter by status (e.g., pending, resolved) Example: /api/complaints?limit=10&offset=0&status=pending Response:
+json
+{
+  "complaints": [ ... ],
+  "total": 42,
+  "limit": 10,
+  "offset": 0,
+  "hasMore": true
+}
+5. Admin: Update Complaint Status (Admin Dashboard)
+Endpoint: PATCH /api/complaints/:id/status Format: application/json Payload (JSON):
+
+json
+{
+  "status": "in-review"
+}
