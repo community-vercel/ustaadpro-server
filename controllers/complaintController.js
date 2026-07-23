@@ -154,3 +154,21 @@ export const getMyBookedServices = async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
+
+// User: get their own complaints
+export const getMyComplaints = async (req, res) => {
+  try {
+    const phone = req.user.phone;
+    if (!phone) {
+      return res.json({ complaints: [] });
+    }
+    const [rows] = await pool.query(
+      `SELECT * FROM complaints WHERE phone = $1 ORDER BY created_at DESC`,
+      [phone]
+    );
+    res.json({ complaints: rows });
+  } catch (error) {
+    console.error('Error fetching user complaints:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
