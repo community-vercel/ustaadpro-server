@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import path from 'path';
 
 const requiredSmtpKeys = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
 
@@ -85,8 +86,18 @@ export async function sendComplaintEmail({ name, email, phone, service, subServi
   const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'UstaadPro <no-reply@ustaadpro.local>';
   const to = process.env.CONTACT_EMAIL || from;
 
+  const attachments = imageUrls.map((url, i) => ({
+    filename: url.split('/').pop(),
+    path: path.join(process.cwd(), url),
+    cid: `img_${i}`
+  }));
+
   const imageList = imageUrls.length
-    ? imageUrls.map(url => `<li>${url}</li>`).join('')
+    ? imageUrls.map((url, i) => `
+        <li style="margin-bottom:12px;">
+          <img src="cid:img_${i}" style="max-width:100%; border-radius:8px; border:1px solid #ccc;" alt="Attachment ${i+1}" />
+        </li>
+      `).join('')
     : '<li>No images attached</li>';
 
   const info = await transporter.sendMail({
@@ -111,10 +122,11 @@ export async function sendComplaintEmail({ name, email, phone, service, subServi
         </div>
         <div style="margin-top:16px;">
           <strong>Attached Images (${imageUrls.length}):</strong>
-          <ul style="margin:8px 0;">${imageList}</ul>
+          <ul style="margin:8px 0; padding-left:0; list-style:none;">${imageList}</ul>
         </div>
       </div>
     `,
+    attachments,
   });
 
   if (!hasSmtpConfig()) {
