@@ -297,3 +297,16 @@ Base URL: `http://localhost:5000` (or your live server URL)
 - **PATCH** `/api/bookings/:id`: Update bot booking status `{ "status": "completed" }`
 - **DELETE** `/api/bookings/:id`: Delete bot booking.
 - **GET** `/api/sessions`: List active WhatsApp user sessions.
+
+### 11. Complaints (`/api/complaints`)
+
+#### 11.1 Submit Complaint
+- **Endpoint**: `POST /api/complaints`
+- **Auth**: None
+- **Payload**: `multipart/form-data` with `name`, `phone`, `service`, `email` (optional), `subService` (optional), `description` (optional), and `images` (optional array of files)
+- **Response**: `{ "message": "...", "complaintId": 1 }`
+
+#### 11.2 Get My Booked Services (For Dropdown)
+- **Endpoint**: `GET /api/complaints/my-services`
+- **Auth**: Bearer Token required
+- **Response**: `{ "services": [{ "service": "AC Service", "sub_service": "Master Wash" }] }`

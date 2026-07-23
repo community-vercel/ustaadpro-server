@@ -26,6 +26,7 @@
         "express": "^4.21.0",
         "firebase-admin": "^10.3.0",
         "jsonwebtoken": "^9.0.2",
+        "multer": "^2.2.0",
         "mysql2": "^3.11.0",
         "nodemailer": "^9.0.1",
         "pg": "^8.13.1",
