@@ -6,6 +6,9 @@ import {
   getAdminOrders,
   getAdminPaymentReceipts,
   getAdminServices,
+  getAdminCatalogue,
+  saveAdminCategory,
+  saveAdminSubcategory,
   getAdminSettings,
   getAdminSummary,
   getAdminUsers,
@@ -41,6 +44,9 @@ router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
+router.get('/catalogue', getAdminCatalogue);
+router.post('/categories', saveAdminCategory);
+router.post('/subcategories', saveAdminSubcategory);
 router.get('/services', getAdminServices);
 router.post('/services', createAdminService);
 router.put('/services/:id', updateAdminService);

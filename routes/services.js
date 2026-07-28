@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getAppSettings,
   getCategories,
+  getServiceCatalog,
   getHomeSlides,
   getServiceById,
   getServices,
@@ -11,6 +12,7 @@ import {
 
 const router = express.Router();
 
+router.get('/catalog', getServiceCatalog);
 router.get('/categories', getCategories);
 router.get('/categories/:categoryId/subcategories', getSubcategories);
 router.get('/services', getServices);

@@ -50,6 +50,34 @@ export const getServiceById = async (req, res) => {
   }
 };
 
+export const getServiceCatalog = async (_req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const [categories, services] = await Promise.all([
+      Category.getAll(),
+      Service.getAll(),
+    ]);
+    const subcategoriesByCategory = await Promise.all(
+      categories.map(async category => [category.id, await Subcategory.findByCategoryId(category.id)]),
+    );
+    const subcategoryMap = new Map(subcategoriesByCategory);
+    res.json(categories.map(category => {
+      const subcategories = (subcategoryMap.get(category.id) || []).map(subcategory => ({
+        ...subcategory,
+        services: services.filter(service => service.subcategoryId === subcategory.id),
+      }));
+      return {
+        ...category,
+        services: services.filter(service => service.categoryId === category.id && !service.subcategoryId),
+        subcategories,
+      };
+    }));
+  } catch (error) {
+    console.error('Get service catalog error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
 export const getSubscriptions = async (req, res) => {
   try {
     const subscriptions = await Subscription.getAll();

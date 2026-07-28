@@ -7,6 +7,8 @@ import Order from '../models/Order.js';
 import Service from '../models/Service.js';
 import AppControl from '../models/AppControl.js';
 import Subscription from '../models/Subscription.js';
+import Category from '../models/Category.js';
+import Subcategory from '../models/Subcategory.js';
 import PaymentReceipt from '../models/PaymentReceipt.js';
 import { getFirebaseMessaging } from '../utils/firebase.js';
 
@@ -362,6 +364,54 @@ export const getAdminPaymentReceipts = async (_req, res) => {
     res.status(500).json({message: 'Internal server error.'});
   }
 };
+const catalogueId = value => String(value || '').trim().toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/(^-|-$)/g, '');
+
+export const getAdminCatalogue = async (_req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const categories = await Category.getAll();
+    const subcategories = (await Promise.all(categories.map(category =>
+      Subcategory.findByCategoryId(category.id)))).flat();
+    res.json({categories, subcategories});
+  } catch (error) {
+    console.error('Admin catalogue error:', error);
+    res.status(500).json({message: 'Could not load catalogue.'});
+  }
+};
+
+export const saveAdminCategory = async (req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const title = String(req.body?.title || '').trim();
+    const id = catalogueId(req.body?.id || title);
+    if (!id || !title) return res.status(400).json({message: 'Category title is required.'});
+    await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint',
+      [id, title, req.body?.subtitle || 'Explore services', req.body?.icon || 'tool', req.body?.tint || '#006C49']);
+    res.status(201).json({id, title});
+  } catch (error) {
+    console.error('Save admin category error:', error);
+    res.status(500).json({message: 'Could not save main service.'});
+  }
+};
+
+export const saveAdminSubcategory = async (req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const categoryId = String(req.body?.categoryId || req.body?.category_id || '').trim();
+    const title = String(req.body?.title || '').trim();
+    const id = catalogueId(req.body?.id || categoryId + '-' + title);
+    if (!categoryId || !title) return res.status(400).json({message: 'Main service and sub-service title are required.'});
+    await pool.query('INSERT INTO subcategories (id, category_id, title, description) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description',
+      [id, categoryId, title, req.body?.description || null]);
+    res.status(201).json({id, categoryId, title});
+  } catch (error) {
+    console.error('Save admin subcategory error:', error);
+    res.status(500).json({message: 'Could not save sub-service.'});
+  }
+};
+
 export const getAdminServices = async (_req, res) => {
   try {
     const services = await Service.getAll();
