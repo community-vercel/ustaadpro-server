@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {PDFParse} from 'pdf-parse';
+import pdfParse from 'pdf-parse';
 import pool from '../config/db.js';
 import AppControl from '../models/AppControl.js';
 
@@ -50,9 +50,7 @@ async function main() {
   const suppliedPath = process.argv.slice(2).find(arg => !arg.startsWith('--'));
   const pdfPath = path.resolve(suppliedPath || defaultPdf);
   if (!fs.existsSync(pdfPath)) throw new Error('PDF not found: ' + pdfPath);
-  const parser = new PDFParse({data: fs.readFileSync(pdfPath)});
-  const result = await parser.getText();
-  await parser.destroy();
+  const result = await pdfParse(fs.readFileSync(pdfPath));
   const rows = parseRows(result.text);
   if (!rows.length) throw new Error('No services were read from the PDF.');
   if (dryRun) {
