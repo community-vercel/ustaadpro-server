@@ -12,6 +12,9 @@ import addressRoutes from './routes/addresses.js';
 import adminRoutes from './routes/admin.js';
 import shopRoutes from './routes/shop.js';
 import reviewRoutes from './routes/reviews.js';
+import searchRoutes from './routes/search.js';
+import contactRoutes from './routes/contact.js';
+import complaintRoutes from './routes/complaints.js';
 
 // ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
 import botServiceRoutes from './routes/botserviceRoutes.js';
@@ -55,6 +58,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/complaints', complaintRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', reviewRoutes);

@@ -7,24 +7,26 @@ const SHOP_STATUSES = ['placed', 'processing', 'shipped', 'delivered', 'cancelle
 
 export const getShopProducts = async (req, res) => {
   try {
-    const limit = Math.min(30, Math.max(1, Number(req.query.limit || 15)));
+    const limitParam = req.query.limit !== undefined ? Math.min(200, Math.max(1, Number(req.query.limit))) : undefined;
     const offset = Math.max(0, Number(req.query.offset || 0));
     const category = String(req.query.category || 'All').trim() || 'All';
+    const search = String(req.query.search || '').trim();
     const categoryFilter = category === 'All' ? null : category;
     const [products, total, categories] = await Promise.all([
-      Shop.getProducts({activeOnly: true, category: categoryFilter, limit, offset}),
-      Shop.countProducts({activeOnly: true, category: categoryFilter}),
+      Shop.getProducts({activeOnly: true, category: categoryFilter, search, limit: limitParam, offset}),
+      Shop.countProducts({activeOnly: true, category: categoryFilter, search}),
       Shop.getCategories({activeOnly: true}),
     ]);
 
     res.json({
       products,
       categories,
-      limit,
+      limit: limitParam ?? null,
       offset,
       total,
       category,
-      hasMore: offset + products.length < total,
+      search,
+      hasMore: limitParam !== undefined && (offset + products.length < total),
     });
   } catch (error) {
     console.error('Shop products error:', error);

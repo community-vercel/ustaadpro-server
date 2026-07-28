@@ -64,6 +64,18 @@ export const createWhatsAppBotTables = async () => {
             current_service_type VARCHAR(20),
             change_date_temp VARCHAR(50),
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS complaints (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(200) NOT NULL,
+            email VARCHAR(200),
+            phone VARCHAR(30),
+            service VARCHAR(200),
+            sub_service VARCHAR(200),
+            description TEXT,
+            images JSONB DEFAULT '[]'::jsonb,
+            status VARCHAR(30) DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
     ];
     // ... rest same

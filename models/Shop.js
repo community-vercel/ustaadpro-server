@@ -107,7 +107,7 @@ class Shop {
     await ensureShopTables();
   }
 
-  static async getProducts({activeOnly = true, category = null, limit, offset = 0} = {}) {
+  static async getProducts({activeOnly = true, category = null, search = '', limit, offset = 0} = {}) {
     await ensureShopTables();
     const conditions = [];
     const params = [];
@@ -122,6 +122,12 @@ class Shop {
       params.push(category);
     }
 
+    if (search) {
+      conditions.push('(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(category) LIKE LOWER(?))');
+      const likeVal = `%${search}%`;
+      params.push(likeVal, likeVal, likeVal);
+    }
+
     if (Number.isFinite(Number(limit)) && Number(limit) > 0) {
       paginationClause = 'LIMIT ? OFFSET ?';
       params.push(Math.max(1, Math.floor(Number(limit))), Math.max(0, Math.floor(Number(offset) || 0)));
@@ -134,14 +140,14 @@ class Shop {
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
        ${whereClause}
-       ORDER BY created_at DESC
+       ORDER BY created_at DESC, id ASC
        ${paginationClause}`,
       params,
     );
     return rows.map(normalizeProduct);
   }
 
-  static async countProducts({activeOnly = true, category = null} = {}) {
+  static async countProducts({activeOnly = true, category = null, search = ''} = {}) {
     await ensureShopTables();
     const conditions = [];
     const params = [];
@@ -153,6 +159,12 @@ class Shop {
     if (category && category !== 'All') {
       conditions.push('LOWER(category) = LOWER(?)');
       params.push(category);
+    }
+
+    if (search) {
+      conditions.push('(LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(category) LIKE LOWER(?))');
+      const likeVal = `%${search}%`;
+      params.push(likeVal, likeVal, likeVal);
     }
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
