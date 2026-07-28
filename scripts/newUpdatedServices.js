@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import pdfParse from 'pdf-parse';
+import {PDFParse} from 'pdf-parse';
 import pool from '../config/db.js';
 import AppControl from '../models/AppControl.js';
 
-const defaultPdf = 'C:/Users/Sharplogicians/Desktop/ustaapro_Updated_services.pdf';
+const defaultPdf = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'), 'ustaapro_Updated_services.pdf');
 const mainServiceMeta = {
   Electrician: {icon: 'lightning-bolt', tint: '#F59E0B'}, 'Home Services': {icon: 'home', tint: '#006C49'}, Plumber: {icon: 'wrench', tint: '#0891B2'}, Painter: {icon: 'paintbrush', tint: '#8B5CF6'}, Carpenter: {icon: 'hammer', tint: '#A16207'}, Welder: {icon: 'flame', tint: '#DC2626'}, CCTV: {icon: 'camera', tint: '#0F766E'}, HVAC: {icon: 'wind', tint: '#2563EB'}, 'Office Maintenance': {icon: 'building', tint: '#475569'},
 };
@@ -50,7 +50,9 @@ async function main() {
   const suppliedPath = process.argv.slice(2).find(arg => !arg.startsWith('--'));
   const pdfPath = path.resolve(suppliedPath || defaultPdf);
   if (!fs.existsSync(pdfPath)) throw new Error('PDF not found: ' + pdfPath);
-  const result = await pdfParse(fs.readFileSync(pdfPath));
+  const parser = new PDFParse({data: fs.readFileSync(pdfPath)});
+  const result = await parser.getText();
+  await parser.destroy();
   const rows = parseRows(result.text);
   if (!rows.length) throw new Error('No services were read from the PDF.');
   if (dryRun) {
