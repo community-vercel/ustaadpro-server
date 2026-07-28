@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {PDFParse} from 'pdf-parse';
 import pool from '../config/db.js';
 import AppControl from '../models/AppControl.js';
@@ -14,6 +15,10 @@ const knownSubservices = {
 };
 const slug = value => String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 const priceNumber = value => Number(String(value).replace(/,/g, ''));
+const compactId = (prefix, value) => {
+  const hash = createHash('sha1').update(String(value)).digest('hex').slice(0, 10);
+  return `${prefix}-${slug(value).slice(0, 34)}-${hash}`.slice(0, 50);
+};
 
 function parseRows(text) {
   const rows = [];
@@ -64,9 +69,9 @@ async function main() {
     const categoryId = slug(row.mainTitle);
     const meta = mainServiceMeta[row.mainTitle] || {icon: 'tool', tint: '#006C49'};
     await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint, image_url) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint, image_url = COALESCE(NULLIF(EXCLUDED.image_url, \'\'), categories.image_url)', [categoryId, row.mainTitle, 'Professional ' + row.mainTitle + ' services', meta.icon, meta.tint, row.imageUrl || null]);
-    const subcategoryId = row.subTitle ? slug(categoryId + '-' + row.subTitle) : null;
+    const subcategoryId = row.subTitle ? compactId('sub', categoryId + '-' + row.subTitle) : null;
     if (subcategoryId) await pool.query('INSERT INTO subcategories (id, category_id, title, description, image_url) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, image_url = COALESCE(NULLIF(EXCLUDED.image_url, \'\'), subcategories.image_url)', [subcategoryId, categoryId, row.subTitle, row.subTitle + ' services', row.imageUrl || null]);
-    const id = slug([categoryId, subcategoryId || 'direct', row.title].join('-'));
+    const id = compactId('svc', [categoryId, subcategoryId || 'direct', row.title].join('-')); 
     const description = row.title + ' ? ' + row.unit;
     await pool.query('INSERT INTO services (id, category_id, subcategory_id, title, description, price, original_price, duration, rating, reviews, badge, service_type, image_url, detail_description, details, includes, excludes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, subcategory_id = EXCLUDED.subcategory_id, title = EXCLUDED.title, description = EXCLUDED.description, price = EXCLUDED.price, original_price = EXCLUDED.original_price, duration = EXCLUDED.duration, service_type = EXCLUDED.service_type, image_url = EXCLUDED.image_url, detail_description = EXCLUDED.detail_description, details = EXCLUDED.details, includes = EXCLUDED.includes, excludes = EXCLUDED.excludes', [id, categoryId, subcategoryId, row.title, description, row.price, row.price, '60 min', 0, 0, null, row.unit, row.imageUrl || null, description, JSON.stringify([row.unit]), JSON.stringify([]), JSON.stringify([])]);
   }
