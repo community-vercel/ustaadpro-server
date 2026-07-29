@@ -375,3 +375,187 @@ json
 {
   "status": "in-review"
 }
+---
+
+# Service Catalog API
+
+Base URL: `{{baseUrl}}/api` (for example `http://localhost:5000/api`).
+
+## Public / Mobile APIs
+
+### Get full catalog
+
+`GET /catalog`
+
+The response is a main-category hierarchy. Use `subcategories` when present; otherwise use `directServices`.
+
+```json
+[
+  {
+    "id": "electrician",
+    "title": "Electrician",
+    "mainCategory": {
+      "id": "electrician",
+      "title": "Electrician",
+      "mobileIconUrl": "https://...",
+      "webImageUrl": "https://..."
+    },
+    "subcategories": [
+      {
+        "id": "sub-...",
+        "title": "Fan Services",
+        "imageUrl": "https://...",
+        "services": [
+          {
+            "id": "svc-...",
+            "title": "Fan Installation",
+            "price": 800,
+            "unitDescription": "Per ceiling fan",
+            "serviceImageUrl": "https://..."
+          }
+        ]
+      }
+    ],
+    "directServices": []
+  }
+]
+```
+
+### Get main categories
+
+`GET /categories`
+
+### Get a category's subcategories
+
+`GET /categories/:categoryId/subcategories`
+
+Example: `GET /categories/electrician/subcategories`
+
+### Get services
+
+`GET /services?categoryId=:categoryId`
+
+Optional subcategory filter:
+
+`GET /services?categoryId=:categoryId&subcategoryId=:subcategoryId`
+
+### Get service details
+
+`GET /services/:id`
+
+## Admin APIs
+
+### Get admin catalog
+
+`GET /admin/catalogue`
+
+### Create or update a main category
+
+`POST /admin/categories`
+
+```json
+{
+  "id": "electrician",
+  "title": "Electrician",
+  "subtitle": "Wiring, breakers, fans and electrical repairs",
+  "icon": "lightning-bolt",
+  "tint": "#F59E0B",
+  "mobileIconUrl": "https://example.com/electrician-mobile.png",
+  "webImageUrl": "https://example.com/electrician-desktop.jpg"
+}
+```
+
+### Create or update a subcategory
+
+`POST /admin/subcategories`
+
+```json
+{
+  "id": "electrician-fan-services",
+  "categoryId": "electrician",
+  "title": "Fan Services",
+  "description": "Installation and repair of ceiling and exhaust fans",
+  "mobileIconUrl": "https://example.com/fan-mobile.png",
+  "webImageUrl": "https://example.com/fan-desktop.jpg"
+}
+```
+
+### Get all services for admin
+
+`GET /admin/services`
+
+### Create service
+
+`POST /admin/services`
+
+### Update service
+
+`PUT /admin/services/:id`
+
+Use this request body for create or update:
+
+```json
+{
+  "categoryId": "electrician",
+  "subcategoryId": "electrician-fan-services",
+  "title": "Fan Installation",
+  "description": "Professional ceiling fan installation.",
+  "price": 800,
+  "originalPrice": 800,
+  "unitDescription": "Per ceiling fan",
+  "duration": "60 min",
+  "imageUrl": "https://example.com/fan-installation.jpg",
+  "detailDescription": "Installation using the existing electrical point.",
+  "includes": ["Fan mounting", "Electrical connection", "Safety test"],
+  "details": ["Technician checks the existing power point"],
+  "excludes": ["New wiring", "Fan cost"]
+}
+```
+
+`serviceType` is accepted for older clients. New requests should use `unitDescription`.
+
+## Spreadsheet import API
+
+### Validate and preview a spreadsheet
+
+`POST /admin/catalogue/import`
+
+```json
+{
+  "dataUrl": "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,PASTE_FILE_BASE64_HERE",
+  "commit": false
+}
+```
+
+Required spreadsheet columns:
+
+- `Main Category`
+- `Sub Category`
+- `Service`
+- `Price (PKR)`
+- `Unit/Description`
+
+Optional columns: `main category icon for moible`, `main category images for web / desktop`, `Sub category Image`, and `Services Images`.
+
+### Import a validated spreadsheet
+
+Use the same endpoint and payload, with `commit` set to `true`:
+
+```json
+{
+  "dataUrl": "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,PASTE_FILE_BASE64_HERE",
+  "commit": true
+}
+```
+
+## Delete status
+
+Catalog delete endpoints are not currently implemented. The following return no route:
+
+```text
+DELETE /admin/categories/:id
+DELETE /admin/subcategories/:id
+DELETE /admin/services/:id
+```
+
+Use an inactive/hidden state for catalog items when deletion safety is required.

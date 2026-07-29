@@ -50,6 +50,16 @@ export const getServiceById = async (req, res) => {
   }
 };
 
+// Backwards-compatible catalog response.  The nested fields below are the
+// canonical public API; the legacy fields remain while mobile clients migrate.
+function catalogService(service) {
+  return {
+    ...service,
+    serviceImageUrl: service.imageUrl || '',
+    unitDescription: service.serviceType || '',
+  };
+}
+
 export const getServiceCatalog = async (_req, res) => {
   try {
     await AppControl.ensureSchema();
@@ -61,14 +71,39 @@ export const getServiceCatalog = async (_req, res) => {
       categories.map(async category => [category.id, await Subcategory.findByCategoryId(category.id)]),
     );
     const subcategoryMap = new Map(subcategoriesByCategory);
+
     res.json(categories.map(category => {
-      const subcategories = (subcategoryMap.get(category.id) || []).map(subcategory => ({
-        ...subcategory,
-        services: services.filter(service => service.subcategoryId === subcategory.id),
-      }));
+      const directServices = services
+        .filter(service => service.categoryId === category.id && !service.subcategoryId)
+        .map(catalogService);
+      const subcategories = (subcategoryMap.get(category.id) || []).map(subcategory => {
+        const imageUrl = subcategory.mobileIconUrl || subcategory.webImageUrl || subcategory.imageUrl || '';
+        return {
+          ...subcategory,
+          subCategory: {
+            id: subcategory.id,
+            title: subcategory.title,
+            imageUrl,
+          },
+          imageUrl,
+          services: services
+            .filter(service => service.subcategoryId === subcategory.id)
+            .map(catalogService),
+        };
+      });
+
       return {
         ...category,
-        services: services.filter(service => service.categoryId === category.id && !service.subcategoryId),
+        mainCategory: {
+          id: category.id,
+          title: category.title,
+          mobileIconUrl: category.mobileIconUrl || category.imageUrl || '',
+          webImageUrl: category.webImageUrl || category.imageUrl || '',
+        },
+        // `services` is retained for existing mobile clients. `directServices`
+        // makes the no-subcategory case explicit for API consumers.
+        services: directServices,
+        directServices,
         subcategories,
       };
     }));
@@ -77,7 +112,6 @@ export const getServiceCatalog = async (_req, res) => {
     res.status(500).json({message: 'Internal server error.'});
   }
 };
-
 export const getSubscriptions = async (req, res) => {
   try {
     const subscriptions = await Subscription.getAll();

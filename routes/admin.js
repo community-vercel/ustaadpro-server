@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import {
   createAdminService,
   getAdminHomeSlides,
@@ -24,6 +24,7 @@ import {
   updateAdminSubscription,
   deleteAdminSubscription,
   loginAdmin,
+  importAdminCatalog,
 } from '../controllers/adminController.js';
 import {
   getAdminShopOrders,
@@ -45,6 +46,7 @@ router.get('/payment-receipts', getAdminPaymentReceipts);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.get('/catalogue', getAdminCatalogue);
+router.post('/catalogue/import', importAdminCatalog);
 router.post('/categories', saveAdminCategory);
 router.post('/subcategories', saveAdminSubcategory);
 router.get('/services', getAdminServices);
