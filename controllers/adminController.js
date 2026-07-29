@@ -498,6 +498,33 @@ export const saveAdminSubcategory = async (req, res) => {
   }
 };
 
+export const deleteAdminCategory = async (req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items oi JOIN services s ON s.id = oi.service_id WHERE s.category_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This category has booked services and cannot be deleted.'});
+    await pool.query('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    res.json({message: 'Category deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete category.'}); }
+};
+
+export const deleteAdminSubcategory = async (req, res) => {
+  try {
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items oi JOIN services s ON s.id = oi.service_id WHERE s.subcategory_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This subcategory has booked services and cannot be deleted.'});
+    await pool.query('DELETE FROM subcategories WHERE id = ?', [req.params.id]);
+    res.json({message: 'Subcategory deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete subcategory.'}); }
+};
+
+export const deleteAdminService = async (req, res) => {
+  try {
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items WHERE service_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This service has bookings and cannot be deleted.'});
+    await pool.query('DELETE FROM services WHERE id = ?', [req.params.id]);
+    res.json({message: 'Service deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete service.'}); }
+};
 export const getAdminServices = async (_req, res) => {
   try {
     const services = await Service.getAll();
