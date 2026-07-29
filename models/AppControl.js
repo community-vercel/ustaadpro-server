@@ -211,24 +211,7 @@ class AppControl {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
-    for (const category of defaultCategories) {
-      await pool.query(
-        `INSERT INTO categories (id, title, subtitle, icon, tint)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET
-          title = EXCLUDED.title,
-          subtitle = EXCLUDED.subtitle,
-          icon = EXCLUDED.icon,
-          tint = EXCLUDED.tint`,
-        [
-          category.id,
-          category.title,
-          category.subtitle,
-          category.icon,
-          category.tint,
-        ],
-      );
-    }
+    // Categories are managed by the admin catalog. Do not recreate defaults after a catalog cleanup.
 
     const serviceColumns = [
       ['service_type', "VARCHAR(80) NOT NULL DEFAULT 'Standard Visit'"],

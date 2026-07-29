@@ -19,7 +19,8 @@
     "seed:services": "node serviceSeed.js",
     "migrate:mysql-to-postgres": "node db/migrate-mysql-to-postgres.js",
     "seed:updated-services": "node scripts/newUpdatedServices.js",
-    "import:service-catalog": "node scripts/importNewServiceCatalog.js"
+    "import:service-catalog": "node scripts/importNewServiceCatalog.js",
+    "cleanServices": "node scripts/cleanServices.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
