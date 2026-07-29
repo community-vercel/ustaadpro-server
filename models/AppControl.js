@@ -160,6 +160,10 @@ class AppControl {
     // PostgreSQL-safe and idempotent: runs at backend startup on every deploy.
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url TEXT');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS image_url TEXT');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
+    await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+    await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS home_slides (

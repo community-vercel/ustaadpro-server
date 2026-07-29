@@ -1,4 +1,4 @@
-﻿import fs from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import bcrypt from 'bcryptjs';
@@ -387,8 +387,8 @@ export const saveAdminCategory = async (req, res) => {
     const title = String(req.body?.title || '').trim();
     const id = catalogueId(req.body?.id || title);
     if (!id || !title) return res.status(400).json({message: 'Category title is required.'});
-    await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint',
-      [id, title, req.body?.subtitle || 'Explore services', req.body?.icon || 'tool', req.body?.tint || '#006C49']);
+    await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint, web_image_url, mobile_icon_url) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url',
+      [id, title, req.body?.subtitle || 'Explore services', req.body?.icon || 'tool', req.body?.tint || '#006C49', req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null]);
     res.status(201).json({id, title});
   } catch (error) {
     console.error('Save admin category error:', error);
@@ -403,8 +403,8 @@ export const saveAdminSubcategory = async (req, res) => {
     const title = String(req.body?.title || '').trim();
     const id = catalogueId(req.body?.id || categoryId + '-' + title);
     if (!categoryId || !title) return res.status(400).json({message: 'Main service and sub-service title are required.'});
-    await pool.query('INSERT INTO subcategories (id, category_id, title, description) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description',
-      [id, categoryId, title, req.body?.description || null]);
+    await pool.query('INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url',
+      [id, categoryId, title, req.body?.description || null, req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null]);
     res.status(201).json({id, categoryId, title});
   } catch (error) {
     console.error('Save admin subcategory error:', error);
