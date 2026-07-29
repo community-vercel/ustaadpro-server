@@ -160,6 +160,12 @@ class AppControl {
     // PostgreSQL-safe and idempotent: runs at backend startup on every deploy.
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url TEXT');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS image_url TEXT');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE');
+    await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 999');
+    await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+    await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS home_slides (
@@ -205,24 +211,7 @@ class AppControl {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
 
-    for (const category of defaultCategories) {
-      await pool.query(
-        `INSERT INTO categories (id, title, subtitle, icon, tint)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET
-          title = EXCLUDED.title,
-          subtitle = EXCLUDED.subtitle,
-          icon = EXCLUDED.icon,
-          tint = EXCLUDED.tint`,
-        [
-          category.id,
-          category.title,
-          category.subtitle,
-          category.icon,
-          category.tint,
-        ],
-      );
-    }
+    // Categories are managed by the admin catalog. Do not recreate defaults after a catalog cleanup.
 
     const serviceColumns = [
       ['service_type', "VARCHAR(80) NOT NULL DEFAULT 'Standard Visit'"],

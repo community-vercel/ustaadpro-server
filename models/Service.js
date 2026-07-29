@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
 function parseJsonList(value, fallback = []) {
@@ -47,6 +47,7 @@ function mapService(row, workPrices = []) {
     subcategoryId: row.subcategory_id,
     originalPrice: Number(row.original_price || 0),
     serviceType: row.service_type,
+    unitDescription: row.service_type || '',
     imageUrl: row.image_url || '',
     detailDescription: row.detail_description || '',
     details: parseJsonList(row.details),
@@ -184,7 +185,7 @@ class Service {
         Number(payload.rating || 0),
         Number(payload.reviews || 0),
         payload.badge || null,
-        payload.serviceType || payload.service_type || 'Standard Visit',
+        payload.unitDescription || payload.unit_description || payload.serviceType || payload.service_type || 'Standard Visit',
         payload.imageUrl || payload.image_url || '',
         payload.detailDescription || payload.detail_description || '',
         JSON.stringify(payload.details || []),
@@ -221,7 +222,7 @@ class Service {
         Number(payload.rating || 0),
         Number(payload.reviews || 0),
         payload.badge || null,
-        payload.serviceType || payload.service_type || 'Standard Visit',
+        payload.unitDescription || payload.unit_description || payload.serviceType || payload.service_type || 'Standard Visit',
         payload.imageUrl || payload.image_url || '',
         payload.detailDescription || payload.detail_description || '',
         JSON.stringify(payload.details || []),

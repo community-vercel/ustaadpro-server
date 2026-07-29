@@ -375,3 +375,309 @@ json
 {
   "status": "in-review"
 }
+---
+
+# Service Catalog API
+
+Base URL: `{{baseUrl}}/api` (for example `http://localhost:5000/api`).
+
+## Public / Mobile APIs
+
+### Get full catalog
+
+`GET /catalog`
+
+The response is a main-category hierarchy. Use `subcategories` when present; otherwise use `directServices`.
+
+```json
+[
+  {
+    "id": "electrician",
+    "title": "Electrician",
+    "mainCategory": {
+      "id": "electrician",
+      "title": "Electrician",
+      "mobileIconUrl": "https://...",
+      "webImageUrl": "https://..."
+    },
+    "subcategories": [
+      {
+        "id": "sub-...",
+        "title": "Fan Services",
+        "imageUrl": "https://...",
+        "services": [
+          {
+            "id": "svc-...",
+            "title": "Fan Installation",
+            "price": 800,
+            "unitDescription": "Per ceiling fan",
+            "serviceImageUrl": "https://..."
+          }
+        ]
+      }
+    ],
+    "directServices": []
+  }
+]
+```
+
+### Get main categories
+
+`GET /categories`
+
+### Get a category's subcategories
+
+`GET /categories/:categoryId/subcategories`
+
+Example: `GET /categories/electrician/subcategories`
+
+### Get services
+
+`GET /services?categoryId=:categoryId`
+
+Optional subcategory filter:
+
+`GET /services?categoryId=:categoryId&subcategoryId=:subcategoryId`
+
+### Get service details
+
+`GET /services/:id`
+
+## Admin APIs
+
+### Get admin catalog
+
+`GET /admin/catalogue`
+
+### Create or update a main category
+
+`POST /admin/categories`
+
+```json
+{
+  "id": "electrician",
+  "title": "Electrician",
+  "subtitle": "Wiring, breakers, fans and electrical repairs",
+  "icon": "lightning-bolt",
+  "tint": "#F59E0B",
+  "mobileIconUrl": "https://example.com/electrician-mobile.png",
+  "webImageUrl": "https://example.com/electrician-desktop.jpg"
+}
+```
+
+### Create or update a subcategory
+
+`POST /admin/subcategories`
+
+```json
+{
+  "id": "electrician-fan-services",
+  "categoryId": "electrician",
+  "title": "Fan Services",
+  "description": "Installation and repair of ceiling and exhaust fans",
+  "mobileIconUrl": "https://example.com/fan-mobile.png",
+  "webImageUrl": "https://example.com/fan-desktop.jpg"
+}
+```
+
+### Get all services for admin
+
+`GET /admin/services`
+
+### Create service
+
+`POST /admin/services`
+
+### Update service
+
+`PUT /admin/services/:id`
+
+Use this request body for create or update:
+
+```json
+{
+  "categoryId": "electrician",
+  "subcategoryId": "electrician-fan-services",
+  "title": "Fan Installation",
+  "description": "Professional ceiling fan installation.",
+  "price": 800,
+  "originalPrice": 800,
+  "unitDescription": "Per ceiling fan",
+  "duration": "60 min",
+  "imageUrl": "https://example.com/fan-installation.jpg",
+  "detailDescription": "Installation using the existing electrical point.",
+  "includes": ["Fan mounting", "Electrical connection", "Safety test"],
+  "details": ["Technician checks the existing power point"],
+  "excludes": ["New wiring", "Fan cost"]
+}
+```
+
+`serviceType` is accepted for older clients. New requests should use `unitDescription`.
+
+## Spreadsheet import API
+
+### Validate and preview a spreadsheet
+
+`POST /admin/catalogue/import`
+
+```json
+{
+  "dataUrl": "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,PASTE_FILE_BASE64_HERE",
+  "commit": false
+}
+```
+
+Required spreadsheet columns:
+
+- `Main Category`
+- `Sub Category`
+- `Service`
+- `Price (PKR)`
+- `Unit/Description`
+
+Optional columns: `main category icon for moible`, `main category images for web / desktop`, `Sub category Image`, and `Services Images`.
+
+### Import a validated spreadsheet
+
+Use the same endpoint and payload, with `commit` set to `true`:
+
+```json
+{
+  "dataUrl": "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,PASTE_FILE_BASE64_HERE",
+  "commit": true
+}
+```
+
+## Delete status
+
+Catalog delete endpoints are not currently implemented. The following return no route:
+
+```text
+DELETE /admin/categories/:id
+DELETE /admin/subcategories/:id
+DELETE /admin/services/:id
+```
+
+Use an inactive/hidden state for catalog items when deletion safety is required.
+## Catalog JSON examples
+
+### `GET /api/catalog` response
+
+```json
+[
+  {
+    "id": "electrician",
+    "title": "Electrician",
+    "subtitle": "Wiring, breakers, fans and repairs",
+    "mainCategory": {
+      "id": "electrician",
+      "title": "Electrician",
+      "mobileIconUrl": "https://api.ustaadpro.pk/uploads/electrician-mobile.png",
+      "webImageUrl": "https://api.ustaadpro.pk/uploads/electrician-web.jpg"
+    },
+    "subcategories": [
+      {
+        "id": "electrician-fan-services",
+        "title": "Fan Services",
+        "description": "Ceiling and exhaust fan services",
+        "imageUrl": "https://api.ustaadpro.pk/uploads/fan-services.jpg",
+        "services": [
+          {
+            "id": "fan-installation",
+            "title": "Fan Installation",
+            "description": "Professional fan installation.",
+            "price": 800,
+            "unitDescription": "Per ceiling fan",
+            "serviceImageUrl": "https://api.ustaadpro.pk/uploads/fan-installation.jpg",
+            "duration": "60 min"
+          }
+        ]
+      }
+    ],
+    "directServices": []
+  },
+  {
+    "id": "painter",
+    "title": "Painter",
+    "mainCategory": {
+      "id": "painter",
+      "title": "Painter",
+      "mobileIconUrl": "https://api.ustaadpro.pk/uploads/painter-mobile.png",
+      "webImageUrl": "https://api.ustaadpro.pk/uploads/painter-web.jpg"
+    },
+    "subcategories": [],
+    "directServices": [
+      {
+        "id": "interior-wall-painting",
+        "title": "Interior Wall Painting",
+        "description": "Interior wall painting service.",
+        "price": 500,
+        "unitDescription": "Visit and inspection charges",
+        "serviceImageUrl": "https://api.ustaadpro.pk/uploads/interior-painting.jpg",
+        "duration": "60 min"
+      }
+    ]
+  }
+]
+```
+
+### Create main category
+
+`POST /api/admin/categories`
+
+```json
+{
+  "title": "Electrician",
+  "subtitle": "Wiring, breakers, fans and repairs",
+  "mobileIconUrl": "https://.../electrician-mobile.png",
+  "webImageUrl": "https://.../electrician-web.jpg"
+}
+```
+
+### Create subcategory
+
+`POST /api/admin/subcategories`
+
+```json
+{
+  "categoryId": "electrician",
+  "title": "Fan Services",
+  "description": "Ceiling and exhaust fan services",
+  "mobileIconUrl": "https://.../fan-services-mobile.png",
+  "webImageUrl": "https://.../fan-services-web.jpg"
+}
+```
+
+### Create service
+
+`POST /api/admin/services`
+
+```json
+{
+  "categoryId": "electrician",
+  "subcategoryId": "electrician-fan-services",
+  "title": "Fan Installation",
+  "price": 800,
+  "unitDescription": "Per ceiling fan",
+  "imageUrl": "https://.../fan-installation.jpg",
+  "description": "Professional ceiling fan installation."
+}
+```
+
+### Create direct service
+
+Use `null` for `subcategoryId` when the service belongs directly to the main category.
+
+`POST /api/admin/services`
+
+```json
+{
+  "categoryId": "painter",
+  "subcategoryId": null,
+  "title": "Interior Wall Painting",
+  "price": 500,
+  "unitDescription": "Visit and inspection charges",
+  "imageUrl": "https://.../interior-painting.jpg",
+  "description": "Interior wall painting service."
+}
+```

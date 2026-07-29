@@ -1,7 +1,9 @@
-﻿import fs from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import bcrypt from 'bcryptjs';
+import xlsx from 'xlsx';
+import {createHash} from 'node:crypto';
 import pool from '../config/db.js';
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
@@ -368,6 +370,90 @@ const catalogueId = value => String(value || '').trim().toLowerCase()
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/(^-|-$)/g, '');
 
+const catalogText = value => String(value ?? '').trim();
+const catalogSlug = value => catalogText(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const catalogId = (prefix, values) => `${prefix}-${createHash('sha1').update(values.join('|')).digest('hex').slice(0, 14)}`;
+const catalogValue = (row, ...keys) => keys.map(key => catalogText(row[key])).find(Boolean) || '';
+
+function parseCatalogWorkbook(dataUrl) {
+  const match = String(dataUrl || '').match(/^data:application\/(?:vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|vnd\.ms-excel);base64,(.+)$/i);
+  if (!match) throw new Error('Upload an .xlsx spreadsheet.');
+  const workbook = xlsx.read(Buffer.from(match[1], 'base64'), {type: 'buffer'});
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rawRows = xlsx.utils.sheet_to_json(sheet, {defval: ''});
+  const required = ['Main Category', 'Service', 'Price (PKR)', 'Unit/Description'];
+  const headers = Object.keys(rawRows[0] || {});
+  const missing = required.filter(header => !headers.includes(header));
+  if (missing.length) throw new Error(`Missing required columns: ${missing.join(', ')}`);
+
+  return rawRows.map((row, index) => ({
+    row: index + 2,
+    mainCategory: catalogValue(row, 'Main Category'),
+    mobileIconUrl: catalogValue(row, 'main category icon for  moible', 'main category icon for mobile'),
+    webImageUrl: catalogValue(row, 'main category images for  web / desktop'),
+    subcategory: catalogValue(row, 'Sub Category'),
+    subcategoryImageUrl: catalogValue(row, 'Sub category Image'),
+    title: catalogValue(row, 'Service'),
+    price: Number(String(row['Price (PKR)'] ?? 0).replace(/,/g, '')) || 0,
+    unitDescription: catalogValue(row, 'Unit/Description'),
+    imageUrl: catalogValue(row, 'Services Images'),
+  })).filter(row => row.mainCategory && row.title);
+}
+
+async function importCatalogRows(rows) {
+  await AppControl.ensureSchema();
+  for (const row of rows) {
+    const categoryId = catalogSlug(row.mainCategory);
+    await pool.query(
+      `INSERT INTO categories (id, title, subtitle, icon, tint, web_image_url, mobile_icon_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title,
+       web_image_url = COALESCE(NULLIF(EXCLUDED.web_image_url, ''), categories.web_image_url),
+       mobile_icon_url = COALESCE(NULLIF(EXCLUDED.mobile_icon_url, ''), categories.mobile_icon_url)`,
+      [categoryId, row.mainCategory, `Professional ${row.mainCategory} services`, 'tool', '#006C49', row.webImageUrl, row.mobileIconUrl],
+    );
+    const subcategoryId = row.subcategory ? catalogId('sub', [categoryId, row.subcategory]) : null;
+    if (subcategoryId) {
+      await pool.query(
+        `INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title,
+         web_image_url = COALESCE(NULLIF(EXCLUDED.web_image_url, ''), subcategories.web_image_url),
+         mobile_icon_url = COALESCE(NULLIF(EXCLUDED.mobile_icon_url, ''), subcategories.mobile_icon_url)`,
+        [subcategoryId, categoryId, row.subcategory, `${row.subcategory} services`, row.subcategoryImageUrl, row.subcategoryImageUrl],
+      );
+    }
+    const serviceId = catalogId('svc', [categoryId, subcategoryId || 'direct', row.title]);
+    const description = row.unitDescription || `${row.title} service`;
+    await pool.query(
+      `INSERT INTO services (id, category_id, subcategory_id, title, description, price, original_price, duration, rating, reviews, badge, service_type, image_url, detail_description, details, includes, excludes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description,
+       price = EXCLUDED.price, original_price = EXCLUDED.original_price, service_type = EXCLUDED.service_type,
+       image_url = COALESCE(NULLIF(EXCLUDED.image_url, ''), services.image_url), detail_description = EXCLUDED.detail_description`,
+      [serviceId, categoryId, subcategoryId, row.title, description, row.price, row.price, '60 min', 0, 0, null, row.unitDescription || 'Standard Visit', row.imageUrl, description, JSON.stringify([row.unitDescription].filter(Boolean)), '[]', '[]'],
+    );
+  }
+}
+
+export const importAdminCatalog = async (req, res) => {
+  try {
+    const rows = parseCatalogWorkbook(req.body?.dataUrl);
+    const summary = {
+      rows: rows.length,
+      categories: [...new Set(rows.map(row => row.mainCategory))],
+      subcategories: [...new Set(rows.map(row => `${row.mainCategory}|${row.subcategory || '(direct)'}`))].length,
+      preview: rows.slice(0, 10),
+    };
+    if (req.body?.commit === true) {
+      await importCatalogRows(rows);
+      summary.imported = true;
+    }
+    res.json(summary);
+  } catch (error) {
+    res.status(400).json({message: error.message || 'Catalog import failed.'});
+  }
+};
 export const getAdminCatalogue = async (_req, res) => {
   try {
     await AppControl.ensureSchema();
@@ -387,8 +473,8 @@ export const saveAdminCategory = async (req, res) => {
     const title = String(req.body?.title || '').trim();
     const id = catalogueId(req.body?.id || title);
     if (!id || !title) return res.status(400).json({message: 'Category title is required.'});
-    await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint',
-      [id, title, req.body?.subtitle || 'Explore services', req.body?.icon || 'tool', req.body?.tint || '#006C49']);
+    await pool.query('INSERT INTO categories (id, title, subtitle, icon, tint, web_image_url, mobile_icon_url) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, subtitle = EXCLUDED.subtitle, icon = EXCLUDED.icon, tint = EXCLUDED.tint, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url',
+      [id, title, req.body?.subtitle || 'Explore services', req.body?.icon || 'tool', req.body?.tint || '#006C49', req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null]);
     res.status(201).json({id, title});
   } catch (error) {
     console.error('Save admin category error:', error);
@@ -403,8 +489,8 @@ export const saveAdminSubcategory = async (req, res) => {
     const title = String(req.body?.title || '').trim();
     const id = catalogueId(req.body?.id || categoryId + '-' + title);
     if (!categoryId || !title) return res.status(400).json({message: 'Main service and sub-service title are required.'});
-    await pool.query('INSERT INTO subcategories (id, category_id, title, description) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description',
-      [id, categoryId, title, req.body?.description || null]);
+    await pool.query('INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url',
+      [id, categoryId, title, req.body?.description || null, req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null]);
     res.status(201).json({id, categoryId, title});
   } catch (error) {
     console.error('Save admin subcategory error:', error);
@@ -412,6 +498,33 @@ export const saveAdminSubcategory = async (req, res) => {
   }
 };
 
+export const deleteAdminCategory = async (req, res) => {
+  try {
+    await AppControl.ensureSchema();
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items oi JOIN services s ON s.id = oi.service_id WHERE s.category_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This category has booked services and cannot be deleted.'});
+    await pool.query('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    res.json({message: 'Category deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete category.'}); }
+};
+
+export const deleteAdminSubcategory = async (req, res) => {
+  try {
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items oi JOIN services s ON s.id = oi.service_id WHERE s.subcategory_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This subcategory has booked services and cannot be deleted.'});
+    await pool.query('DELETE FROM subcategories WHERE id = ?', [req.params.id]);
+    res.json({message: 'Subcategory deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete subcategory.'}); }
+};
+
+export const deleteAdminService = async (req, res) => {
+  try {
+    const [orders] = await pool.query('SELECT COUNT(*)::int AS count FROM order_items WHERE service_id = ?', [req.params.id]);
+    if (Number(orders[0]?.count || 0) > 0) return res.status(409).json({message: 'This service has bookings and cannot be deleted.'});
+    await pool.query('DELETE FROM services WHERE id = ?', [req.params.id]);
+    res.json({message: 'Service deleted.'});
+  } catch (error) { res.status(500).json({message: error.message || 'Could not delete service.'}); }
+};
 export const getAdminServices = async (_req, res) => {
   try {
     const services = await Service.getAll();
