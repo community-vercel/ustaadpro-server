@@ -29,6 +29,19 @@ function mapReceipt(row) {
 class PaymentReceipt {
   static async create({orderId, userId, receiptUrl, amount, accountNumber, accountTitle}) {
     await AppControl.ensureSchema();
+    // Existing production databases may have been created before staged
+    // payments. Make the migration idempotent at the write boundary.
+    const [stageColumns] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'payment_receipts'
+         AND COLUMN_NAME = 'payment_stage'`,
+    );
+    if (!stageColumns.length) {
+      await pool.query(
+        "ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
+      );
+    }
     const [orders] = await pool.query(
       'SELECT id, status, total FROM orders WHERE id = ? AND user_id = ?',
       [orderId, userId],
@@ -75,6 +88,19 @@ class PaymentReceipt {
 
   static async findLatestByUserOrderIds(userId, orderIds = []) {
     await AppControl.ensureSchema();
+    // Existing production databases may have been created before staged
+    // payments. Make the migration idempotent at the write boundary.
+    const [stageColumns] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'payment_receipts'
+         AND COLUMN_NAME = 'payment_stage'`,
+    );
+    if (!stageColumns.length) {
+      await pool.query(
+        "ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
+      );
+    }
     if (!orderIds.length) return {};
 
     const placeholders = orderIds.map(() => '?').join(', ');
@@ -98,6 +124,19 @@ class PaymentReceipt {
 
   static async getAdminAll() {
     await AppControl.ensureSchema();
+    // Existing production databases may have been created before staged
+    // payments. Make the migration idempotent at the write boundary.
+    const [stageColumns] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'payment_receipts'
+         AND COLUMN_NAME = 'payment_stage'`,
+    );
+    if (!stageColumns.length) {
+      await pool.query(
+        "ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
+      );
+    }
     const [rows] = await pool.query(
       `SELECT pr.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email,
               o.total as order_total, o.status as order_status, o.booked_for, o.payment_method, o.address
