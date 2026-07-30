@@ -21,7 +21,8 @@
                     "seed:updated-services":  "node scripts/newUpdatedServices.js",
                     "import:service-catalog":  "node scripts/importNewServiceCatalog.js",
                     "cleanServices":  "node scripts/cleanServices.js",
-                    "seed:FinalServicesUstaadPro":  "node scripts/FinalServicesUstaadPro.js"
+                    "seed:FinalServicesUstaadPro":  "node scripts/FinalServicesUstaadPro.js",
+                    "cleanOrders":  "node scripts/cleanOrders.js"
                 },
     "dependencies":  {
                          "bcryptjs":  "^2.4.3",
