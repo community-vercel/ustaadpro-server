@@ -121,7 +121,7 @@ class Service {
     await AppControl.ensureSchema();
     let query = 'SELECT * FROM services';
     const params = [];
-    const conditions = [];
+    const conditions = ['COALESCE(is_active, TRUE) = TRUE'];
 
     if (categoryId) {
       conditions.push('category_id = ?');
@@ -207,7 +207,7 @@ class Service {
       `UPDATE services
        SET category_id = ?, subcategory_id = ?, title = ?, description = ?,
            price = ?, original_price = ?, duration = ?, rating = ?, reviews = ?,
-           badge = ?, service_type = ?, image_url = ?, detail_description = ?, details = ?, includes = ?, excludes = ?
+           badge = ?, service_type = ?, image_url = ?, detail_description = ?, details = ?, includes = ?, excludes = ?, is_active = TRUE
        WHERE id = ?`,
       [
         payload.categoryId || payload.category_id || 'home',
