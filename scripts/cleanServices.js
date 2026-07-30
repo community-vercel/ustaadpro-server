@@ -1,4 +1,4 @@
-import pool, {whatsAppBotTablesReady} from '../config/db.js';
+import pool from '../config/db.js';
 import AppControl from '../models/AppControl.js';
 
 const confirmed = process.argv.includes('--confirm');
@@ -43,7 +43,6 @@ if (!confirmed) {
     process.exitCode = 1;
   } finally {
     client.release();
-    await whatsAppBotTablesReady;
     await pool.end();
   }
 }
