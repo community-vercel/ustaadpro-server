@@ -1,4 +1,4 @@
-﻿import fs from 'fs/promises';
+import fs from 'fs/promises';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import Order from '../models/Order.js';
@@ -179,7 +179,12 @@ export const checkout = async (req, res) => {
       rewardDiscount = redeemableDiscount;
     }
 
-    const taxableTotal = Math.max(0, total - rewardDiscount);
+    const afterRewardTotal = Math.max(0, total - rewardDiscount);
+    const fullAdvanceDiscount =
+      paymentMethod === 'Full Payment in Advance'
+        ? Math.round(afterRewardTotal * 0.05)
+        : 0;
+    const taxableTotal = Math.max(0, afterRewardTotal - fullAdvanceDiscount);
     const tax = Math.round(
       (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
     );

@@ -218,12 +218,9 @@ export const updateAdminOrderStatus = async (req, res) => {
       );
       const fcmToken = users[0]?.fcmToken;
       const messaging = getFirebaseMessaging();
-      const isCashPayment = String(order.paymentMethod || '')
-        .toLowerCase()
-        .includes('cash');
-      const completedPaymentBody = isCashPayment
-        ? 'Congrats, your work is completed. Please pay cash to our agent.'
-        : 'Congrats, your work is completed. Please pay us at EasyPaisa.';
+      const [payments] = await pool.query('SELECT COALESCE(SUM(amount), 0) as paid FROM payment_receipts WHERE order_id = ?', [req.params.id]);
+      const paid = Number(payments[0]?.paid || 0);
+      const requiresRemainingPayment = status === 'completed' && order.paymentMethod === 'Rs 200 Advance' && paid > 0;
 
       if (fcmToken && messaging) {
         try {
@@ -239,13 +236,15 @@ export const updateAdminOrderStatus = async (req, res) => {
               },
             },
             notification: {
-              title: status === 'completed' ? 'Work completed' : 'Order Status Updated',
-              body: status === 'completed'
-                ? completedPaymentBody
+              title: requiresRemainingPayment ? 'Remaining payment due' : status === 'completed' ? 'Work completed' : 'Order Status Updated',
+              body: requiresRemainingPayment
+                ? 'Your Rs. 200 advance was received. Please pay and upload the remaining EasyPaisa balance.'
+                : status === 'completed'
+                ? 'Your work has been completed.'
                 : `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
             },
             data: {
-              type: status === 'completed' ? 'payment_request' : 'service_order',
+              type: requiresRemainingPayment ? 'payment_request' : 'service_order',
               orderId: req.params.id,
               status,
               accountNumber: '03485838593',

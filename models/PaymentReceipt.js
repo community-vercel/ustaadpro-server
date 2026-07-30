@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
 function mapReceipt(row) {
@@ -11,6 +11,7 @@ function mapReceipt(row) {
     accountNumber: row.account_number,
     accountTitle: row.account_title,
     status: row.status || 'submitted',
+    paymentStage: row.payment_stage || row.paymentStage || 'full',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     customerName: row.customer_name,
@@ -40,21 +41,26 @@ class PaymentReceipt {
       throw error;
     }
 
-    if (order.status !== 'completed') {
-      const error = new Error('Receipt can be uploaded after the work is completed.');
+    // EasyPaisa receipts are submitted before a service visit. Keep accepting
+    // them through the service lifecycle, but never for a cancelled order.
+    if (order.status === 'cancelled') {
+      const error = new Error('A receipt cannot be submitted for a cancelled booking.');
       error.statusCode = 400;
       throw error;
     }
 
-    await pool.query('DELETE FROM payment_receipts WHERE order_id = ? AND user_id = ?', [
-      orderId,
-      userId,
-    ]);
+    const [existing] = await pool.query('SELECT amount, payment_stage FROM payment_receipts WHERE order_id = ? AND user_id = ?', [orderId, userId]);
+    const paid = existing.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const isAdvance = String((await pool.query('SELECT payment_method FROM orders WHERE id = ?', [orderId]))[0][0]?.payment_method || '') === 'Rs 200 Advance';
+    const remaining = Math.max(0, Number(order.total) - paid);
+    const paymentStage = isAdvance && !existing.length ? 'advance' : isAdvance ? 'remaining' : 'full';
+    const expected = paymentStage === 'advance' ? Math.min(200, Number(order.total)) : remaining;
+    if (Number(amount) !== expected) { const error = new Error('Payment amount must be Rs. ' + expected + '.'); error.statusCode = 400; throw error; }
 
     await pool.query(
       `INSERT INTO payment_receipts
-       (order_id, user_id, receipt_url, amount, account_number, account_title, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'submitted')`,
+       (order_id, user_id, receipt_url, amount, account_number, account_title, status, payment_stage)
+       VALUES (?, ?, ?, ?, ?, ?, 'submitted', ?)`,
       [
         orderId,
         userId,
@@ -62,6 +68,7 @@ class PaymentReceipt {
         Number(amount || order.total || 0),
         accountNumber,
         accountTitle,
+        paymentStage,
       ],
     );
   }
