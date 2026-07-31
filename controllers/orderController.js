@@ -71,6 +71,17 @@ function resolveSelectedWork(service, item) {
   };
 }
 
+function parseBookingStartInPakistan(bookedFor) {
+  const matches = [...String(bookedFor || '').matchAll(/([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})\s+-\s+(\d{1,2}):(\d{2})\s+([AP]M)/g)];
+  const match = matches[0];
+  if (!match) return null;
+
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(match[1]);
+  if (month < 0) return null;
+  const hour12 = Number(match[4]);
+  const hour = match[6] === 'PM' ? (hour12 === 12 ? 12 : hour12 + 12) : (hour12 === 12 ? 0 : hour12);
+  return new Date(Date.UTC(Number(match[3]), month, Number(match[2]), hour - 5, Number(match[5])));
+}
 export const checkout = async (req, res) => {
   try {
     const {
@@ -129,6 +140,13 @@ export const checkout = async (req, res) => {
     }
 
     const settings = await AppControl.getSettings();
+    const minimumBookingLeadHours = Math.max(0, Math.min(168, Number(settings.minimumBookingLeadHours || 0)));
+    const bookingStart = parseBookingStartInPakistan(bookedFor);
+    if (bookingStart && bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
+      return res.status(400).json({
+        message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
+      });
+    }
     const inspectionFee = Number(settings.inspectionFee || 0);
     const rewardEnabled = settings.rewardEnabled !== false;
     const rewardPointValue = Math.max(
@@ -330,6 +348,13 @@ export const updateOrder = async (req, res) => {
     }
 
     const settings = await AppControl.getSettings();
+    const minimumBookingLeadHours = Math.max(0, Math.min(168, Number(settings.minimumBookingLeadHours || 0)));
+    const bookingStart = parseBookingStartInPakistan(bookedFor);
+    if (bookingStart && bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
+      return res.status(400).json({
+        message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
+      });
+    }
     const inspectionFee = Number(settings.inspectionFee || 0);
     const rewardPointValue = Math.max(
       1,

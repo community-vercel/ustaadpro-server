@@ -52,6 +52,7 @@ const defaultSlides = [
 const defaultSettings = {
   inspectionFee: 500,
   serviceTaxPercent: 12,
+  minimumBookingLeadHours: 4,
   currency: 'PKR',
   supportPhone: '+923001234567',
   shippingCost: 200,
@@ -401,6 +402,7 @@ class AppControl {
     const defaultEntries = [
       ['inspection_fee', defaultSettings.inspectionFee],
       ['service_tax_percent', defaultSettings.serviceTaxPercent],
+      ['minimum_booking_lead_hours', defaultSettings.minimumBookingLeadHours],
       ['currency', defaultSettings.currency],
       ['support_phone', defaultSettings.supportPhone],
       ['shipping_cost', defaultSettings.shippingCost],
@@ -500,6 +502,9 @@ class AppControl {
       if (row.setting_key === 'service_tax_percent') {
         settings.serviceTaxPercent = Number(row.setting_value);
       }
+      if (row.setting_key === 'minimum_booking_lead_hours') {
+        settings.minimumBookingLeadHours = Math.max(0, Math.min(168, Number(row.setting_value) || 0));
+      }
       if (row.setting_key === 'currency') {
         settings.currency = row.setting_value;
       }
@@ -553,6 +558,10 @@ class AppControl {
       ),
       service_tax_percent: Number(
         payload.serviceTaxPercent ?? defaultSettings.serviceTaxPercent,
+      ),
+      minimum_booking_lead_hours: Math.max(
+        0,
+        Math.min(168, Number(payload.minimumBookingLeadHours ?? defaultSettings.minimumBookingLeadHours) || 0),
       ),
       currency: payload.currency || defaultSettings.currency,
       support_phone: payload.supportPhone || defaultSettings.supportPhone,
