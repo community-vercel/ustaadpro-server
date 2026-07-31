@@ -215,7 +215,7 @@ export const checkout = async (req, res) => {
       id: orderId,
       userId,
       total: calculatedTotal,
-      status: 'confirmed',
+      status: 'checking_receipt',
       bookedFor: bookedFor || 'Today, 6:00 PM',
       paymentMethod,
       address,
@@ -231,11 +231,11 @@ export const checkout = async (req, res) => {
     const updatedUser = await User.findById(userId);
 
     res.status(201).json({
-      message: 'Booking confirmed successfully',
+      message: 'Booking created. Payment receipt verification is required.',
       order: {
         id: orderId,
         total: calculatedTotal,
-        status: 'confirmed',
+        status: 'checking_receipt',
         bookedFor: bookedFor || 'Today, 6:00 PM',
         paymentMethod,
         address,
@@ -289,7 +289,7 @@ export const updateOrder = async (req, res) => {
       return res.status(404).json({message: 'Order not found.'});
     }
 
-    if (order.status !== 'confirmed') {
+    if (!['confirmed', 'checking_receipt'].includes(order.status)) {
       return res
         .status(400)
         .json({message: 'This order can no longer be updated after assignment.'});
@@ -417,7 +417,7 @@ export const cancelOrder = async (req, res) => {
       return res.status(400).json({message: 'Cancellation reason is required.'});
     }
 
-    if (order.status !== 'confirmed') {
+    if (!['confirmed', 'checking_receipt'].includes(order.status)) {
       return res
         .status(400)
         .json({message: 'This order can no longer be cancelled after assignment.'});

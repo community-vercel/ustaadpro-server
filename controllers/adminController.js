@@ -193,6 +193,7 @@ export const updateAdminOrderStatus = async (req, res) => {
   try {
     const {status, cancelReason} = req.body;
     const allowed = [
+      'checking_receipt',
       'confirmed',
       'assigned',
       'in_progress',

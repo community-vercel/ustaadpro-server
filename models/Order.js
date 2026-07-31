@@ -7,7 +7,7 @@ class Order {
     id,
     userId,
     total,
-    status = 'confirmed',
+    status = 'checking_receipt',
     bookedFor,
     paymentMethod,
     address,

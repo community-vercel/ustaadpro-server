@@ -93,7 +93,15 @@ class PaymentReceipt {
     const [rows] = await pool.query('SELECT order_id, user_id FROM payment_receipts WHERE id = ?', [id]);
     if (!rows[0]) { const error = new Error('Receipt not found.'); error.statusCode = 404; throw error; }
     await pool.query('UPDATE payment_receipts SET status = ? WHERE id = ?', [status, id]);
-    if (status === 'verified') await this.creditVerifiedCancellation(rows[0].order_id, rows[0].user_id);
+    if (status === 'verified') {
+      // Only the initial payment-review state becomes confirmed. A remaining
+      // receipt after completed work must never move the order backward.
+      await pool.query(
+        "UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'checking_receipt'",
+        [rows[0].order_id],
+      );
+      await this.creditVerifiedCancellation(rows[0].order_id, rows[0].user_id);
+    }
   }
 
   static async creditVerifiedCancellation(orderId, userId) {
