@@ -356,6 +356,12 @@ export const sendBroadcastNotification = async (req, res) => {
   }
 };
 
+export const updateAdminPaymentReceiptStatus = async (req, res) => {
+  try {
+    await PaymentReceipt.updateStatusAndCredit(Number(req.params.id), req.body?.status);
+    res.json({message: 'Receipt status updated. Verified cancelled payments are credited to the wallet once.'});
+  } catch (error) { res.status(error.statusCode || 500).json({message: error.message || 'Could not update receipt.'}); }
+};
 export const getAdminPaymentReceipts = async (_req, res) => {
   try {
     const receipts = await PaymentReceipt.getAdminAll();

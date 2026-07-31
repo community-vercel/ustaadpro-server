@@ -315,6 +315,19 @@ class AppControl {
       )`,
     );
 
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS wallet_transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        order_id VARCHAR(50) NOT NULL,
+        type VARCHAR(40) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY wallet_order_type_unique (order_id, type),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      )`,
+    );
     const orderItemColumns = [
       ['service_work_price_id', 'INT NULL'],
       ['service_work_title', 'VARCHAR(180) NULL'],

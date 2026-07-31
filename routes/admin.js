@@ -4,7 +4,7 @@ import {
   getAdminHomeSlides,
   getAdminOrderById,
   getAdminOrders,
-  getAdminPaymentReceipts,
+  getAdminPaymentReceipts,`r`n  updateAdminPaymentReceiptStatus,
   getAdminServices,
   getAdminCatalogue,
   saveAdminCategory,
@@ -46,6 +46,7 @@ router.get('/users', getAdminUsers);
 router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
+router.patch('/payment-receipts/:id/status', updateAdminPaymentReceiptStatus);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.get('/catalogue', getAdminCatalogue);

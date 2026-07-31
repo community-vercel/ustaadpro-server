@@ -86,6 +86,31 @@ class PaymentReceipt {
     );
   }
 
+  static async updateStatusAndCredit(id, status) {
+    if (!['verified', 'rejected', 'submitted'].includes(status)) {
+      const error = new Error('Invalid receipt status.'); error.statusCode = 400; throw error;
+    }
+    const [rows] = await pool.query('SELECT order_id, user_id FROM payment_receipts WHERE id = ?', [id]);
+    if (!rows[0]) { const error = new Error('Receipt not found.'); error.statusCode = 404; throw error; }
+    await pool.query('UPDATE payment_receipts SET status = ? WHERE id = ?', [status, id]);
+    if (status === 'verified') await this.creditVerifiedCancellation(rows[0].order_id, rows[0].user_id);
+  }
+
+  static async creditVerifiedCancellation(orderId, userId) {
+    await pool.query(`CREATE TABLE IF NOT EXISTS wallet_transactions (
+      id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, order_id VARCHAR(50) NOT NULL,
+      type VARCHAR(40) NOT NULL, amount DECIMAL(10,2) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY wallet_order_type_unique (order_id, type)
+    )`);
+    const [orders] = await pool.query('SELECT status FROM orders WHERE id = ? AND user_id = ?', [orderId, userId]);
+    if (orders[0]?.status !== 'cancelled') return false;
+    const [payments] = await pool.query("SELECT COALESCE(SUM(amount),0) AS amount FROM payment_receipts WHERE order_id = ? AND user_id = ? AND status = 'verified'", [orderId, userId]);
+    const amount = Number(payments[0]?.amount || 0); if (amount <= 0) return false;
+    const [result] = await pool.query("INSERT IGNORE INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?)", [userId, orderId, amount]);
+    if (Number(result.affectedRows || 0) === 0) return false;
+    await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [amount, userId]);
+    return true;
+  }
   static async findLatestByUserOrderIds(userId, orderIds = []) {
     await AppControl.ensureSchema();
     // Existing production databases may have been created before staged

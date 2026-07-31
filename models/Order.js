@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 import PaymentReceipt from './PaymentReceipt.js';
 import AppControl from './AppControl.js';
 
@@ -202,6 +202,7 @@ class Order {
           );
         }
       }
+      if (order) await PaymentReceipt.creditVerifiedCancellation(id, order.userId);
       return;
     }
 
