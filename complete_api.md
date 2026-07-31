@@ -845,12 +845,28 @@ Example response fragment:
     "total": 2500,
     "paymentMethod": "Full Payment",
     "paymentReceipt": {
-      "id": 41,
-      "amount": 2500,
+      "id": 42,
+      "amount": 2300,
       "status": "submitted",
-      "paymentStage": "full",
-      "receiptUrl": "/uploads/payment-receipts/easypaisa-full-payment.jpg"
-    }
+      "paymentStage": "remaining",
+      "receiptUrl": "/uploads/payment-receipts/easypaisa-remaining.jpg"
+    },
+    "paymentReceipts": [
+      {
+        "id": 41,
+        "amount": 200,
+        "status": "verified",
+        "paymentStage": "advance",
+        "receiptUrl": "/uploads/payment-receipts/easypaisa-advance.jpg"
+      },
+      {
+        "id": 42,
+        "amount": 2300,
+        "status": "submitted",
+        "paymentStage": "remaining",
+        "receiptUrl": "/uploads/payment-receipts/easypaisa-remaining.jpg"
+      }
+    ]
   }
 ]
 ```
@@ -864,6 +880,15 @@ Receipt status values:
   "rejected": "Admin rejected the proof; customer must upload a replacement."
 }
 ```
+
+### Receipt-history response rule
+
+`GET /api/orders` returns both fields below for each service order:
+
+- `paymentReceipt`: the newest receipt. Existing app screens use this for the current payment state.
+- `paymentReceipts`: every receipt for that order, ordered oldest to newest. Use this to show both the **Advance receipt** and **Remaining receipt** images.
+
+For a full-payment booking, `paymentReceipts` normally contains one item with `"paymentStage": "full"`.
 
 ## 3. Admin: list payment receipts
 
