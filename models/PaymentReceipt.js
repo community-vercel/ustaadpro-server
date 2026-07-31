@@ -106,7 +106,7 @@ class PaymentReceipt {
     if (orders[0]?.status !== 'cancelled') return false;
     const [payments] = await pool.query("SELECT COALESCE(SUM(amount),0) AS amount FROM payment_receipts WHERE order_id = ? AND user_id = ? AND status = 'verified'", [orderId, userId]);
     const amount = Number(payments[0]?.amount || 0); if (amount <= 0) return false;
-    const [result] = await pool.query("INSERT IGNORE INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?)", [userId, orderId, amount]);
+    const [result] = await pool.query("INSERT INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?) ON CONFLICT (order_id, type) DO NOTHING", [userId, orderId, amount]);
     if (Number(result.affectedRows || 0) === 0) return false;
     await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [amount, userId]);
     return true;

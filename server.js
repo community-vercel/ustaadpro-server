@@ -41,7 +41,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middlewares
-app.use(cors({ origin: true, credentials: true }));
+// Keep browser origins explicit. Admin requests include an Authorization
+// header, so browsers first send an OPTIONS preflight request.
+const allowedOrigins = new Set([
+  'https://admin.ustaadpro.pk',
+  'https://ustaadpro.pk',
+  'https://www.ustaadpro.pk',
+  'http://localhost:3000',
+  'http://localhost:3001',
+]);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Native mobile clients and server-to-server calls do not send Origin.
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS origin not allowed: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
