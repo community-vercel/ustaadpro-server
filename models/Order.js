@@ -83,6 +83,10 @@ class Order {
       userId,
       orders.map(order => order.id),
     );
+    const receiptHistoryByOrderId = await PaymentReceipt.findByUserOrderIds(
+      userId,
+      orders.map(order => order.id),
+    );
 
     // Populate items for each order
     const populatedOrders = [];
@@ -132,6 +136,7 @@ class Order {
         rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
         rewardDiscount: Number(order.rewardDiscount || 0),
         paymentReceipt: receiptsByOrderId[order.id] || null,
+        paymentReceipts: receiptHistoryByOrderId[order.id] || [],
         items: cartItems,
       });
     }

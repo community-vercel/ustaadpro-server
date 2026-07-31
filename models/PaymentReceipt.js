@@ -155,6 +155,25 @@ class PaymentReceipt {
     }, {});
   }
 
+  static async findByUserOrderIds(userId, orderIds = []) {
+    await AppControl.ensureSchema();
+    if (!orderIds.length) return {};
+
+    const placeholders = orderIds.map(() => '?').join(', ');
+    const [rows] = await pool.query(
+      `SELECT * FROM payment_receipts
+       WHERE user_id = ? AND order_id IN (${placeholders})
+       ORDER BY created_at ASC, id ASC`,
+      [userId, ...orderIds],
+    );
+
+    return rows.reduce((acc, row) => {
+      const orderId = row.order_id;
+      if (!acc[orderId]) acc[orderId] = [];
+      acc[orderId].push(mapReceipt(row));
+      return acc;
+    }, {});
+  }
   static async getAdminAll() {
     await AppControl.ensureSchema();
     // Existing production databases may have been created before staged
