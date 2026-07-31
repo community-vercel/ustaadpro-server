@@ -972,3 +972,95 @@ Content-Type: application/json
 ```
 
 > Do not use `PUT /api/auth/wallet` from the mobile app for refunds or payments. Wallet credits must stay server-controlled. Wallet payment at checkout will use a separate server-side checkout endpoint when that feature is enabled.
+---
+
+# Booking lead-time / preferred-time API
+
+The minimum lead time determines the earliest time a customer can select for a service booking. It applies to quick slots, custom time, checkout, and booking updates.
+
+## Get the public booking setting (mobile app)
+
+`GET /api/settings`
+
+No authentication is required.
+
+```http
+GET https://api.ustaadpro.pk/api/settings
+```
+
+Example response:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR",
+  "supportPhone": "+923001234567"
+}
+```
+
+`minimumBookingLeadHours` is an integer from `0` to `168`.
+
+- `0`: customer can choose any operational future slot today.
+- `1`: customer can choose a slot at least one hour from now.
+- `4`: customer can choose a slot at least four hours from now.
+
+## Admin: update the booking lead time
+
+`PUT /api/admin/settings`
+
+```http
+PUT https://api.ustaadpro.pk/api/admin/settings
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Send the complete settings object. Example with a four-hour lead time:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR",
+  "supportPhone": "+923001234567",
+  "shippingCost": 200,
+  "rewardEnabled": true,
+  "rewardPointValue": 25,
+  "rewardMinimumRedeem": 100,
+  "serviceRewardPointsOnCompletion": 1,
+  "serviceRewardMaxDiscountPercent": 10,
+  "shopRewardEarnPercent": 0.5,
+  "shopRewardMaxDiscountPercent": 5
+}
+```
+
+Successful response:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR"
+}
+```
+
+## Checkout enforcement
+
+When a customer submits an earlier booking time, the backend rejects it even if they use an old mobile app or call the API directly.
+
+`POST /api/orders/checkout`
+
+Example failed response (`400 Bad Request`):
+
+```json
+{
+  "message": "Please choose a time at least 4 hour(s) from now."
+}
+```
+
+The same validation also applies to:
+
+`PUT /api/orders/:orderId`
