@@ -70,12 +70,14 @@ class PaymentReceipt {
     }
 
     // Always insert a new immutable payment proof. Never update or delete the advance receipt.
-    await pool.query(
+    const [createdRows] = await pool.query(
       `INSERT INTO payment_receipts
        (order_id, user_id, receipt_url, amount, account_number, account_title, status, payment_stage)
-       VALUES (?, ?, ?, ?, ?, ?, 'submitted', ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, 'submitted', ?)
+       RETURNING id, order_id, user_id, receipt_url, amount, account_number, account_title, status, payment_stage, created_at, updated_at`,
       [orderId, userId, receiptUrl, Number(amount), accountNumber, accountTitle, paymentStage],
     );
+    return mapReceipt(createdRows[0]);
   }
 
   static async updateStatusAndCredit(id, status) {

@@ -301,6 +301,11 @@ class AppControl {
       )`,
     );
 
+    // Existing deployments may have created payment_receipts before staged
+    // payments existed. This is idempotent and runs on every API startup.
+    await pool.query(
+      "ALTER TABLE payment_receipts ADD COLUMN IF NOT EXISTS payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
+    );
     await ensureTable(
       'order_items',
       `CREATE TABLE IF NOT EXISTS order_items (

@@ -442,7 +442,7 @@ export const uploadPaymentReceipt = async (req, res) => {
     const receiptUrl = await saveReceiptImage(req.body?.dataUrl, req.body?.filename);
     const amount = Number(req.body?.amount || 0);
 
-    await PaymentReceipt.create({
+    const receipt = PaymentReceipt.create({
       orderId: req.params.id,
       userId: req.user.id,
       receiptUrl,
@@ -453,6 +453,8 @@ export const uploadPaymentReceipt = async (req, res) => {
 
     res.status(201).json({
       message: 'Receipt uploaded successfully.',
+      receiptId: receipt.id,
+      paymentStage: receipt.paymentStage,
       receiptUrl,
     });
   } catch (error) {
