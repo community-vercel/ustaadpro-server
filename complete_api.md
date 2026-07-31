@@ -681,3 +681,294 @@ Use `null` for `subcategoryId` when the service belongs directly to the main cat
   "description": "Interior wall painting service."
 }
 ```
+---
+
+# Payment receipts and wallet
+
+Base URL: `https://api.ustaadpro.pk/api`
+
+Every customer and admin endpoint below requires this header:
+
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+## 0. Create a service booking with a payment method
+
+`POST /api/orders/checkout`
+
+The backend accepts these exact payment-method values:
+
+```json
+{
+  "fullPayment": "Full Payment in Advance",
+  "advancePayment": "Rs 200 Advance"
+}
+```
+
+### Full payment booking
+
+```http
+POST /api/orders/checkout
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "cart": [
+    {
+      "service": {"id": "fan-installation"},
+      "quantity": 1
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Full Payment in Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "specialInstructions": "Please call before arrival",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+Example booking response:
+
+```json
+{
+  "message": "Booking confirmed successfully",
+  "order": {
+    "id": "USTAADPRO-618044",
+    "total": 2500,
+    "status": "confirmed",
+    "paymentMethod": "Full Payment in Advance"
+  }
+}
+```
+
+Then upload one receipt using `POST /api/orders/USTAADPRO-618044/payment-receipt` with the exact returned `order.total` as `amount`.
+
+### Rs 200 advance booking
+
+```json
+{
+  "cart": [
+    {
+      "service": {"id": "fan-installation"},
+      "quantity": 1
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Rs 200 Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+### Upload the first Rs 200 receipt
+
+`POST /api/orders/USTAADPRO-618044/payment-receipt`
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-advance.jpg",
+  "amount": 200
+}
+```
+
+### Upload the remaining receipt after service completion
+
+Only after the admin changes the order status to `completed`, upload the balance. For an order total of Rs. 2,500, the remaining amount is Rs. 2,300:
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-remaining.jpg",
+  "amount": 2300
+}
+```
+## 1. Upload a full-payment receipt (customer)
+
+Use this after creating an order with the **Full Payment** method. The amount must exactly equal the order total.
+
+`POST /api/orders/:orderId/payment-receipt`
+
+Example:
+
+```http
+POST /api/orders/USTAADPRO-618044/payment-receipt
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-full-payment.jpg",
+  "amount": 2500
+}
+```
+
+Successful response:
+
+```json
+{
+  "message": "Payment receipt uploaded successfully."
+}
+```
+
+Rules:
+
+- The logged-in customer must own `orderId`.
+- A cancelled order cannot receive a receipt.
+- For **Full Payment**, `amount` must equal the complete order total.
+- For **Rs 200 Advance**, first submit `200`; after the admin marks the order `completed`, submit the remaining balance as a second receipt.
+
+## 2. View customer bookings and receipt state
+
+`GET /api/orders`
+
+```http
+GET /api/orders
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+[
+  {
+    "id": "USTAADPRO-618044",
+    "status": "confirmed",
+    "total": 2500,
+    "paymentMethod": "Full Payment",
+    "paymentReceipt": {
+      "id": 41,
+      "amount": 2500,
+      "status": "submitted",
+      "paymentStage": "full",
+      "receiptUrl": "/uploads/payment-receipts/easypaisa-full-payment.jpg"
+    }
+  }
+]
+```
+
+Receipt status values:
+
+```json
+{
+  "submitted": "Customer uploaded proof; awaiting admin review.",
+  "verified": "Admin approved the payment proof.",
+  "rejected": "Admin rejected the proof; customer must upload a replacement."
+}
+```
+
+## 3. Admin: list payment receipts
+
+`GET /api/admin/payment-receipts`
+
+```http
+GET /api/admin/payment-receipts
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+[
+  {
+    "id": 41,
+    "orderId": "USTAADPRO-618044",
+    "userId": 25,
+    "amount": 2500,
+    "status": "submitted",
+    "paymentStage": "full",
+    "receiptUrl": "/uploads/payment-receipts/easypaisa-full-payment.jpg",
+    "orderStatus": "confirmed"
+  }
+]
+```
+
+## 4. Admin: verify or reject a receipt
+
+`PATCH /api/admin/payment-receipts/:receiptId/status`
+
+Verify a receipt:
+
+```http
+PATCH /api/admin/payment-receipts/41/status
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "verified"
+}
+```
+
+Reject a receipt:
+
+```json
+{
+  "status": "rejected"
+}
+```
+
+Successful response:
+
+```json
+{
+  "message": "Receipt status updated. Verified cancelled payments are credited to the wallet once."
+}
+```
+
+## 5. Wallet balance (customer)
+
+`GET /api/auth/profile`
+
+```http
+GET /api/auth/profile
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+{
+  "id": 25,
+  "name": "Test Anis",
+  "walletBalance": 2500,
+  "coins": 0,
+  "rewardPoints": 0
+}
+```
+
+## Wallet refund security flow
+
+There is deliberately **no customer API that can credit a wallet balance**.
+
+A refund is created only when both conditions are true:
+
+1. The customer cancels their eligible `confirmed` service order using `PATCH /api/orders/:orderId/cancel`.
+2. An admin verifies at least one payment receipt using `PATCH /api/admin/payment-receipts/:receiptId/status` with `"status": "verified"`.
+
+The backend then credits the sum of verified receipts to `walletBalance`. It writes a unique `wallet_transactions` record for `(order_id, cancellation_refund)`, so duplicate requests, refreshes, or repeated status updates cannot credit the same order twice.
+
+Cancel order example:
+
+```http
+PATCH /api/orders/USTAADPRO-618044/cancel
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "cancelReason": "I no longer need this service."
+}
+```
+
+> Do not use `PUT /api/auth/wallet` from the mobile app for refunds or payments. Wallet credits must stay server-controlled. Wallet payment at checkout will use a separate server-side checkout endpoint when that feature is enabled.
