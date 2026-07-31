@@ -29,60 +29,52 @@ function mapReceipt(row) {
 class PaymentReceipt {
   static async create({orderId, userId, receiptUrl, amount, accountNumber, accountTitle}) {
     await AppControl.ensureSchema();
-    // Existing production databases may have been created before staged
-    // payments. Make the migration idempotent at the write boundary.
     const [stageColumns] = await pool.query(
       `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME = 'payment_receipts'
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payment_receipts'
          AND COLUMN_NAME = 'payment_stage'`,
     );
     if (!stageColumns.length) {
-      await pool.query(
-        "ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
-      );
+      await pool.query("ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'");
     }
+
     const [orders] = await pool.query(
-      'SELECT id, status, total FROM orders WHERE id = ? AND user_id = ?',
+      'SELECT id, status, total, payment_method FROM orders WHERE id = ? AND user_id = ?',
       [orderId, userId],
     );
-
     const order = orders[0];
     if (!order) {
-      const error = new Error('Order not found.');
-      error.statusCode = 404;
-      throw error;
+      const error = new Error('Order not found.'); error.statusCode = 404; throw error;
     }
-
-    // EasyPaisa receipts are submitted before a service visit. Keep accepting
-    // them through the service lifecycle, but never for a cancelled order.
     if (order.status === 'cancelled') {
-      const error = new Error('A receipt cannot be submitted for a cancelled booking.');
-      error.statusCode = 400;
-      throw error;
+      const error = new Error('A receipt cannot be submitted for a cancelled booking.'); error.statusCode = 400; throw error;
     }
 
-    const [existing] = await pool.query('SELECT amount, payment_stage FROM payment_receipts WHERE order_id = ? AND user_id = ?', [orderId, userId]);
-    const paid = existing.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-    const isAdvance = String((await pool.query('SELECT payment_method FROM orders WHERE id = ?', [orderId]))[0][0]?.payment_method || '') === 'Rs 200 Advance';
-    const remaining = Math.max(0, Number(order.total) - paid);
-    const paymentStage = isAdvance && !existing.length ? 'advance' : isAdvance ? 'remaining' : 'full';
-    const expected = paymentStage === 'advance' ? Math.min(200, Number(order.total)) : remaining;
-    if (Number(amount) !== expected) { const error = new Error('Payment amount must be Rs. ' + expected + '.'); error.statusCode = 400; throw error; }
+    const [existing] = await pool.query(
+      'SELECT amount, status, payment_stage FROM payment_receipts WHERE order_id = ? AND user_id = ? ORDER BY id ASC',
+      [orderId, userId],
+    );
+    const isAdvance = String(order.payment_method || order.paymentMethod || '') === 'Rs 200 Advance';
+    const hasAdvanceReceipt = existing.some(item => item.payment_stage === 'advance');
+    const paymentStage = isAdvance ? (hasAdvanceReceipt ? 'remaining' : 'advance') : 'full';
+    if (paymentStage === 'remaining' && order.status !== 'completed') {
+      const error = new Error('The remaining receipt can only be uploaded after the work is completed.'); error.statusCode = 400; throw error;
+    }
 
+    const paid = existing.filter(item => item.status !== 'rejected').reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const expected = paymentStage === 'advance'
+      ? Math.min(200, Number(order.total || 0))
+      : Math.max(0, Number(order.total || 0) - paid);
+    if (Number(amount) !== expected) {
+      const error = new Error('Payment amount must be Rs. ' + expected + '.'); error.statusCode = 400; throw error;
+    }
+
+    // Always insert a new immutable payment proof. Never update or delete the advance receipt.
     await pool.query(
       `INSERT INTO payment_receipts
        (order_id, user_id, receipt_url, amount, account_number, account_title, status, payment_stage)
        VALUES (?, ?, ?, ?, ?, ?, 'submitted', ?)`,
-      [
-        orderId,
-        userId,
-        receiptUrl,
-        Number(amount || order.total || 0),
-        accountNumber,
-        accountTitle,
-        paymentStage,
-      ],
+      [orderId, userId, receiptUrl, Number(amount), accountNumber, accountTitle, paymentStage],
     );
   }
 
@@ -94,12 +86,7 @@ class PaymentReceipt {
     if (!rows[0]) { const error = new Error('Receipt not found.'); error.statusCode = 404; throw error; }
     await pool.query('UPDATE payment_receipts SET status = ? WHERE id = ?', [status, id]);
     if (status === 'verified') {
-      // Only the initial payment-review state becomes confirmed. A remaining
-      // receipt after completed work must never move the order backward.
-      await pool.query(
-        "UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'checking_receipt'",
-        [rows[0].order_id],
-      );
+      await pool.query("UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'checking_receipt'", [rows[0].order_id]);
       await this.creditVerifiedCancellation(rows[0].order_id, rows[0].user_id);
     }
   }
@@ -113,10 +100,10 @@ class PaymentReceipt {
     const [orders] = await pool.query('SELECT status FROM orders WHERE id = ? AND user_id = ?', [orderId, userId]);
     if (orders[0]?.status !== 'cancelled') return false;
     const [payments] = await pool.query("SELECT COALESCE(SUM(amount),0) AS amount FROM payment_receipts WHERE order_id = ? AND user_id = ? AND status = 'verified'", [orderId, userId]);
-    const amount = Number(payments[0]?.amount || 0); if (amount <= 0) return false;
-    const [result] = await pool.query("INSERT INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?) ON CONFLICT (order_id, type) DO NOTHING", [userId, orderId, amount]);
+    const creditAmount = Number(payments[0]?.amount || 0); if (creditAmount <= 0) return false;
+    const [result] = await pool.query("INSERT INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?) ON CONFLICT (order_id, type) DO NOTHING", [userId, orderId, creditAmount]);
     if (Number(result.affectedRows || 0) === 0) return false;
-    await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [amount, userId]);
+    await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [creditAmount, userId]);
     return true;
   }
   static async findLatestByUserOrderIds(userId, orderIds = []) {
