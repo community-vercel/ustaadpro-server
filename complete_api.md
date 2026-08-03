@@ -1089,3 +1089,134 @@ Example failed response (`400 Bad Request`):
 The same validation also applies to:
 
 `PUT /api/orders/:orderId`
+
+---
+
+# Multi-service cart and quantity booking API
+
+Use this flow when a customer wants to book several services at one address and one preferred time, for example **3 fan installations** plus **2 switch repairs**. One checkout creates one order with multiple `order_items`.
+
+## Create one booking with multiple services
+
+`POST /api/orders/checkout`
+
+**Auth:** `Authorization: Bearer CUSTOMER_ACCESS_TOKEN`
+
+```json
+{
+  "cart": [
+    {
+      "service": {
+        "id": "fan-installation",
+        "selectedWorkPriceId": 45,
+        "selectedWorkTitle": "Ceiling Fan Installation"
+      },
+      "quantity": 3
+    },
+    {
+      "service": {
+        "id": "electrician-general-work",
+        "selectedWorkPriceId": 72,
+        "selectedWorkTitle": "Switch Repair"
+      },
+      "quantity": 2
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Rs 200 Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "specialInstructions": "Please call before arrival.",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+Successful response example:
+
+```json
+{
+  "message": "Booking created. Payment receipt verification is required.",
+  "order": {
+    "id": "USTAADPRO-618044",
+    "status": "checking_receipt",
+    "paymentMethod": "Rs 200 Advance",
+    "total": 4400,
+    "items": [
+      {
+        "serviceId": "fan-installation",
+        "serviceWorkPriceId": 45,
+        "serviceWorkTitle": "Ceiling Fan Installation",
+        "quantity": 3,
+        "price": 700,
+        "lineTotal": 2100
+      },
+      {
+        "serviceId": "electrician-general-work",
+        "serviceWorkPriceId": 72,
+        "serviceWorkTitle": "Switch Repair",
+        "quantity": 2,
+        "price": 900,
+        "lineTotal": 1800
+      }
+    ]
+  }
+}
+```
+
+## Quantity and price security rules
+
+- `quantity` must be a whole number from **1** to **20** for each service work item.
+- The backend gets the current price from the service database. It does **not** trust `service.price`, `lineTotal`, or any price sent by the mobile app.
+- If the same service and selected work are submitted twice, the backend merges them into one order line.
+- The merged quantity cannot exceed `20`.
+- One booking uses one address, one time slot, one payment method, and one order status for all its items.
+
+Invalid quantity response (`400 Bad Request`):
+
+```json
+{
+  "message": "Each service quantity must be a whole number between 1 and 20."
+}
+```
+
+## Get the customer’s multi-service orders
+
+`GET /api/orders`
+
+**Auth:** `Authorization: Bearer CUSTOMER_ACCESS_TOKEN`
+
+Each returned order includes all booked items and quantities:
+
+```json
+{
+  "id": "USTAADPRO-618044",
+  "status": "confirmed",
+  "total": 4400,
+  "items": [
+    {
+      "quantity": 3,
+      "price": 700,
+      "serviceWorkTitle": "Ceiling Fan Installation",
+      "service": {
+        "id": "fan-installation",
+        "title": "Fan Services"
+      }
+    },
+    {
+      "quantity": 2,
+      "price": 900,
+      "serviceWorkTitle": "Switch Repair",
+      "service": {
+        "id": "electrician-general-work",
+        "title": "Electrician Services"
+      }
+    }
+  ]
+}
+```
+
+## Admin order details
+
+`GET /api/admin/orders/:orderId`
+
+The Admin order details response includes the same `items` array. Display every item as `quantity × service/work title` and calculate each line as `quantity × price`.
