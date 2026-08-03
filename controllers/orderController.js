@@ -114,8 +114,12 @@ export const checkout = async (req, res) => {
     const itemsToInsert = [];
 
     for (const cartItem of cart) {
-      if (!cartItem.service || !cartItem.service.id || !cartItem.quantity) {
+      if (!cartItem.service || !cartItem.service.id) {
         return res.status(400).json({message: 'Invalid cart item structure.'});
+      }
+      const quantity = Number(cartItem.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+        return res.status(400).json({message: 'Each service quantity must be a whole number between 1 and 20.'});
       }
 
       const service = await Service.findById(cartItem.service.id);
@@ -127,16 +131,26 @@ export const checkout = async (req, res) => {
 
       const selectedWork = resolveSelectedWork(service, cartItem);
       const itemTotal =
-        Number(selectedWork.price) * cartItem.quantity * occurrenceCount;
+        Number(selectedWork.price) * quantity * occurrenceCount;
       total += itemTotal;
 
-      itemsToInsert.push({
-        serviceId: service.id,
-        serviceWorkPriceId: selectedWork.serviceWorkPriceId,
-        serviceWorkTitle: selectedWork.serviceWorkTitle,
-        quantity: cartItem.quantity,
-        price: selectedWork.price,
-      });
+      const existingItem = itemsToInsert.find(item =>
+        item.serviceId === service.id && item.serviceWorkPriceId === selectedWork.serviceWorkPriceId,
+      );
+      if (existingItem) {
+        if (existingItem.quantity + quantity > 20) {
+          return res.status(400).json({message: 'A service work item cannot exceed quantity 20 per booking.'});
+        }
+        existingItem.quantity += quantity;
+      } else {
+        itemsToInsert.push({
+          serviceId: service.id,
+          serviceWorkPriceId: selectedWork.serviceWorkPriceId,
+          serviceWorkTitle: selectedWork.serviceWorkTitle,
+          quantity,
+          price: selectedWork.price,
+        });
+      }
     }
 
     const settings = await AppControl.getSettings();
