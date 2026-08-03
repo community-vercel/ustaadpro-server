@@ -29,6 +29,7 @@ import {
   deleteAdminCategory,
   deleteAdminSubcategory,
   deleteAdminService,
+  deleteAdminHomeSlide,
 } from '../controllers/adminController.js';
 import {
   getAdminShopOrders,
@@ -63,6 +64,7 @@ router.delete('/services/:id', deleteAdminService);
 router.get('/home-slides', getAdminHomeSlides);
 router.post('/home-slides', saveAdminHomeSlide);
 router.put('/home-slides/:id', saveAdminHomeSlide);
+router.delete('/home-slides/:id', deleteAdminHomeSlide);
 router.get('/settings', getAdminSettings);
 router.put('/settings', updateAdminSettings);
 

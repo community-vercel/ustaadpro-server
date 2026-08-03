@@ -698,6 +698,15 @@ export const saveAdminHomeSlide = async (req, res) => {
   }
 };
 
+export const deleteAdminHomeSlide = async (req, res) => {
+  try {
+    await AppControl.deleteSlide(req.params.id);
+    res.json({message: 'Home header slide deleted.'});
+  } catch (error) {
+    console.error('Admin delete home slide error:', error);
+    res.status(404).json({message: error.message || 'Home header slide was not found.'});
+  }
+};
 export const getAdminSettings = async (_req, res) => {
   try {
     const settings = await AppControl.getSettings();

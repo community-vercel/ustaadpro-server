@@ -502,6 +502,13 @@ class AppControl {
     return id;
   }
 
+  static async deleteSlide(id) {
+    await this.ensureSchema();
+    const [result] = await pool.query('DELETE FROM home_slides WHERE id = ?', [id]);
+    if (!Number(result?.affectedRows || result?.rowCount || 0)) {
+      throw new Error('Home header slide was not found.');
+    }
+  }
   static async getSettings() {
     await this.ensureSchema();
     const [rows] = await pool.query('SELECT * FROM app_settings');
