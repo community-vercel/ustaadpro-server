@@ -119,6 +119,7 @@ function mapSlide(row) {
     buttonLabel: row.button_label,
     categoryId: row.category_id,
     categoryTitle: row.category_title,
+    redirectType: row.redirect_type || 'category',
     visual: row.visual,
     imageUrl: row.image_url || '',
     primaryColor: row.primary_color,
@@ -188,6 +189,10 @@ class AppControl {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+
+    await pool.query(
+      `ALTER TABLE home_slides ADD COLUMN IF NOT EXISTS redirect_type VARCHAR(40) NOT NULL DEFAULT 'category'`,
+    );
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS app_settings (
@@ -459,9 +464,9 @@ class AppControl {
 
     await pool.query(
       `INSERT INTO home_slides
-       (id, badge, title, subtitle, button_label, category_id, category_title,
+       (id, badge, title, subtitle, button_label, category_id, category_title, redirect_type,
         visual, image_url, primary_color, secondary_color, sort_order, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET
         badge = EXCLUDED.badge,
         title = EXCLUDED.title,
@@ -469,6 +474,7 @@ class AppControl {
         button_label = EXCLUDED.button_label,
         category_id = EXCLUDED.category_id,
         category_title = EXCLUDED.category_title,
+        redirect_type = EXCLUDED.redirect_type,
         visual = EXCLUDED.visual,
         image_url = EXCLUDED.image_url,
         primary_color = EXCLUDED.primary_color,
@@ -483,6 +489,7 @@ class AppControl {
         payload.buttonLabel || payload.button_label || 'Book Now',
         payload.categoryId || payload.category_id || 'home',
         payload.categoryTitle || payload.category_title || 'Home Services',
+        payload.redirectType || payload.redirect_type || 'category',
         payload.visual || 'UP',
         payload.imageUrl || payload.image_url || '',
         payload.primaryColor || payload.primary_color || '#131b2e',
