@@ -148,7 +148,28 @@ async function ensureTable(tableName, createSql) {
 }
 
 class AppControl {
+  // Schema setup is needed after a deployment/restart, but normal API calls
+  // must not repeatedly issue CREATE/ALTER statements. Concurrent calls share
+  // the same initialization promise until the schema is ready.
+  static _schemaReady = false;
+  static _schemaInitialization = null;
+
   static async ensureSchema() {
+    if (this._schemaReady) return;
+    if (this._schemaInitialization) return this._schemaInitialization;
+
+    this._schemaInitialization = this.ensureSchemaInternal()
+      .then(() => {
+        this._schemaReady = true;
+      })
+      .finally(() => {
+        this._schemaInitialization = null;
+      });
+
+    return this._schemaInitialization;
+  }
+
+  static async ensureSchemaInternal() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id VARCHAR(50) PRIMARY KEY,
