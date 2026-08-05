@@ -19,7 +19,7 @@ class User {
     return rows[0];
   }
 
-  static async create({ name, phone, email, password, walletBalance = 5200.00, coins = 1280 }) {
+  static async create({ name, phone, email, password, walletBalance = 0, coins = 1280 }) {
     const [rows] = await pool.query(
       'INSERT INTO users (name, phone, email, password, wallet_balance, coins) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
       [name, phone, email, password, walletBalance, coins]
