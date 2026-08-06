@@ -34,6 +34,29 @@ class User {
     );
   }
 
+  static async consumeWallet(id, maximumAmount) {
+    const amount = Math.max(0, Number(maximumAmount || 0));
+    if (!amount) return 0;
+    const [rows] = await pool.query(
+      `WITH current_balance AS (
+         SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE
+       )
+       UPDATE users u
+       SET wallet_balance = u.wallet_balance - LEAST(u.wallet_balance, ?)
+       FROM current_balance current
+       WHERE u.id = ?
+       RETURNING LEAST(current.wallet_balance, ?) AS wallet_used`,
+      [id, amount, id, amount],
+    );
+    return Number(rows[0]?.walletUsed || rows[0]?.wallet_used || 0);
+  }
+
+  static async creditWallet(id, amount) {
+    await pool.query(
+      'UPDATE users SET wallet_balance = COALESCE(wallet_balance, 0) + ? WHERE id = ?',
+      [Math.max(0, Number(amount || 0)), id],
+    );
+  }
   static async addRewardPoints(id, points) {
     await pool.query(
       'UPDATE users SET reward_points = GREATEST(0, COALESCE(reward_points, 0) + ?) WHERE id = ?',

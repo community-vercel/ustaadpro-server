@@ -92,6 +92,7 @@ export const checkout = async (req, res) => {
       specialInstructions,
       recurringOccurrences,
       useRewardPoints = false,
+      useWalletBalance = false,
     } = req.body;
     const userId = req.user.id;
     const occurrenceCount = Math.max(
@@ -221,35 +222,51 @@ export const checkout = async (req, res) => {
       (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
     );
     const calculatedTotal = taxableTotal + inspectionFee + tax;
+    let walletUsed = 0;
+    if (useWalletBalance) {
+      walletUsed = await User.consumeWallet(userId, calculatedTotal);
+    }
+    const payableTotal = Math.max(0, calculatedTotal - walletUsed);
 
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const orderId = `USTAADPRO-${randomSuffix.slice(-6)}`;
 
-    await Order.create({
-      id: orderId,
-      userId,
-      total: calculatedTotal,
-      status: 'checking_receipt',
-      bookedFor: bookedFor || 'Today, 6:00 PM',
-      paymentMethod,
-      address,
-      specialInstructions,
-      inspectionFee: Number(inspectionFee || 0),
-      tax: Number(tax || 0),
-      rewardPointsEarned: 0,
-      rewardPointsRedeemed,
-      rewardDiscount,
-    });
-
-    await Order.addItems(orderId, itemsToInsert);
+    try {
+      await Order.create({
+        id: orderId,
+        userId,
+        total: payableTotal,
+        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
+        bookedFor: bookedFor || 'Today, 6:00 PM',
+        paymentMethod,
+        address,
+        specialInstructions,
+        inspectionFee: Number(inspectionFee || 0),
+        tax: Number(tax || 0),
+        rewardPointsEarned: 0,
+        rewardPointsRedeemed,
+        rewardDiscount,
+        walletUsed,
+        originalTotal: calculatedTotal,
+      });
+      await Order.addItems(orderId, itemsToInsert);
+    } catch (error) {
+      await Order.remove(orderId, userId).catch(() => {});
+      if (walletUsed > 0) await User.creditWallet(userId, walletUsed);
+      throw error;
+    }
     const updatedUser = await User.findById(userId);
 
     res.status(201).json({
-      message: 'Booking created. Payment receipt verification is required.',
+      message: payableTotal === 0
+        ? 'Booking confirmed using wallet balance.'
+        : 'Booking created. Payment receipt verification is required.',
       order: {
         id: orderId,
-        total: calculatedTotal,
-        status: 'checking_receipt',
+        total: payableTotal,
+        originalTotal: calculatedTotal,
+        walletUsed,
+        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
         bookedFor: bookedFor || 'Today, 6:00 PM',
         paymentMethod,
         address,

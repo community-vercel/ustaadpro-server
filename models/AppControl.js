@@ -403,6 +403,8 @@ class AppControl {
       ['reward_points_earned', 'INT NOT NULL DEFAULT 0'],
       ['reward_points_redeemed', 'INT NOT NULL DEFAULT 0'],
       ['reward_discount', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'],
+      ['wallet_used', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'],
+      ['original_total', 'NUMERIC(10, 2) NULL'],
     ];
 
     for (const [column, definition] of orderColumns) {
