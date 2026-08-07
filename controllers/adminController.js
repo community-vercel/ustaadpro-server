@@ -89,6 +89,8 @@ async function populateAdminOrder(order) {
     rewardPointsEarned: Number(order.rewardPointsEarned || 0),
     rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
     rewardDiscount: Number(order.rewardDiscount || 0),
+    walletUsed: Number(order.walletUsed || 0),
+    originalTotal: Number(order.originalTotal ?? order.total),
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
@@ -140,6 +142,8 @@ export const getAdminOrders = async (_req, res) => {
               o.reward_points_earned as rewardPointsEarned,
               o.reward_points_redeemed as rewardPointsRedeemed,
               o.reward_discount as rewardDiscount,
+              o.wallet_used as walletUsed,
+              o.original_total as originalTotal,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
@@ -170,6 +174,8 @@ export const getAdminOrderById = async (req, res) => {
               o.reward_points_earned as rewardPointsEarned,
               o.reward_points_redeemed as rewardPointsRedeemed,
               o.reward_discount as rewardDiscount,
+              o.wallet_used as walletUsed,
+              o.original_total as originalTotal,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
