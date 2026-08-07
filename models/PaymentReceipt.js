@@ -7,6 +7,7 @@ function mapReceipt(row) {
     orderId: row.order_id,
     userId: Number(row.user_id),
     receiptUrl: row.receipt_url,
+
     amount: Number(row.amount || 0),
     accountNumber: row.account_number,
     accountTitle: row.account_title,
@@ -112,6 +113,14 @@ class PaymentReceipt {
     await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [creditAmount, userId]);
     console.info('[Wallet] Cancellation refund Rs ' + creditAmount + ' credited for order ' + orderId + '.');
     return true;
+  }
+  static async findImage(orderId, receiptId, userId) {
+    await AppControl.ensureSchema();
+    const [rows] = await pool.query(
+      'SELECT receipt_url FROM payment_receipts WHERE id = ? AND order_id = ? AND user_id = ? LIMIT 1',
+      [receiptId, orderId, userId],
+    );
+    return rows[0]?.receipt_url || null;
   }
   static async findLatestByUserOrderIds(userId, orderIds = []) {
     await AppControl.ensureSchema();

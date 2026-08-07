@@ -7,9 +7,6 @@ import AppControl from '../models/AppControl.js';
 import User from '../models/User.js';
 import PaymentReceipt from '../models/PaymentReceipt.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const receiptUploadDir = path.resolve(__dirname, '../uploads/payment-receipts');
 const EASYPAISA_ACCOUNT_NUMBER = '03485838593';
 const EASYPAISA_ACCOUNT_TITLE = 'Muhammad Ikram';
 
@@ -29,21 +26,16 @@ async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
 
   const mimeType = match[1];
   const base64 = match[2];
-  const extension =
-    mimeType === 'image/png'
-      ? 'png'
-      : mimeType === 'image/webp'
-        ? 'webp'
-        : mimeType === 'image/gif'
-          ? 'gif'
-          : 'jpg';
-  const safeName = String(filename).replace(/[^a-zA-Z0-9._-]/g, '-');
-  const storedName = `${Date.now()}-${safeName.replace(/\.[^.]+$/, '')}.${extension}`;
+  const image = Buffer.from(base64, 'base64');
+  if (!image.length) {
+    const error = new Error('The receipt image is empty.');
+    error.statusCode = 400;
+    throw error;
+  }
 
-  await fs.mkdir(receiptUploadDir, {recursive: true});
-  await fs.writeFile(path.join(receiptUploadDir, storedName), Buffer.from(base64, 'base64'));
-
-  return `/uploads/payment-receipts/${storedName}`;
+  // Local upload files are removed by application rebuilds. Persist the
+  // validated proof in the database-backed receipt URL so it remains available.
+  return `data:${mimeType};base64,${image.toString('base64')}`;
 }
 
 function resolveSelectedWork(service, item) {
@@ -472,6 +464,32 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
+export const getPaymentReceiptImage = async (req, res) => {
+  try {
+    const storedImage = await PaymentReceipt.findImage(
+      req.params.id,
+      req.params.receiptId,
+      req.user.id,
+    );
+    if (!storedImage) {
+      return res.status(404).json({message: 'Receipt image not found.'});
+    }
+
+    const match = String(storedImage).match(
+      /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/,
+    );
+    if (!match) {
+      return res.redirect(storedImage);
+    }
+
+    res.set('Content-Type', match[1]);
+    res.set('Cache-Control', 'private, max-age=86400');
+    return res.send(Buffer.from(match[2], 'base64'));
+  } catch (error) {
+    console.error('Get receipt image error:', error);
+    return res.status(500).json({message: 'Unable to load receipt image.'});
+  }
+};
 export const uploadPaymentReceipt = async (req, res) => {
   try {
     const receiptUrl = await saveReceiptImage(req.body?.dataUrl, req.body?.filename);
@@ -490,7 +508,7 @@ export const uploadPaymentReceipt = async (req, res) => {
       message: 'Receipt uploaded successfully.',
       receiptId: receipt.id,
       paymentStage: receipt.paymentStage,
-      receiptUrl,
+      receiptUrl: `/api/orders/${encodeURIComponent(req.params.id)}/receipts/${receipt.id}/image`,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});
