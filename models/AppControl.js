@@ -419,8 +419,13 @@ class AppControl {
 
       if (!columns.length) {
         await pool.query(`ALTER TABLE orders ADD COLUMN ${column} ${definition}`);
+        if (column === 'wallet_used' || column === 'original_total') {
+          console.info('[Wallet] Added orders.' + column + ' schema column.');
+        }
       }
     }
+
+    console.info('[Wallet] Order wallet schema check completed.');
 
     const [[slideCount]] = await pool.query(
       'SELECT COUNT(*) as count FROM home_slides',

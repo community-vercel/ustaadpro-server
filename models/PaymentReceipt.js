@@ -103,9 +103,14 @@ class PaymentReceipt {
     if (orders[0]?.status !== 'cancelled') return false;
     const [payments] = await pool.query("SELECT COALESCE(SUM(amount),0) AS amount FROM payment_receipts WHERE order_id = ? AND user_id = ? AND status = 'verified'", [orderId, userId]);
     const creditAmount = Number(payments[0]?.amount || 0); if (creditAmount <= 0) return false;
+    console.info('[Wallet] Cancellation refund evaluated for order ' + orderId + ': verified Rs ' + creditAmount + '.');
     const [result] = await pool.query("INSERT INTO wallet_transactions (user_id, order_id, type, amount) VALUES (?, ?, 'cancellation_refund', ?) ON CONFLICT (order_id, type) DO NOTHING", [userId, orderId, creditAmount]);
-    if (Number(result.affectedRows || 0) === 0) return false;
+    if (Number(result.affectedRows || 0) === 0) {
+      console.info('[Wallet] Duplicate cancellation refund skipped for order ' + orderId + '.');
+      return false;
+    }
     await pool.query('UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id = ?', [creditAmount, userId]);
+    console.info('[Wallet] Cancellation refund Rs ' + creditAmount + ' credited for order ' + orderId + '.');
     return true;
   }
   static async findLatestByUserOrderIds(userId, orderIds = []) {

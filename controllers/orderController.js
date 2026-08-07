@@ -224,9 +224,11 @@ export const checkout = async (req, res) => {
     const calculatedTotal = taxableTotal + inspectionFee + tax;
     let walletUsed = 0;
     if (useWalletBalance) {
+      console.info('[Wallet] Checkout requested for user ' + userId + '; order total Rs ' + calculatedTotal + '.');
       walletUsed = await User.consumeWallet(userId, calculatedTotal);
     }
     const payableTotal = Math.max(0, calculatedTotal - walletUsed);
+    console.info('[Wallet] Checkout calculated for user ' + userId + ': used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
 
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const orderId = `USTAADPRO-${randomSuffix.slice(-6)}`;
@@ -250,7 +252,9 @@ export const checkout = async (req, res) => {
         originalTotal: calculatedTotal,
       });
       await Order.addItems(orderId, itemsToInsert);
+      console.info('[Wallet] Booking ' + orderId + ' created: used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
     } catch (error) {
+      console.error('[Wallet] Booking ' + orderId + ' failed; restoring Rs ' + walletUsed + '.');
       await Order.remove(orderId, userId).catch(() => {});
       if (walletUsed > 0) await User.creditWallet(userId, walletUsed);
       throw error;
