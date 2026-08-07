@@ -11,6 +11,7 @@ import {
   getProfile,
   updateWallet,
   saveFcmToken,
+  deleteAccount,
 } from '../controllers/authController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 
@@ -27,5 +28,6 @@ router.post('/forgot-password/reset', resetPasswordWithOtp);
 router.get('/profile', verifyToken, getProfile);
 router.put('/wallet', verifyToken, updateWallet);
 router.post('/fcm-token', verifyToken, saveFcmToken);
+router.delete('/account', verifyToken, deleteAccount);
 
 export default router;

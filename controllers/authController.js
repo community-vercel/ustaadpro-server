@@ -6,6 +6,7 @@ import { sendOtpEmail } from '../utils/mailer.js';
 import { sendOtpSms } from '../utils/sms.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import pool from '../config/db.js';
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'ustaadpro_super_secret_key_123!';
@@ -568,5 +569,52 @@ export const saveFcmToken = async (req, res) => {
   } catch (error) {
     console.error('Save FCM token error:', error);
     res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+export const deleteAccount = async (req, res) => {
+  const client = await pool.raw.connect();
+  try {
+    await client.query('BEGIN');
+    const {rows} = await client.query(
+      'SELECT id, email, phone FROM users WHERE id = $1 FOR UPDATE',
+      [req.user.id],
+    );
+    const user = rows[0];
+    if (!user) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({message: 'User not found.'});
+    }
+
+    await client.query(
+      'DELETE FROM complaints WHERE phone = $1 OR ($2::text IS NOT NULL AND email = $2)',
+      [user.phone, user.email || null],
+    );
+    await client.query('DELETE FROM service_reviews WHERE user_id = $1', [user.id]);
+    await client.query('DELETE FROM user_addresses WHERE user_id = $1', [user.id]);
+    await client.query('DELETE FROM payment_receipts WHERE user_id = $1', [user.id]);
+    await client.query('DELETE FROM wallet_transactions WHERE user_id = $1', [user.id]);
+    await client.query(
+      'DELETE FROM shop_order_items WHERE order_id IN (SELECT id FROM shop_orders WHERE user_id = $1)',
+      [user.id],
+    );
+    await client.query('DELETE FROM shop_orders WHERE user_id = $1', [user.id]);
+    await client.query(
+      'DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)',
+      [user.id],
+    );
+    await client.query('DELETE FROM orders WHERE user_id = $1', [user.id]);    await client.query('DELETE FROM auth_otps WHERE email IN ($1, $2)', [
+      user.email,
+      user.phone,
+    ]);
+    await client.query('DELETE FROM users WHERE id = $1', [user.id]);
+    await client.query('COMMIT');
+
+    return res.json({message: 'Your account has been permanently deleted.'});
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('Delete account error:', error);
+    return res.status(500).json({message: 'Unable to delete account.'});
+  } finally {
+    client.release();
   }
 };
