@@ -1,4 +1,4 @@
-﻿import pool from '../config/db.js';
+import pool from '../config/db.js';
 import PaymentReceipt from './PaymentReceipt.js';
 import AppControl from './AppControl.js';
 
@@ -7,7 +7,7 @@ class Order {
     id,
     userId,
     total,
-    status = 'confirmed',
+    status = 'checking_receipt',
     bookedFor,
     paymentMethod,
     address,
@@ -17,13 +17,15 @@ class Order {
     rewardPointsEarned = 0,
     rewardPointsRedeemed = 0,
     rewardDiscount = 0,
+    walletUsed = 0,
+    originalTotal = null,
   }) {
     await pool.query(
       `INSERT INTO orders
        (id, user_id, total, status, booked_for, payment_method, address,
         special_instructions, inspection_fee, tax, reward_points_earned,
-        reward_points_redeemed, reward_discount)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        reward_points_redeemed, reward_discount, wallet_used, original_total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -38,11 +40,16 @@ class Order {
         rewardPointsEarned,
         rewardPointsRedeemed,
         rewardDiscount,
+        walletUsed,
+        originalTotal,
       ],
     );
     return id;
   }
 
+  static async remove(id, userId) {
+    await pool.query('DELETE FROM orders WHERE id = ? AND user_id = ?', [id, userId]);
+  }
   static async addItems(orderId, items) {
     // items is an array of { serviceId, serviceWorkPriceId, serviceWorkTitle, quantity, price }
     for (const item of items) {
@@ -72,6 +79,7 @@ class Order {
               reward_points_earned as rewardPointsEarned,
               reward_points_redeemed as rewardPointsRedeemed,
               reward_discount as rewardDiscount,
+              wallet_used as walletUsed, original_total as originalTotal,
               created_at as createdAt
        FROM orders
        WHERE user_id = ?
@@ -80,6 +88,10 @@ class Order {
     );
 
     const receiptsByOrderId = await PaymentReceipt.findLatestByUserOrderIds(
+      userId,
+      orders.map(order => order.id),
+    );
+    const receiptHistoryByOrderId = await PaymentReceipt.findByUserOrderIds(
       userId,
       orders.map(order => order.id),
     );
@@ -131,7 +143,10 @@ class Order {
         rewardPointsEarned: Number(order.rewardPointsEarned || 0),
         rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
         rewardDiscount: Number(order.rewardDiscount || 0),
+        walletUsed: Number(order.walletUsed || 0),
+        originalTotal: Number(order.originalTotal ?? order.total),
         paymentReceipt: receiptsByOrderId[order.id] || null,
+        paymentReceipts: receiptHistoryByOrderId[order.id] || [],
         items: cartItems,
       });
     }
@@ -202,6 +217,7 @@ class Order {
           );
         }
       }
+      if (order) await PaymentReceipt.creditVerifiedCancellation(id, order.userId);
       return;
     }
 

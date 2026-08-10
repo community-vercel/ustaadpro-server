@@ -52,6 +52,7 @@ const defaultSlides = [
 const defaultSettings = {
   inspectionFee: 500,
   serviceTaxPercent: 12,
+  minimumBookingLeadHours: 4,
   currency: 'PKR',
   supportPhone: '+923001234567',
   shippingCost: 200,
@@ -118,6 +119,7 @@ function mapSlide(row) {
     buttonLabel: row.button_label,
     categoryId: row.category_id,
     categoryTitle: row.category_title,
+    redirectType: row.redirect_type || 'category',
     visual: row.visual,
     imageUrl: row.image_url || '',
     primaryColor: row.primary_color,
@@ -146,7 +148,28 @@ async function ensureTable(tableName, createSql) {
 }
 
 class AppControl {
+  // Schema setup is needed after a deployment/restart, but normal API calls
+  // must not repeatedly issue CREATE/ALTER statements. Concurrent calls share
+  // the same initialization promise until the schema is ready.
+  static _schemaReady = false;
+  static _schemaInitialization = null;
+
   static async ensureSchema() {
+    if (this._schemaReady) return;
+    if (this._schemaInitialization) return this._schemaInitialization;
+
+    this._schemaInitialization = this.ensureSchemaInternal()
+      .then(() => {
+        this._schemaReady = true;
+      })
+      .finally(() => {
+        this._schemaInitialization = null;
+      });
+
+    return this._schemaInitialization;
+  }
+
+  static async ensureSchemaInternal() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id VARCHAR(50) PRIMARY KEY,
@@ -163,6 +186,7 @@ class AppControl {
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE');
+    await pool.query('ALTER TABLE services ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE');
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 999');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
@@ -186,6 +210,10 @@ class AppControl {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+
+    await pool.query(
+      `ALTER TABLE home_slides ADD COLUMN IF NOT EXISTS redirect_type VARCHAR(40) NOT NULL DEFAULT 'category'`,
+    );
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS app_settings (
@@ -299,6 +327,11 @@ class AppControl {
       )`,
     );
 
+    // Existing deployments may have created payment_receipts before staged
+    // payments existed. This is idempotent and runs on every API startup.
+    await pool.query(
+      "ALTER TABLE payment_receipts ADD COLUMN IF NOT EXISTS payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
+    );
     await ensureTable(
       'order_items',
       `CREATE TABLE IF NOT EXISTS order_items (
@@ -314,6 +347,19 @@ class AppControl {
       )`,
     );
 
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS wallet_transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        order_id VARCHAR(50) NOT NULL,
+        type VARCHAR(40) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY wallet_order_type_unique (order_id, type),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+      )`,
+    );
     const orderItemColumns = [
       ['service_work_price_id', 'INT NULL'],
       ['service_work_title', 'VARCHAR(180) NULL'],
@@ -357,6 +403,8 @@ class AppControl {
       ['reward_points_earned', 'INT NOT NULL DEFAULT 0'],
       ['reward_points_redeemed', 'INT NOT NULL DEFAULT 0'],
       ['reward_discount', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'],
+      ['wallet_used', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'],
+      ['original_total', 'NUMERIC(10, 2) NULL'],
     ];
 
     for (const [column, definition] of orderColumns) {
@@ -371,8 +419,13 @@ class AppControl {
 
       if (!columns.length) {
         await pool.query(`ALTER TABLE orders ADD COLUMN ${column} ${definition}`);
+        if (column === 'wallet_used' || column === 'original_total') {
+          console.info('[Wallet] Added orders.' + column + ' schema column.');
+        }
       }
     }
+
+    console.info('[Wallet] Order wallet schema check completed.');
 
     const [[slideCount]] = await pool.query(
       'SELECT COUNT(*) as count FROM home_slides',
@@ -387,6 +440,7 @@ class AppControl {
     const defaultEntries = [
       ['inspection_fee', defaultSettings.inspectionFee],
       ['service_tax_percent', defaultSettings.serviceTaxPercent],
+      ['minimum_booking_lead_hours', defaultSettings.minimumBookingLeadHours],
       ['currency', defaultSettings.currency],
       ['support_phone', defaultSettings.supportPhone],
       ['shipping_cost', defaultSettings.shippingCost],
@@ -438,9 +492,9 @@ class AppControl {
 
     await pool.query(
       `INSERT INTO home_slides
-       (id, badge, title, subtitle, button_label, category_id, category_title,
+       (id, badge, title, subtitle, button_label, category_id, category_title, redirect_type,
         visual, image_url, primary_color, secondary_color, sort_order, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET
         badge = EXCLUDED.badge,
         title = EXCLUDED.title,
@@ -448,6 +502,7 @@ class AppControl {
         button_label = EXCLUDED.button_label,
         category_id = EXCLUDED.category_id,
         category_title = EXCLUDED.category_title,
+        redirect_type = EXCLUDED.redirect_type,
         visual = EXCLUDED.visual,
         image_url = EXCLUDED.image_url,
         primary_color = EXCLUDED.primary_color,
@@ -462,6 +517,7 @@ class AppControl {
         payload.buttonLabel || payload.button_label || 'Book Now',
         payload.categoryId || payload.category_id || 'home',
         payload.categoryTitle || payload.category_title || 'Home Services',
+        payload.redirectType || payload.redirect_type || 'category',
         payload.visual || 'UP',
         payload.imageUrl || payload.image_url || '',
         payload.primaryColor || payload.primary_color || '#131b2e',
@@ -474,6 +530,13 @@ class AppControl {
     return id;
   }
 
+  static async deleteSlide(id) {
+    await this.ensureSchema();
+    const [result] = await pool.query('DELETE FROM home_slides WHERE id = ?', [id]);
+    if (!Number(result?.affectedRows || result?.rowCount || 0)) {
+      throw new Error('Home header slide was not found.');
+    }
+  }
   static async getSettings() {
     await this.ensureSchema();
     const [rows] = await pool.query('SELECT * FROM app_settings');
@@ -485,6 +548,9 @@ class AppControl {
       }
       if (row.setting_key === 'service_tax_percent') {
         settings.serviceTaxPercent = Number(row.setting_value);
+      }
+      if (row.setting_key === 'minimum_booking_lead_hours') {
+        settings.minimumBookingLeadHours = Math.max(0, Math.min(168, Number(row.setting_value) || 0));
       }
       if (row.setting_key === 'currency') {
         settings.currency = row.setting_value;
@@ -539,6 +605,10 @@ class AppControl {
       ),
       service_tax_percent: Number(
         payload.serviceTaxPercent ?? defaultSettings.serviceTaxPercent,
+      ),
+      minimum_booking_lead_hours: Math.max(
+        0,
+        Math.min(168, Number(payload.minimumBookingLeadHours ?? defaultSettings.minimumBookingLeadHours) || 0),
       ),
       currency: payload.currency || defaultSettings.currency,
       support_phone: payload.supportPhone || defaultSettings.supportPhone,

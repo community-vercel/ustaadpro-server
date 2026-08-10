@@ -681,3 +681,542 @@ Use `null` for `subcategoryId` when the service belongs directly to the main cat
   "description": "Interior wall painting service."
 }
 ```
+---
+
+# Payment receipts and wallet
+
+Base URL: `https://api.ustaadpro.pk/api`
+
+Every customer and admin endpoint below requires this header:
+
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+## 0. Create a service booking with a payment method
+
+`POST /api/orders/checkout`
+
+The backend accepts these exact payment-method values:
+
+```json
+{
+  "fullPayment": "Full Payment in Advance",
+  "advancePayment": "Rs 200 Advance"
+}
+```
+
+### Full payment booking
+
+```http
+POST /api/orders/checkout
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "cart": [
+    {
+      "service": {"id": "fan-installation"},
+      "quantity": 1
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Full Payment in Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "specialInstructions": "Please call before arrival",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+Example booking response:
+
+```json
+{
+  "message": "Booking confirmed successfully",
+  "order": {
+    "id": "USTAADPRO-618044",
+    "total": 2500,
+    "status": "confirmed",
+    "paymentMethod": "Full Payment in Advance"
+  }
+}
+```
+
+Then upload one receipt using `POST /api/orders/USTAADPRO-618044/payment-receipt` with the exact returned `order.total` as `amount`.
+
+### Rs 200 advance booking
+
+```json
+{
+  "cart": [
+    {
+      "service": {"id": "fan-installation"},
+      "quantity": 1
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Rs 200 Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+### Upload the first Rs 200 receipt
+
+`POST /api/orders/USTAADPRO-618044/payment-receipt`
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-advance.jpg",
+  "amount": 200
+}
+```
+
+### Upload the remaining receipt after service completion
+
+Only after the admin changes the order status to `completed`, upload the balance. For an order total of Rs. 2,500, the remaining amount is Rs. 2,300:
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-remaining.jpg",
+  "amount": 2300
+}
+```
+## 1. Upload a full-payment receipt (customer)
+
+Use this after creating an order with the **Full Payment** method. The amount must exactly equal the order total.
+
+`POST /api/orders/:orderId/payment-receipt`
+
+Example:
+
+```http
+POST /api/orders/USTAADPRO-618044/payment-receipt
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "dataUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
+  "filename": "easypaisa-full-payment.jpg",
+  "amount": 2500
+}
+```
+
+Successful response:
+
+```json
+{
+  "message": "Payment receipt uploaded successfully."
+}
+```
+
+Rules:
+
+- The logged-in customer must own `orderId`.
+- A cancelled order cannot receive a receipt.
+- For **Full Payment**, `amount` must equal the complete order total.
+- For **Rs 200 Advance**, first submit `200`; after the admin marks the order `completed`, submit the remaining balance as a second receipt.
+
+## 2. View customer bookings and receipt state
+
+`GET /api/orders`
+
+```http
+GET /api/orders
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+[
+  {
+    "id": "USTAADPRO-618044",
+    "status": "confirmed",
+    "total": 2500,
+    "paymentMethod": "Full Payment",
+    "paymentReceipt": {
+      "id": 42,
+      "amount": 2300,
+      "status": "submitted",
+      "paymentStage": "remaining",
+      "receiptUrl": "/uploads/payment-receipts/easypaisa-remaining.jpg"
+    },
+    "paymentReceipts": [
+      {
+        "id": 41,
+        "amount": 200,
+        "status": "verified",
+        "paymentStage": "advance",
+        "receiptUrl": "/uploads/payment-receipts/easypaisa-advance.jpg"
+      },
+      {
+        "id": 42,
+        "amount": 2300,
+        "status": "submitted",
+        "paymentStage": "remaining",
+        "receiptUrl": "/uploads/payment-receipts/easypaisa-remaining.jpg"
+      }
+    ]
+  }
+]
+```
+
+Receipt status values:
+
+```json
+{
+  "submitted": "Customer uploaded proof; awaiting admin review.",
+  "verified": "Admin approved the payment proof.",
+  "rejected": "Admin rejected the proof; customer must upload a replacement."
+}
+```
+
+### Receipt-history response rule
+
+`GET /api/orders` returns both fields below for each service order:
+
+- `paymentReceipt`: the newest receipt. Existing app screens use this for the current payment state.
+- `paymentReceipts`: every receipt for that order, ordered oldest to newest. Use this to show both the **Advance receipt** and **Remaining receipt** images.
+
+For a full-payment booking, `paymentReceipts` normally contains one item with `"paymentStage": "full"`.
+
+## 3. Admin: list payment receipts
+
+`GET /api/admin/payment-receipts`
+
+```http
+GET /api/admin/payment-receipts
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+[
+  {
+    "id": 41,
+    "orderId": "USTAADPRO-618044",
+    "userId": 25,
+    "amount": 2500,
+    "status": "submitted",
+    "paymentStage": "full",
+    "receiptUrl": "/uploads/payment-receipts/easypaisa-full-payment.jpg",
+    "orderStatus": "confirmed"
+  }
+]
+```
+
+## 4. Admin: verify or reject a receipt
+
+`PATCH /api/admin/payment-receipts/:receiptId/status`
+
+Verify a receipt:
+
+```http
+PATCH /api/admin/payment-receipts/41/status
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "verified"
+}
+```
+
+Reject a receipt:
+
+```json
+{
+  "status": "rejected"
+}
+```
+
+Successful response:
+
+```json
+{
+  "message": "Receipt status updated. Verified cancelled payments are credited to the wallet once."
+}
+```
+
+## 5. Wallet balance (customer)
+
+`GET /api/auth/profile`
+
+```http
+GET /api/auth/profile
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+```
+
+Example response fragment:
+
+```json
+{
+  "id": 25,
+  "name": "Test Anis",
+  "walletBalance": 2500,
+  "coins": 0,
+  "rewardPoints": 0
+}
+```
+
+## Wallet refund security flow
+
+There is deliberately **no customer API that can credit a wallet balance**.
+
+A refund is created only when both conditions are true:
+
+1. The customer cancels their eligible `confirmed` service order using `PATCH /api/orders/:orderId/cancel`.
+2. An admin verifies at least one payment receipt using `PATCH /api/admin/payment-receipts/:receiptId/status` with `"status": "verified"`.
+
+The backend then credits the sum of verified receipts to `walletBalance`. It writes a unique `wallet_transactions` record for `(order_id, cancellation_refund)`, so duplicate requests, refreshes, or repeated status updates cannot credit the same order twice.
+
+Cancel order example:
+
+```http
+PATCH /api/orders/USTAADPRO-618044/cancel
+Authorization: Bearer CUSTOMER_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "cancelReason": "I no longer need this service."
+}
+```
+
+> Do not use `PUT /api/auth/wallet` from the mobile app for refunds or payments. Wallet credits must stay server-controlled. Wallet payment at checkout will use a separate server-side checkout endpoint when that feature is enabled.
+---
+
+# Booking lead-time / preferred-time API
+
+The minimum lead time determines the earliest time a customer can select for a service booking. It applies to quick slots, custom time, checkout, and booking updates.
+
+## Get the public booking setting (mobile app)
+
+`GET /api/settings`
+
+No authentication is required.
+
+```http
+GET https://api.ustaadpro.pk/api/settings
+```
+
+Example response:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR",
+  "supportPhone": "+923001234567"
+}
+```
+
+`minimumBookingLeadHours` is an integer from `0` to `168`.
+
+- `0`: customer can choose any operational future slot today.
+- `1`: customer can choose a slot at least one hour from now.
+- `4`: customer can choose a slot at least four hours from now.
+
+## Admin: update the booking lead time
+
+`PUT /api/admin/settings`
+
+```http
+PUT https://api.ustaadpro.pk/api/admin/settings
+Authorization: Bearer ADMIN_ACCESS_TOKEN
+Content-Type: application/json
+```
+
+Send the complete settings object. Example with a four-hour lead time:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR",
+  "supportPhone": "+923001234567",
+  "shippingCost": 200,
+  "rewardEnabled": true,
+  "rewardPointValue": 25,
+  "rewardMinimumRedeem": 100,
+  "serviceRewardPointsOnCompletion": 1,
+  "serviceRewardMaxDiscountPercent": 10,
+  "shopRewardEarnPercent": 0.5,
+  "shopRewardMaxDiscountPercent": 5
+}
+```
+
+Successful response:
+
+```json
+{
+  "inspectionFee": 500,
+  "serviceTaxPercent": 12,
+  "minimumBookingLeadHours": 4,
+  "currency": "PKR"
+}
+```
+
+## Checkout enforcement
+
+When a customer submits an earlier booking time, the backend rejects it even if they use an old mobile app or call the API directly.
+
+`POST /api/orders/checkout`
+
+Example failed response (`400 Bad Request`):
+
+```json
+{
+  "message": "Please choose a time at least 4 hour(s) from now."
+}
+```
+
+The same validation also applies to:
+
+`PUT /api/orders/:orderId`
+
+---
+
+# Multi-service cart and quantity booking API
+
+Use this flow when a customer wants to book several services at one address and one preferred time, for example **3 fan installations** plus **2 switch repairs**. One checkout creates one order with multiple `order_items`.
+
+## Create one booking with multiple services
+
+`POST /api/orders/checkout`
+
+**Auth:** `Authorization: Bearer CUSTOMER_ACCESS_TOKEN`
+
+```json
+{
+  "cart": [
+    {
+      "service": {
+        "id": "fan-installation",
+        "selectedWorkPriceId": 45,
+        "selectedWorkTitle": "Ceiling Fan Installation"
+      },
+      "quantity": 3
+    },
+    {
+      "service": {
+        "id": "electrician-general-work",
+        "selectedWorkPriceId": 72,
+        "selectedWorkTitle": "Switch Repair"
+      },
+      "quantity": 2
+    }
+  ],
+  "bookedFor": "FRI, Jul 31, 2026 - 02:00 PM",
+  "paymentMethod": "Rs 200 Advance",
+  "address": "Bahria Town Phase 3, Rawalpindi, Pakistan",
+  "specialInstructions": "Please call before arrival.",
+  "recurringOccurrences": 1,
+  "useRewardPoints": false
+}
+```
+
+Successful response example:
+
+```json
+{
+  "message": "Booking created. Payment receipt verification is required.",
+  "order": {
+    "id": "USTAADPRO-618044",
+    "status": "checking_receipt",
+    "paymentMethod": "Rs 200 Advance",
+    "total": 4400,
+    "items": [
+      {
+        "serviceId": "fan-installation",
+        "serviceWorkPriceId": 45,
+        "serviceWorkTitle": "Ceiling Fan Installation",
+        "quantity": 3,
+        "price": 700,
+        "lineTotal": 2100
+      },
+      {
+        "serviceId": "electrician-general-work",
+        "serviceWorkPriceId": 72,
+        "serviceWorkTitle": "Switch Repair",
+        "quantity": 2,
+        "price": 900,
+        "lineTotal": 1800
+      }
+    ]
+  }
+}
+```
+
+## Quantity and price security rules
+
+- `quantity` must be a whole number from **1** to **20** for each service work item.
+- The backend gets the current price from the service database. It does **not** trust `service.price`, `lineTotal`, or any price sent by the mobile app.
+- If the same service and selected work are submitted twice, the backend merges them into one order line.
+- The merged quantity cannot exceed `20`.
+- One booking uses one address, one time slot, one payment method, and one order status for all its items.
+
+Invalid quantity response (`400 Bad Request`):
+
+```json
+{
+  "message": "Each service quantity must be a whole number between 1 and 20."
+}
+```
+
+## Get the customer’s multi-service orders
+
+`GET /api/orders`
+
+**Auth:** `Authorization: Bearer CUSTOMER_ACCESS_TOKEN`
+
+Each returned order includes all booked items and quantities:
+
+```json
+{
+  "id": "USTAADPRO-618044",
+  "status": "confirmed",
+  "total": 4400,
+  "items": [
+    {
+      "quantity": 3,
+      "price": 700,
+      "serviceWorkTitle": "Ceiling Fan Installation",
+      "service": {
+        "id": "fan-installation",
+        "title": "Fan Services"
+      }
+    },
+    {
+      "quantity": 2,
+      "price": 900,
+      "serviceWorkTitle": "Switch Repair",
+      "service": {
+        "id": "electrician-general-work",
+        "title": "Electrician Services"
+      }
+    }
+  ]
+}
+```
+
+## Admin order details
+
+`GET /api/admin/orders/:orderId`
+
+The Admin order details response includes the same `items` array. Display every item as `quantity × service/work title` and calculate each line as `quantity × price`.

@@ -89,6 +89,8 @@ async function populateAdminOrder(order) {
     rewardPointsEarned: Number(order.rewardPointsEarned || 0),
     rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
     rewardDiscount: Number(order.rewardDiscount || 0),
+    walletUsed: Number(order.walletUsed || 0),
+    originalTotal: Number(order.originalTotal ?? order.total),
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
@@ -140,6 +142,8 @@ export const getAdminOrders = async (_req, res) => {
               o.reward_points_earned as rewardPointsEarned,
               o.reward_points_redeemed as rewardPointsRedeemed,
               o.reward_discount as rewardDiscount,
+              o.wallet_used as walletUsed,
+              o.original_total as originalTotal,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
@@ -170,6 +174,8 @@ export const getAdminOrderById = async (req, res) => {
               o.reward_points_earned as rewardPointsEarned,
               o.reward_points_redeemed as rewardPointsRedeemed,
               o.reward_discount as rewardDiscount,
+              o.wallet_used as walletUsed,
+              o.original_total as originalTotal,
               o.created_at as createdAt,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
@@ -193,6 +199,7 @@ export const updateAdminOrderStatus = async (req, res) => {
   try {
     const {status, cancelReason} = req.body;
     const allowed = [
+      'checking_receipt',
       'confirmed',
       'assigned',
       'in_progress',
@@ -218,12 +225,9 @@ export const updateAdminOrderStatus = async (req, res) => {
       );
       const fcmToken = users[0]?.fcmToken;
       const messaging = getFirebaseMessaging();
-      const isCashPayment = String(order.paymentMethod || '')
-        .toLowerCase()
-        .includes('cash');
-      const completedPaymentBody = isCashPayment
-        ? 'Congrats, your work is completed. Please pay cash to our agent.'
-        : 'Congrats, your work is completed. Please pay us at EasyPaisa.';
+      const [payments] = await pool.query('SELECT COALESCE(SUM(amount), 0) as paid FROM payment_receipts WHERE order_id = ?', [req.params.id]);
+      const paid = Number(payments[0]?.paid || 0);
+      const requiresRemainingPayment = status === 'completed' && order.paymentMethod === 'Rs 200 Advance' && paid > 0;
 
       if (fcmToken && messaging) {
         try {
@@ -239,13 +243,15 @@ export const updateAdminOrderStatus = async (req, res) => {
               },
             },
             notification: {
-              title: status === 'completed' ? 'Work completed' : 'Order Status Updated',
-              body: status === 'completed'
-                ? completedPaymentBody
+              title: requiresRemainingPayment ? 'Remaining payment due' : status === 'completed' ? 'Work completed' : 'Order Status Updated',
+              body: requiresRemainingPayment
+                ? 'Your Rs. 200 advance was received. Please pay and upload the remaining EasyPaisa balance.'
+                : status === 'completed'
+                ? 'Your work has been completed.'
                 : `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,
             },
             data: {
-              type: status === 'completed' ? 'payment_request' : 'service_order',
+              type: requiresRemainingPayment ? 'payment_request' : 'service_order',
               orderId: req.params.id,
               status,
               accountNumber: '03485838593',
@@ -357,6 +363,12 @@ export const sendBroadcastNotification = async (req, res) => {
   }
 };
 
+export const updateAdminPaymentReceiptStatus = async (req, res) => {
+  try {
+    await PaymentReceipt.updateStatusAndCredit(Number(req.params.id), req.body?.status);
+    res.json({message: 'Receipt status updated. Verified cancelled payments are credited to the wallet once.'});
+  } catch (error) { res.status(error.statusCode || 500).json({message: error.message || 'Could not update receipt.'}); }
+};
 export const getAdminPaymentReceipts = async (_req, res) => {
   try {
     const receipts = await PaymentReceipt.getAdminAll();
@@ -692,6 +704,15 @@ export const saveAdminHomeSlide = async (req, res) => {
   }
 };
 
+export const deleteAdminHomeSlide = async (req, res) => {
+  try {
+    await AppControl.deleteSlide(req.params.id);
+    res.json({message: 'Home header slide deleted.'});
+  } catch (error) {
+    console.error('Admin delete home slide error:', error);
+    res.status(404).json({message: error.message || 'Home header slide was not found.'});
+  }
+};
 export const getAdminSettings = async (_req, res) => {
   try {
     const settings = await AppControl.getSettings();

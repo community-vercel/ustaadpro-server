@@ -1,4 +1,4 @@
-﻿import fs from 'fs/promises';
+import fs from 'fs/promises';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import Order from '../models/Order.js';
@@ -7,9 +7,6 @@ import AppControl from '../models/AppControl.js';
 import User from '../models/User.js';
 import PaymentReceipt from '../models/PaymentReceipt.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const receiptUploadDir = path.resolve(__dirname, '../uploads/payment-receipts');
 const EASYPAISA_ACCOUNT_NUMBER = '03485838593';
 const EASYPAISA_ACCOUNT_TITLE = 'Muhammad Ikram';
 
@@ -29,21 +26,16 @@ async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
 
   const mimeType = match[1];
   const base64 = match[2];
-  const extension =
-    mimeType === 'image/png'
-      ? 'png'
-      : mimeType === 'image/webp'
-        ? 'webp'
-        : mimeType === 'image/gif'
-          ? 'gif'
-          : 'jpg';
-  const safeName = String(filename).replace(/[^a-zA-Z0-9._-]/g, '-');
-  const storedName = `${Date.now()}-${safeName.replace(/\.[^.]+$/, '')}.${extension}`;
+  const image = Buffer.from(base64, 'base64');
+  if (!image.length) {
+    const error = new Error('The receipt image is empty.');
+    error.statusCode = 400;
+    throw error;
+  }
 
-  await fs.mkdir(receiptUploadDir, {recursive: true});
-  await fs.writeFile(path.join(receiptUploadDir, storedName), Buffer.from(base64, 'base64'));
-
-  return `/uploads/payment-receipts/${storedName}`;
+  // Local upload files are removed by application rebuilds. Persist the
+  // validated proof in the database-backed receipt URL so it remains available.
+  return `data:${mimeType};base64,${image.toString('base64')}`;
 }
 
 function resolveSelectedWork(service, item) {
@@ -71,6 +63,17 @@ function resolveSelectedWork(service, item) {
   };
 }
 
+function parseBookingStartInPakistan(bookedFor) {
+  const matches = [...String(bookedFor || '').matchAll(/([A-Z][a-z]{2})\s+(\d{1,2}),\s+(\d{4})\s+-\s+(\d{1,2}):(\d{2})\s+([AP]M)/g)];
+  const match = matches[0];
+  if (!match) return null;
+
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(match[1]);
+  if (month < 0) return null;
+  const hour12 = Number(match[4]);
+  const hour = match[6] === 'PM' ? (hour12 === 12 ? 12 : hour12 + 12) : (hour12 === 12 ? 0 : hour12);
+  return new Date(Date.UTC(Number(match[3]), month, Number(match[2]), hour - 5, Number(match[5])));
+}
 export const checkout = async (req, res) => {
   try {
     const {
@@ -81,6 +84,7 @@ export const checkout = async (req, res) => {
       specialInstructions,
       recurringOccurrences,
       useRewardPoints = false,
+      useWalletBalance = false,
     } = req.body;
     const userId = req.user.id;
     const occurrenceCount = Math.max(
@@ -103,8 +107,12 @@ export const checkout = async (req, res) => {
     const itemsToInsert = [];
 
     for (const cartItem of cart) {
-      if (!cartItem.service || !cartItem.service.id || !cartItem.quantity) {
+      if (!cartItem.service || !cartItem.service.id) {
         return res.status(400).json({message: 'Invalid cart item structure.'});
+      }
+      const quantity = Number(cartItem.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+        return res.status(400).json({message: 'Each service quantity must be a whole number between 1 and 20.'});
       }
 
       const service = await Service.findById(cartItem.service.id);
@@ -116,19 +124,36 @@ export const checkout = async (req, res) => {
 
       const selectedWork = resolveSelectedWork(service, cartItem);
       const itemTotal =
-        Number(selectedWork.price) * cartItem.quantity * occurrenceCount;
+        Number(selectedWork.price) * quantity * occurrenceCount;
       total += itemTotal;
 
-      itemsToInsert.push({
-        serviceId: service.id,
-        serviceWorkPriceId: selectedWork.serviceWorkPriceId,
-        serviceWorkTitle: selectedWork.serviceWorkTitle,
-        quantity: cartItem.quantity,
-        price: selectedWork.price,
-      });
+      const existingItem = itemsToInsert.find(item =>
+        item.serviceId === service.id && item.serviceWorkPriceId === selectedWork.serviceWorkPriceId,
+      );
+      if (existingItem) {
+        if (existingItem.quantity + quantity > 20) {
+          return res.status(400).json({message: 'A service work item cannot exceed quantity 20 per booking.'});
+        }
+        existingItem.quantity += quantity;
+      } else {
+        itemsToInsert.push({
+          serviceId: service.id,
+          serviceWorkPriceId: selectedWork.serviceWorkPriceId,
+          serviceWorkTitle: selectedWork.serviceWorkTitle,
+          quantity,
+          price: selectedWork.price,
+        });
+      }
     }
 
     const settings = await AppControl.getSettings();
+    const minimumBookingLeadHours = Math.max(0, Math.min(168, Number(settings.minimumBookingLeadHours || 0)));
+    const bookingStart = parseBookingStartInPakistan(bookedFor);
+    if (bookingStart && bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
+      return res.status(400).json({
+        message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
+      });
+    }
     const inspectionFee = Number(settings.inspectionFee || 0);
     const rewardEnabled = settings.rewardEnabled !== false;
     const rewardPointValue = Math.max(
@@ -179,40 +204,65 @@ export const checkout = async (req, res) => {
       rewardDiscount = redeemableDiscount;
     }
 
-    const taxableTotal = Math.max(0, total - rewardDiscount);
+    const afterRewardTotal = Math.max(0, total - rewardDiscount);
+    const fullAdvanceDiscount =
+      paymentMethod === 'Full Payment in Advance'
+        ? Math.round(afterRewardTotal * 0.05)
+        : 0;
+    const taxableTotal = Math.max(0, afterRewardTotal - fullAdvanceDiscount);
     const tax = Math.round(
       (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
     );
     const calculatedTotal = taxableTotal + inspectionFee + tax;
+    let walletUsed = 0;
+    if (useWalletBalance) {
+      console.info('[Wallet] Checkout requested for user ' + userId + '; order total Rs ' + calculatedTotal + '.');
+      walletUsed = await User.consumeWallet(userId, calculatedTotal);
+    }
+    const payableTotal = Math.max(0, calculatedTotal - walletUsed);
+    console.info('[Wallet] Checkout calculated for user ' + userId + ': used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
 
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const orderId = `USTAADPRO-${randomSuffix.slice(-6)}`;
 
-    await Order.create({
-      id: orderId,
-      userId,
-      total: calculatedTotal,
-      status: 'confirmed',
-      bookedFor: bookedFor || 'Today, 6:00 PM',
-      paymentMethod,
-      address,
-      specialInstructions,
-      inspectionFee: Number(inspectionFee || 0),
-      tax: Number(tax || 0),
-      rewardPointsEarned: 0,
-      rewardPointsRedeemed,
-      rewardDiscount,
-    });
-
-    await Order.addItems(orderId, itemsToInsert);
+    try {
+      await Order.create({
+        id: orderId,
+        userId,
+        total: payableTotal,
+        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
+        bookedFor: bookedFor || 'Today, 6:00 PM',
+        paymentMethod,
+        address,
+        specialInstructions,
+        inspectionFee: Number(inspectionFee || 0),
+        tax: Number(tax || 0),
+        rewardPointsEarned: 0,
+        rewardPointsRedeemed,
+        rewardDiscount,
+        walletUsed,
+        originalTotal: calculatedTotal,
+      });
+      await Order.addItems(orderId, itemsToInsert);
+      console.info('[Wallet] Booking ' + orderId + ' created: used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
+    } catch (error) {
+      console.error('[Wallet] Booking ' + orderId + ' failed; restoring Rs ' + walletUsed + '.');
+      await Order.remove(orderId, userId).catch(() => {});
+      if (walletUsed > 0) await User.creditWallet(userId, walletUsed);
+      throw error;
+    }
     const updatedUser = await User.findById(userId);
 
     res.status(201).json({
-      message: 'Booking confirmed successfully',
+      message: payableTotal === 0
+        ? 'Booking confirmed using wallet balance.'
+        : 'Booking created. Payment receipt verification is required.',
       order: {
         id: orderId,
-        total: calculatedTotal,
-        status: 'confirmed',
+        total: payableTotal,
+        originalTotal: calculatedTotal,
+        walletUsed,
+        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
         bookedFor: bookedFor || 'Today, 6:00 PM',
         paymentMethod,
         address,
@@ -266,7 +316,7 @@ export const updateOrder = async (req, res) => {
       return res.status(404).json({message: 'Order not found.'});
     }
 
-    if (order.status !== 'confirmed') {
+    if (!['confirmed', 'checking_receipt'].includes(order.status)) {
       return res
         .status(400)
         .json({message: 'This order can no longer be updated after assignment.'});
@@ -325,6 +375,13 @@ export const updateOrder = async (req, res) => {
     }
 
     const settings = await AppControl.getSettings();
+    const minimumBookingLeadHours = Math.max(0, Math.min(168, Number(settings.minimumBookingLeadHours || 0)));
+    const bookingStart = parseBookingStartInPakistan(bookedFor);
+    if (bookingStart && bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
+      return res.status(400).json({
+        message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
+      });
+    }
     const inspectionFee = Number(settings.inspectionFee || 0);
     const rewardPointValue = Math.max(
       1,
@@ -387,7 +444,7 @@ export const cancelOrder = async (req, res) => {
       return res.status(400).json({message: 'Cancellation reason is required.'});
     }
 
-    if (order.status !== 'confirmed') {
+    if (!['confirmed', 'checking_receipt'].includes(order.status)) {
       return res
         .status(400)
         .json({message: 'This order can no longer be cancelled after assignment.'});
@@ -407,12 +464,38 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
+export const getPaymentReceiptImage = async (req, res) => {
+  try {
+    const storedImage = await PaymentReceipt.findImage(
+      req.params.id,
+      req.params.receiptId,
+      req.user.id,
+    );
+    if (!storedImage) {
+      return res.status(404).json({message: 'Receipt image not found.'});
+    }
+
+    const match = String(storedImage).match(
+      /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/,
+    );
+    if (!match) {
+      return res.redirect(storedImage);
+    }
+
+    res.set('Content-Type', match[1]);
+    res.set('Cache-Control', 'private, max-age=86400');
+    return res.send(Buffer.from(match[2], 'base64'));
+  } catch (error) {
+    console.error('Get receipt image error:', error);
+    return res.status(500).json({message: 'Unable to load receipt image.'});
+  }
+};
 export const uploadPaymentReceipt = async (req, res) => {
   try {
     const receiptUrl = await saveReceiptImage(req.body?.dataUrl, req.body?.filename);
     const amount = Number(req.body?.amount || 0);
 
-    await PaymentReceipt.create({
+    const receipt = await PaymentReceipt.create({
       orderId: req.params.id,
       userId: req.user.id,
       receiptUrl,
@@ -423,7 +506,9 @@ export const uploadPaymentReceipt = async (req, res) => {
 
     res.status(201).json({
       message: 'Receipt uploaded successfully.',
-      receiptUrl,
+      receiptId: receipt.id,
+      paymentStage: receipt.paymentStage,
+      receiptUrl: `/api/orders/${encodeURIComponent(req.params.id)}/receipts/${receipt.id}/image`,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});

@@ -5,6 +5,7 @@ import {
   getAdminOrderById,
   getAdminOrders,
   getAdminPaymentReceipts,
+  updateAdminPaymentReceiptStatus,
   getAdminServices,
   getAdminCatalogue,
   saveAdminCategory,
@@ -28,6 +29,7 @@ import {
   deleteAdminCategory,
   deleteAdminSubcategory,
   deleteAdminService,
+  deleteAdminHomeSlide,
 } from '../controllers/adminController.js';
 import {
   getAdminShopOrders,
@@ -46,6 +48,7 @@ router.get('/users', getAdminUsers);
 router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
+router.patch('/payment-receipts/:id/status', updateAdminPaymentReceiptStatus);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.get('/catalogue', getAdminCatalogue);
@@ -61,6 +64,7 @@ router.delete('/services/:id', deleteAdminService);
 router.get('/home-slides', getAdminHomeSlides);
 router.post('/home-slides', saveAdminHomeSlide);
 router.put('/home-slides/:id', saveAdminHomeSlide);
+router.delete('/home-slides/:id', deleteAdminHomeSlide);
 router.get('/settings', getAdminSettings);
 router.put('/settings', updateAdminSettings);
 

@@ -1,4 +1,4 @@
-﻿DROP TABLE IF EXISTS shop_order_items CASCADE;
+DROP TABLE IF EXISTS shop_order_items CASCADE;
 DROP TABLE IF EXISTS shop_orders CASCADE;
 DROP TABLE IF EXISTS shop_products CASCADE;
 DROP TABLE IF EXISTS service_reviews CASCADE;
@@ -158,6 +158,8 @@ CREATE TABLE orders (
   reward_points_earned INT NOT NULL DEFAULT 0,
   reward_points_redeemed INT NOT NULL DEFAULT 0,
   reward_discount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  wallet_used NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  original_total NUMERIC(10, 2),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -218,6 +220,8 @@ CREATE TABLE shop_orders (
   reward_points_earned INT NOT NULL DEFAULT 0,
   reward_points_redeemed INT NOT NULL DEFAULT 0,
   reward_discount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  wallet_used NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+  original_total NUMERIC(10, 2),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
