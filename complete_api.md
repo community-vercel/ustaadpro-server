@@ -70,6 +70,37 @@ Base URL: `http://localhost:5000` (or your live server URL)
 - **Auth**: 🔒 Bearer Token
 - **Payload**: `{ "fcmToken": "abcdef123456..." }`
 
+### 1.12 Permanently Delete User Account
+- **Endpoint**: `DELETE /api/auth/account`
+- **Auth**: 🔒 Bearer Token
+- **Headers**:
+  ```http
+  Authorization: Bearer YOUR_ACCESS_TOKEN
+  ```
+- **Payload**: None
+- **Description**: Permanently deletes the authenticated user's account and associated profile data. This includes service bookings, store orders, payment receipts, saved addresses, reviews, complaints, wallet transactions, reward/wallet account data, and authentication OTP records.
+- **Warning**: This operation is irreversible. The app should show a clear confirmation dialog before calling this endpoint. After success, remove the local access token/session and return the user to authentication.
+- **Success Response** (`200 OK`):
+  ```json
+  {
+    "message": "Your account has been permanently deleted."
+  }
+  ```
+- **Error Responses**:
+  - `401 Unauthorized`: Bearer token is missing, invalid, or expired.
+  - `404 Not Found`:
+    ```json
+    {
+      "message": "User not found."
+    }
+    ```
+  - `500 Internal Server Error`:
+    ```json
+    {
+      "message": "Unable to delete account."
+    }
+    ```
+
 ---
 
 ## 2. Services, Categories & App Data (`/api`)

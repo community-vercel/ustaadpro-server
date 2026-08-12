@@ -369,12 +369,28 @@ export const updateAdminPaymentReceiptStatus = async (req, res) => {
     res.json({message: 'Receipt status updated. Verified cancelled payments are credited to the wallet once.'});
   } catch (error) { res.status(error.statusCode || 500).json({message: error.message || 'Could not update receipt.'}); }
 };
-export const getAdminPaymentReceipts = async (_req, res) => {
+export const getAdminPaymentReceipts = async (req, res) => {
   try {
-    const receipts = await PaymentReceipt.getAdminAll();
-    res.json(receipts);
+    const result = await PaymentReceipt.getAdminAll({
+      limit: req.query.limit,
+      offset: req.query.offset,
+      search: req.query.search,
+      orderId: req.query.orderId,
+    });
+    res.json(result);
   } catch (error) {
     console.error('Admin payment receipts error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminPaymentReceipt = async (req, res) => {
+  try {
+    const result = await PaymentReceipt.getAdminById(Number(req.params.id));
+    if (!result) return res.status(404).json({message: 'Payment receipt not found.'});
+    res.json(result);
+  } catch (error) {
+    console.error('Admin payment receipt details error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };

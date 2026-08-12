@@ -177,66 +177,72 @@ class PaymentReceipt {
       return acc;
     }, {});
   }
-  static async getAdminAll() {
+  static async getAdminAll({limit = 15, offset = 0, search = '', orderId = '', includeImages = false} = {}) {
     await AppControl.ensureSchema();
-    // Existing production databases may have been created before staged
-    // payments. Make the migration idempotent at the write boundary.
-    const [stageColumns] = await pool.query(
-      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME = 'payment_receipts'
-         AND COLUMN_NAME = 'payment_stage'`,
-    );
-    if (!stageColumns.length) {
-      await pool.query(
-        "ALTER TABLE payment_receipts ADD COLUMN payment_stage VARCHAR(30) NOT NULL DEFAULT 'full'",
-      );
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 15));
+    const safeOffset = Math.max(0, Number(offset) || 0);
+    const conditions = [];
+    const conditionParams = [];
+    if (orderId) {
+      conditions.push('pr.order_id = ?');
+      conditionParams.push(orderId);
     }
+    if (search) {
+      const like = `%${String(search).trim()}%`;
+      conditions.push(`(LOWER(pr.order_id) LIKE LOWER(?) OR LOWER(u.name) LIKE LOWER(?) OR LOWER(u.phone) LIKE LOWER(?) OR LOWER(COALESCE(u.email, '')) LIKE LOWER(?) OR LOWER(o.payment_method) LIKE LOWER(?) OR EXISTS (SELECT 1 FROM order_items oi_search JOIN services s_search ON s_search.id = oi_search.service_id WHERE oi_search.order_id = pr.order_id AND (LOWER(s_search.title) LIKE LOWER(?) OR LOWER(COALESCE(oi_search.service_work_title, '')) LIKE LOWER(?))))`);
+      conditionParams.push(like, like, like, like, like, like, like);
+    }
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const [countRows] = await pool.query(
+      `SELECT COUNT(DISTINCT pr.order_id) as total FROM payment_receipts pr JOIN users u ON u.id = pr.user_id JOIN orders o ON o.id = pr.order_id ${whereClause}`,
+      conditionParams,
+    );
+    const total = Number(countRows[0]?.total || countRows[0]?.count || 0);
+    const [orderRows] = await pool.query(
+      `SELECT pr.order_id as order_id, MAX(pr.created_at) as latest_created_at FROM payment_receipts pr JOIN users u ON u.id = pr.user_id JOIN orders o ON o.id = pr.order_id ${whereClause} GROUP BY pr.order_id ORDER BY MAX(pr.created_at) DESC LIMIT ? OFFSET ?`,
+      [...conditionParams, safeLimit, safeOffset],
+    );
+    const orderIds = orderRows.map(row => row.orderId);
+    if (!orderIds.length) return {receipts: [], total, hasMore: false};
+    const placeholders = orderIds.map(() => '?').join(', ');
     const [rows] = await pool.query(
-      `SELECT pr.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email,
-              o.total as order_total, o.status as order_status, o.booked_for, o.payment_method, o.address
-       FROM payment_receipts pr
-       JOIN users u ON u.id = pr.user_id
-       JOIN orders o ON o.id = pr.order_id
-       ORDER BY pr.created_at DESC`,
+      `SELECT pr.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email, o.total as order_total, o.status as order_status, o.booked_for, o.payment_method, o.address FROM payment_receipts pr JOIN users u ON u.id = pr.user_id JOIN orders o ON o.id = pr.order_id WHERE pr.order_id IN (${placeholders}) ORDER BY pr.created_at DESC`,
+      orderIds,
     );
+    const [allItems] = await pool.query(
+      `SELECT oi.order_id as order_id, oi.quantity, oi.price, oi.service_work_price_id, oi.service_work_title, s.id as service_id, s.title, s.description, s.duration, s.category_id, s.service_type, s.image_url FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id IN (${placeholders})`,
+      orderIds,
+    );
+    const itemsByOrder = allItems.reduce((grouped, item) => {
+      if (!grouped[item.orderId]) grouped[item.orderId] = [];
+      grouped[item.orderId].push({...item, quantity: Number(item.quantity || 0), price: Number(item.price || 0)});
+      return grouped;
+    }, {});
+    const receiptOrder = new Map(orderIds.map((id, index) => [id, index]));
+    const receipts = rows.map(row => mapReceipt({
+      ...row,
+      receipt_url: includeImages ? row.receipt_url : '',
+      items: itemsByOrder[row.order_id] || [],
+    }));
+    receipts.sort((left, right) => (receiptOrder.get(left.orderId) || 0) - (receiptOrder.get(right.orderId) || 0));
+    return {receipts, total, hasMore: safeOffset + orderIds.length < total};
+  }
 
-    const receipts = [];
-    for (const row of rows) {
-      const [items] = await pool.query(
-        `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
-                oi.service_work_title as serviceWorkTitle,
-                s.id as serviceId, s.title, s.description, s.duration, s.category_id as categoryId,
-                s.service_type as serviceType, s.image_url as imageUrl
-         FROM order_items oi
-         JOIN services s ON oi.service_id = s.id
-         WHERE oi.order_id = ?`,
-        [row.order_id],
-      );
-
-      receipts.push(
-        mapReceipt({
-          ...row,
-          items: items.map(item => ({
-            serviceId: item.serviceId,
-            title: item.title,
-            description: item.description,
-            duration: item.duration,
-            categoryId: item.categoryId,
-            serviceType: item.serviceType,
-            serviceWorkPriceId: item.serviceWorkPriceId,
-            serviceWorkTitle: item.serviceWorkTitle,
-            imageUrl: item.imageUrl,
-            quantity: Number(item.quantity || 0),
-            price: Number(item.price || 0),
-          })),
-        }),
-      );
-    }
-
-    return receipts;
+  static async getAdminById(id) {
+    await AppControl.ensureSchema();
+    const [rows] = await pool.query(
+      'SELECT order_id FROM payment_receipts WHERE id = ? LIMIT 1',
+      [id],
+    );
+    if (!rows[0]) return null;
+    const result = await this.getAdminAll({
+      limit: 1,
+      orderId: rows[0].order_id,
+      includeImages: true,
+    });
+    const receipt = result.receipts.find(item => item.id === Number(id));
+    return receipt ? {receipt, receipts: result.receipts} : null;
   }
 }
 
 export default PaymentReceipt;
-
