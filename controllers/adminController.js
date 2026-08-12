@@ -81,16 +81,48 @@ async function populateAdminOrder(order) {
     [order.id],
   );
 
+  const rawInstructions = String(order.specialInstructions || '');
+  const legacyRewardPattern = /\s*\[8-Order Loyalty Reward:[^\]]*\]\s*/gi;
+  const legacyRewardApplied = legacyRewardPattern.test(rawInstructions);
+  const legacyFinalMatch = rawInstructions.match(/Final Total:\s*Rs\s*([\d,]+(?:\.\d+)?)/i);
+  const storedDiscount = Number(order.rewardDiscount || 0);
+  const rewardDiscount = storedDiscount || (legacyRewardApplied ? 200 : 0);
+  const originalTotal = Number(order.originalTotal ?? order.total);
+  const finalTotal = legacyFinalMatch
+    ? Number(legacyFinalMatch[1].replace(/,/g, ''))
+    : Number(order.total);
+  const legacyTax = legacyRewardApplied && storedDiscount === 0
+    ? Math.max(0, Number(order.tax || 0) - Math.max(0, originalTotal - finalTotal - rewardDiscount))
+    : Number(order.tax);
+  const servicesSubtotal = items.reduce(
+    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+    0,
+  );
+
   return {
     ...order,
-    total: Number(order.total),
+    specialInstructions: rawInstructions.replace(legacyRewardPattern, ' ').replace(/\s+/g, ' ').trim(),
+    total: finalTotal,
     inspectionFee: Number(order.inspectionFee),
-    tax: Number(order.tax),
+    tax: legacyTax,
     rewardPointsEarned: Number(order.rewardPointsEarned || 0),
     rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
-    rewardDiscount: Number(order.rewardDiscount || 0),
     walletUsed: Number(order.walletUsed || 0),
-    originalTotal: Number(order.originalTotal ?? order.total),
+    rewardDiscount,
+    loyaltyDiscount: rewardDiscount,
+    discount: rewardDiscount,
+    originalTotal,
+    servicesSubtotal,
+    platformCharges: legacyTax,
+    amountPayable: finalTotal,
+    billingBreakdown: {
+      servicesSubtotal,
+      inspectionFee: Number(order.inspectionFee),
+      platformCharges: legacyTax,
+      originalTotal,
+      discount: rewardDiscount,
+      amountPayable: finalTotal,
+    },
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
@@ -772,5 +804,3 @@ export const deleteAdminSubscription = async (req, res) => {
     res.status(500).json({message: 'Internal server error.'});
   }
 };
-
-

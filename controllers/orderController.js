@@ -87,6 +87,10 @@ export const checkout = async (req, res) => {
       useWalletBalance = false,
     } = req.body;
     const userId = req.user.id;
+    console.log('[service-checkout] POST /api/orders/checkout received', JSON.stringify({
+      userId,
+      ...req.body,
+    }, null, 2));
     const occurrenceCount = Math.max(
       1,
       Math.min(Number.parseInt(recurringOccurrences, 10) || 1, 90),
@@ -155,55 +159,19 @@ export const checkout = async (req, res) => {
       });
     }
     const inspectionFee = Number(settings.inspectionFee || 0);
-    const rewardEnabled = settings.rewardEnabled !== false;
-    const rewardPointValue = Math.max(
-      1,
-      Number(settings.rewardPointValue || 25),
-    );
-    const rewardMinimumRedeem = Math.max(
-      0,
-      Number(settings.rewardMinimumRedeem || 100),
-    );
-    const serviceRewardMaxDiscountPercent = Math.max(
-      0,
-      Number(settings.serviceRewardMaxDiscountPercent || 10),
-    );
+    // Rewards are decided and redeemed by the API, never trusted from the client.
+    // Twelve points (earned from twelve completed orders) are worth PKR 300.
+    const loyalty = await Order.getLoyaltyStatus(userId);
     let rewardPointsRedeemed = 0;
-    let rewardDiscount = 0;
-
-    if (useRewardPoints && rewardEnabled) {
-      const user = await User.findById(userId);
-      const availablePoints = Number(user?.rewardPoints || 0);
-      const availableRewardValue = availablePoints * rewardPointValue;
-      const maxDiscountByPercent = Math.floor(
-        (total * serviceRewardMaxDiscountPercent) / 100,
-      );
-      const maxAllowedDiscount = Math.min(
-        availableRewardValue,
-        maxDiscountByPercent,
-      );
-      const redeemablePoints = Math.floor(maxAllowedDiscount / rewardPointValue);
-      const redeemableDiscount = redeemablePoints * rewardPointValue;
-
-      if (
-        availableRewardValue < rewardMinimumRedeem ||
-        redeemableDiscount < rewardMinimumRedeem ||
-        redeemablePoints <= 0
-      ) {
-        return res.status(400).json({
-          message: `You need at least Rs. ${rewardMinimumRedeem} reward value to redeem points.`,
-        });
+    let loyaltyDiscount = 0;
+    if (useRewardPoints && loyalty.eligible) {
+      const redeemed = await User.redeemRewardPoints(userId, 12);
+      if (redeemed) {
+        rewardPointsRedeemed = 12;
+        loyaltyDiscount = Math.min(300, total);
       }
-
-      const redeemed = await User.redeemRewardPoints(userId, redeemablePoints);
-      if (!redeemed) {
-        return res.status(400).json({message: 'Not enough reward points.'});
-      }
-
-      rewardPointsRedeemed = redeemablePoints;
-      rewardDiscount = redeemableDiscount;
     }
-
+    const rewardDiscount = loyaltyDiscount;
     const afterRewardTotal = Math.max(0, total - rewardDiscount);
     const fullAdvanceDiscount =
       paymentMethod === 'Full Payment in Advance'
@@ -214,6 +182,10 @@ export const checkout = async (req, res) => {
       (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
     );
     const calculatedTotal = taxableTotal + inspectionFee + tax;
+    const originalTax = Math.round(
+      (total * Number(settings.serviceTaxPercent || 0)) / 100,
+    );
+    const originalTotal = total + inspectionFee + originalTax;
     let walletUsed = 0;
     if (useWalletBalance) {
       console.info('[Wallet] Checkout requested for user ' + userId + '; order total Rs ' + calculatedTotal + '.');
@@ -221,16 +193,43 @@ export const checkout = async (req, res) => {
     }
     const payableTotal = Math.max(0, calculatedTotal - walletUsed);
     console.info('[Wallet] Checkout calculated for user ' + userId + ': used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
+    const externalPaymentRequired = paymentMethod === 'Rs 200 Advance'
+      ? payableTotal <= 250 ? payableTotal : Math.max(0, 200 - walletUsed)
+      : payableTotal;
+    const walletCoversRequiredPayment = externalPaymentRequired === 0;
+    const initialStatus = walletCoversRequiredPayment
+      ? 'confirmed'
+      : 'checking_receipt';
 
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
     const orderId = `USTAADPRO-${randomSuffix.slice(-6)}`;
+
+    const calculatedOrder = {
+      id: orderId,
+      userId,
+      servicesSubtotal: total,
+      inspectionFee,
+      platformCharges: tax,
+      originalTotal,
+      rewardDiscount,
+      loyaltyDiscount,
+      amountPayable: payableTotal,
+      walletUsed,
+      paymentMethod,
+      bookedFor: bookedFor || 'Today, 6:00 PM',
+      address,
+      specialInstructions: specialInstructions || '',
+      recurringOccurrences: occurrenceCount,
+      items: itemsToInsert,
+    };
+    console.log('[service-checkout] calculated order', JSON.stringify(calculatedOrder, null, 2));
 
     try {
       await Order.create({
         id: orderId,
         userId,
         total: payableTotal,
-        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
+        status: initialStatus,
         bookedFor: bookedFor || 'Today, 6:00 PM',
         paymentMethod,
         address,
@@ -241,7 +240,7 @@ export const checkout = async (req, res) => {
         rewardPointsRedeemed,
         rewardDiscount,
         walletUsed,
-        originalTotal: calculatedTotal,
+        originalTotal,
       });
       await Order.addItems(orderId, itemsToInsert);
       console.info('[Wallet] Booking ' + orderId + ' created: used Rs ' + walletUsed + ', payable Rs ' + payableTotal + '.');
@@ -249,20 +248,21 @@ export const checkout = async (req, res) => {
       console.error('[Wallet] Booking ' + orderId + ' failed; restoring Rs ' + walletUsed + '.');
       await Order.remove(orderId, userId).catch(() => {});
       if (walletUsed > 0) await User.creditWallet(userId, walletUsed);
+      if (rewardPointsRedeemed > 0) await User.addRewardPoints(userId, rewardPointsRedeemed);
       throw error;
     }
     const updatedUser = await User.findById(userId);
 
     res.status(201).json({
-      message: payableTotal === 0
+      message: walletCoversRequiredPayment
         ? 'Booking confirmed using wallet balance.'
         : 'Booking created. Payment receipt verification is required.',
       order: {
         id: orderId,
         total: payableTotal,
-        originalTotal: calculatedTotal,
+        originalTotal,
         walletUsed,
-        status: payableTotal === 0 ? 'confirmed' : 'checking_receipt',
+        status: initialStatus,
         bookedFor: bookedFor || 'Today, 6:00 PM',
         paymentMethod,
         address,
@@ -272,6 +272,19 @@ export const checkout = async (req, res) => {
         rewardPointsEarned: 0,
         rewardPointsRedeemed,
         rewardDiscount,
+        loyaltyDiscount,
+        discount: rewardDiscount,
+        servicesSubtotal: total,
+        platformCharges: tax,
+        amountPayable: payableTotal,
+        billingBreakdown: {
+          servicesSubtotal: total,
+          inspectionFee,
+          platformCharges: tax,
+          originalTotal,
+          discount: rewardDiscount,
+          amountPayable: payableTotal,
+        },
         createdAt: new Date().toISOString(),
         items: cart,
       },
@@ -305,6 +318,16 @@ export const getOrders = async (req, res) => {
     res.json(orders);
   } catch (error) {
     console.error('Get orders error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getLoyaltyStatus = async (req, res) => {
+  try {
+    const status = await Order.getLoyaltyStatus(req.user.id);
+    res.json(status);
+  } catch (error) {
+    console.error('Get loyalty status error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };
@@ -392,23 +415,10 @@ export const updateOrder = async (req, res) => {
       });
     }
     const inspectionFee = Number(settings.inspectionFee || 0);
-    const rewardPointValue = Math.max(
-      1,
-      Number(settings.rewardPointValue || 25),
+    const rewardDiscount = Math.min(
+      Number(order.rewardDiscount || 0),
+      servicesTotal,
     );
-    const serviceRewardMaxDiscountPercent = Math.max(
-      0,
-      Number(settings.serviceRewardMaxDiscountPercent || 10),
-    );
-    const previousRedeemedValue =
-      Number(order.rewardPointsRedeemed || 0) * rewardPointValue;
-    const maxDiscountByPercent = Math.floor(
-      (servicesTotal * serviceRewardMaxDiscountPercent) / 100,
-    );
-    const rewardDiscount =
-      Number(order.rewardPointsRedeemed || 0) > 0
-        ? Math.min(previousRedeemedValue, maxDiscountByPercent)
-        : 0;
     const taxableTotal = Math.max(0, servicesTotal - rewardDiscount);
     const tax = Math.round(
       (taxableTotal * Number(settings.serviceTaxPercent || 0)) / 100,
