@@ -1,4 +1,4 @@
-﻿import {copyFile, mkdir} from 'node:fs/promises';
+import {copyFile, mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import pool from './config/db.js';
@@ -876,6 +876,13 @@ async function ensureTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url TEXT');
+  await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+  await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
+  await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS image_url TEXT');
+  await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
+  await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS services (
       id VARCHAR(50) PRIMARY KEY,
@@ -950,20 +957,31 @@ async function copySeedImages() {
 
 async function seedCategories() {
   for (const category of categories) {
+    const imageService = services.find(service => service.categoryId === category.id);
+    const imageUrl = imageService
+      ? `${publicImageBase}/${imageService.publicFile}`
+      : null;
     await pool.query(
-      `INSERT INTO categories (id, title, subtitle, icon, tint)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO categories
+       (id, title, subtitle, icon, tint, image_url, web_image_url, mobile_icon_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         subtitle = EXCLUDED.subtitle,
         icon = EXCLUDED.icon,
-        tint = EXCLUDED.tint`,
+        tint = EXCLUDED.tint,
+        image_url = EXCLUDED.image_url,
+        web_image_url = EXCLUDED.web_image_url,
+        mobile_icon_url = EXCLUDED.mobile_icon_url`,
       [
         category.id,
         category.title,
         category.subtitle,
         category.icon,
         category.tint,
+        imageUrl,
+        imageUrl,
+        imageUrl,
       ],
     );
   }
@@ -971,18 +989,31 @@ async function seedCategories() {
 
 async function seedSubcategories() {
   for (const subcategory of subcategories) {
+    const imageService = services.find(
+      service => service.subcategoryId === subcategory.id,
+    );
+    const imageUrl = imageService
+      ? `${publicImageBase}/${imageService.publicFile}`
+      : null;
     await pool.query(
-      `INSERT INTO subcategories (id, category_id, title, description)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO subcategories
+       (id, category_id, title, description, image_url, web_image_url, mobile_icon_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET
         category_id = EXCLUDED.category_id,
         title = EXCLUDED.title,
-        description = EXCLUDED.description`,
+        description = EXCLUDED.description,
+        image_url = EXCLUDED.image_url,
+        web_image_url = EXCLUDED.web_image_url,
+        mobile_icon_url = EXCLUDED.mobile_icon_url`,
       [
         subcategory.id,
         subcategory.categoryId,
         subcategory.title,
         subcategory.description,
+        imageUrl,
+        imageUrl,
+        imageUrl,
       ],
     );
   }

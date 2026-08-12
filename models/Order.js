@@ -2,6 +2,15 @@ import pool from '../config/db.js';
 import PaymentReceipt from './PaymentReceipt.js';
 import AppControl from './AppControl.js';
 
+function receiptForCustomer(receipt) {
+  if (!receipt) return null;
+  if (!String(receipt.receiptUrl || '').startsWith('data:image/')) return receipt;
+  return {
+    ...receipt,
+    receiptUrl: `/api/orders/${encodeURIComponent(receipt.orderId)}/receipts/${receipt.id}/image`,
+  };
+}
+
 class Order {
   static async create({
     id,
@@ -69,6 +78,27 @@ class Order {
     }
   }
 
+  static async findStatusesByUserId(userId) {
+    await AppControl.ensureSchema();
+    const [rows] = await pool.query(
+      `SELECT o.id, o.status, o.payment_method as paymentMethod,
+              MAX(CASE WHEN pr.payment_stage = 'advance' AND pr.status <> 'rejected' THEN 1 ELSE 0 END) as hasAdvance,
+              MAX(CASE WHEN pr.payment_stage = 'remaining' AND pr.status <> 'rejected' THEN 1 ELSE 0 END) as hasRemaining
+       FROM orders o
+       LEFT JOIN payment_receipts pr ON pr.order_id = o.id AND pr.user_id = o.user_id
+       WHERE o.user_id = ?
+       GROUP BY o.id, o.status, o.payment_method, o.created_at
+       ORDER BY o.created_at DESC`,
+      [userId],
+    );
+    return rows.map(row => ({
+      id: row.id,
+      status: row.status,
+      paymentMethod: row.paymentMethod,
+      hasAdvance: Boolean(Number(row.hasAdvance || 0)),
+      hasRemaining: Boolean(Number(row.hasRemaining || 0)),
+    }));
+  }
   static async findByUserId(userId) {
     const [orders] = await pool.query(
       `SELECT id, total, status, booked_for as bookedFor,
@@ -87,32 +117,46 @@ class Order {
       [userId],
     );
 
-    const receiptsByOrderId = await PaymentReceipt.findLatestByUserOrderIds(
-      userId,
-      orders.map(order => order.id),
-    );
+    const orderIds = orders.map(order => order.id);
     const receiptHistoryByOrderId = await PaymentReceipt.findByUserOrderIds(
       userId,
-      orders.map(order => order.id),
+      orderIds,
+    );
+    const receiptsByOrderId = Object.fromEntries(
+      Object.entries(receiptHistoryByOrderId).map(([orderId, receipts]) => [
+        orderId,
+        receipts[receipts.length - 1] || null,
+      ]),
     );
 
-    // Populate items for each order
-    const populatedOrders = [];
-    for (const order of orders) {
-      const [items] = await pool.query(
-        `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
+    let allItems = [];
+    if (orderIds.length) {
+      const placeholders = orderIds.map(() => '?').join(', ');
+      [allItems] = await pool.query(
+        `SELECT oi.order_id as orderId, oi.quantity, oi.price,
+                oi.service_work_price_id as serviceWorkPriceId,
                 oi.service_work_title as serviceWorkTitle,
                 s.id as service_id, s.title, s.description, s.duration, s.category_id,
                 sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
-         FROM order_items oi 
-         JOIN services s ON oi.service_id = s.id 
+         FROM order_items oi
+         JOIN services s ON oi.service_id = s.id
          LEFT JOIN service_reviews sr
            ON sr.order_id = oi.order_id
           AND sr.service_id = oi.service_id
           AND sr.user_id = ?
-         WHERE oi.order_id = ?`,
-        [userId, order.id],
+         WHERE oi.order_id IN (${placeholders})`,
+        [userId, ...orderIds],
       );
+    }
+    const itemsByOrderId = allItems.reduce((grouped, item) => {
+      if (!grouped[item.orderId]) grouped[item.orderId] = [];
+      grouped[item.orderId].push(item);
+      return grouped;
+    }, {});
+
+    const populatedOrders = [];
+    for (const order of orders) {
+      const items = itemsByOrderId[order.id] || [];
 
       const cartItems = items.map(item => ({
         quantity: item.quantity,
@@ -145,8 +189,8 @@ class Order {
         rewardDiscount: Number(order.rewardDiscount || 0),
         walletUsed: Number(order.walletUsed || 0),
         originalTotal: Number(order.originalTotal ?? order.total),
-        paymentReceipt: receiptsByOrderId[order.id] || null,
-        paymentReceipts: receiptHistoryByOrderId[order.id] || [],
+        paymentReceipt: receiptForCustomer(receiptsByOrderId[order.id]),
+        paymentReceipts: (receiptHistoryByOrderId[order.id] || []).map(receiptForCustomer),
         items: cartItems,
       });
     }
