@@ -160,7 +160,8 @@ export const signup = async (req, res) => {
 
 export const verifySignupOtp = async (req, res) => {
   try {
-    const { email, phone, code, verificationChannel = 'email' } = req.body;
+    const { email, phone, verificationChannel = 'email' } = req.body;
+    const code = req.body.code || req.body.otp || req.body.verificationCode;
     const channel = verificationChannel === 'phone' ? 'phone' : 'email';
     const normalizedEmail = normalizeEmail(email);
     const normalizedPhone = normalizePhone(phone);
