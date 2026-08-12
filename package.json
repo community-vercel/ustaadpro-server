@@ -22,7 +22,8 @@
                     "import:service-catalog":  "node scripts/importNewServiceCatalog.js",
                     "cleanServices":  "node scripts/cleanServices.js",
                     "seed:FinalServicesUstaadPro":  "node scripts/FinalServicesUstaadPro.js",
-                    "cleanOrders":  "node scripts/cleanOrders.js"
+                    "cleanOrders":  "node scripts/cleanOrders.js",
+                    "clean:shop:duplicates":  "node scripts/removeDuplicateShopProducts.js"
                 },
     "dependencies":  {
                          "bcryptjs":  "^2.4.3",
