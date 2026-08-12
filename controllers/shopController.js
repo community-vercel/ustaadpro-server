@@ -174,11 +174,32 @@ export const checkoutShopOrder = async (req, res) => {
   }
 };
 
-export const getAdminShopProducts = async (_req, res) => {
+export const getAdminShopProducts = async (req, res) => {
   try {
-    res.json(await Shop.getProducts({activeOnly: false}));
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(100, Math.max(5, Number(req.query.limit || 10)));
+    const category = String(req.query.category || 'All');
+    const search = String(req.query.search || '').trim();
+    const options = {activeOnly: false, category, search};
+    const [products, total, categories] = await Promise.all([
+      Shop.getProducts({...options, limit, offset: (page - 1) * limit}),
+      Shop.countProducts(options),
+      Shop.getCategories({activeOnly: false}),
+    ]);
+    res.json({products, total, page, limit, categories});
   } catch (error) {
     console.error('Admin shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminShopProduct = async (req, res) => {
+  try {
+    const product = await Shop.findProductById(req.params.id);
+    if (!product) return res.status(404).json({message: 'Product not found.'});
+    res.json(product);
+  } catch (error) {
+    console.error('Admin shop product detail error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };

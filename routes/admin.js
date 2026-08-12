@@ -74,6 +74,7 @@ router.put('/subscriptions/:id', updateAdminSubscription);
 router.delete('/subscriptions/:id', deleteAdminSubscription);
 
 router.get('/shop/products', getAdminShopProducts);
+router.get('/shop/products/:id', getAdminShopProduct);
 router.post('/shop/products', saveAdminShopProduct);
 router.put('/shop/products/:id', saveAdminShopProduct);
 router.get('/shop/orders', getAdminShopOrders);
