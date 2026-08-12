@@ -34,6 +34,7 @@ import {
 import {
   getAdminShopOrders,
   getAdminShopProducts,
+  getAdminShopProduct,
   saveAdminShopProduct,
   updateAdminShopOrderStatus,
 } from '../controllers/shopController.js';
