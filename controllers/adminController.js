@@ -163,10 +163,32 @@ export const getAdminSummary = async (_req, res) => {
   }
 };
 
-export const getAdminOrders = async (_req, res) => {
+export const getAdminOrders = async (req, res) => {
   try {
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const offset = (page - 1) * limit;
+    const filter = ['active', 'completed', 'cancelled'].includes(req.query.filter)
+      ? req.query.filter
+      : 'all';
+    const whereClause = filter === 'active'
+      ? "WHERE o.status IN ('checking_receipt', 'confirmed', 'assigned', 'in_progress')"
+      : filter === 'completed'
+        ? "WHERE o.status = 'completed'"
+        : filter === 'cancelled'
+          ? "WHERE o.status = 'cancelled'"
+          : '';
+
+    const [[counts]] = await pool.query(
+      SELECT COUNT(*) as total,
+              COUNT(*) FILTER (WHERE status IN ('checking_receipt', 'confirmed', 'assigned', 'in_progress')) as active,
+              COUNT(*) FILTER (WHERE status = 'completed') as completed,
+              COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
+       FROM orders,
+    );
+    const total = Number(filter === 'all' ? counts.total : counts[filter] || 0);
     const [orders] = await pool.query(
-      `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
+      SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
               o.cancel_reason as cancelReason,
@@ -180,21 +202,31 @@ export const getAdminOrders = async (_req, res) => {
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
        JOIN users u ON o.user_id = u.id
-       ORDER BY o.created_at DESC`,
+       
+       ORDER BY o.created_at DESC
+       LIMIT ? OFFSET ?,
+      [limit, offset],
     );
 
-    const populated = [];
-    for (const order of orders) {
-      populated.push(await populateAdminOrder(order));
-    }
-
-    res.json(populated);
+    const populated = await Promise.all(orders.map(order => populateAdminOrder(order)));
+    res.json({
+      orders: populated,
+      total,
+      page,
+      limit,
+      pages: Math.max(1, Math.ceil(total / limit)),
+      counts: {
+        all: Number(counts.total || 0),
+        active: Number(counts.active || 0),
+        completed: Number(counts.completed || 0),
+        cancelled: Number(counts.cancelled || 0),
+      },
+    });
   } catch (error) {
     console.error('Admin orders error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };
-
 export const getAdminOrderById = async (req, res) => {
   try {
     const [orders] = await pool.query(
