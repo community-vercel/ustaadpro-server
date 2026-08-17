@@ -12,30 +12,6 @@ function receiptForCustomer(receipt) {
 }
 
 class Order {
-  static async getLoyaltyStatus(userId) {
-    const [[status]] = await pool.query(
-      `SELECT
-         COALESCE(u.reward_points, 0) AS rewardPoints,
-         COALESCE(u.wallet_balance, 0) AS walletBalance,
-         (SELECT COUNT(*) FROM orders o
-          WHERE o.user_id = u.id
-            AND o.status = 'checking_receipt'
-            AND o.reward_discount > 0) AS pendingRewardOrders
-       FROM users u
-       WHERE u.id = ?`, [userId],
-    );
-    const rewardPoints = Number(status?.rewardPoints || status?.rewardpoints || 0);
-    const pendingRewardOrders = Number(status?.pendingRewardOrders || status?.pendingrewardorders || 0);
-    return {
-      rewardPoints,
-      rewardValue: rewardPoints * 25,
-      walletBalance: Number(status?.walletBalance || status?.walletbalance || 0),
-      pointsRequired: 12,
-      discountValue: 300,
-      eligible: rewardPoints >= 12 && pendingRewardOrders === 0,
-    };
-  }
-
   static async create({
     id,
     userId,
@@ -203,27 +179,14 @@ class Order {
           : null,
       }));
 
-      const rawInstructions = String(order.specialInstructions || '');
-      const legacyRewardPattern = /\s*\[8-Order Loyalty Reward:[^\]]*\]\s*/gi;
-      const legacyRewardApplied = legacyRewardPattern.test(rawInstructions);
-      const legacyFinalMatch = rawInstructions.match(/Final Total:\s*Rs\s*([\d,]+(?:\.\d+)?)/i);
-      const storedDiscount = Number(order.rewardDiscount || 0);
-      const rewardDiscount = storedDiscount || (legacyRewardApplied ? 200 : 0);
-      const finalTotal = legacyFinalMatch
-        ? Number(legacyFinalMatch[1].replace(/,/g, ''))
-        : Number(order.total);
-
       populatedOrders.push({
         ...order,
-        specialInstructions: rawInstructions.replace(legacyRewardPattern, ' ').replace(/\s+/g, ' ').trim(),
-        total: finalTotal,
+        total: Number(order.total),
         inspectionFee: Number(order.inspectionFee),
         tax: Number(order.tax),
         rewardPointsEarned: Number(order.rewardPointsEarned || 0),
         rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
-        rewardDiscount,
-        loyaltyDiscount: rewardDiscount,
-        discount: rewardDiscount,
+        rewardDiscount: Number(order.rewardDiscount || 0),
         walletUsed: Number(order.walletUsed || 0),
         originalTotal: Number(order.originalTotal ?? order.total),
         paymentReceipt: receiptForCustomer(receiptsByOrderId[order.id]),
@@ -384,3 +347,4 @@ class Order {
 }
 
 export default Order;
+
