@@ -148,15 +148,15 @@ export const getAdminOrders = async (req, res) => {
           : '';
 
     const [[counts]] = await pool.query(
-      SELECT COUNT(*) as total,
+      `SELECT COUNT(*) as total,
               COUNT(*) FILTER (WHERE status IN ('checking_receipt', 'confirmed', 'assigned', 'in_progress')) as active,
               COUNT(*) FILTER (WHERE status = 'completed') as completed,
               COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled
-       FROM orders,
+       FROM orders`,
     );
     const total = Number(filter === 'all' ? counts.total : counts[filter] || 0);
     const [orders] = await pool.query(
-      SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
+      `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.address,
               o.special_instructions as specialInstructions,
               o.cancel_reason as cancelReason,
@@ -170,9 +170,9 @@ export const getAdminOrders = async (req, res) => {
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM orders o
        JOIN users u ON o.user_id = u.id
-       
+       ${whereClause}
        ORDER BY o.created_at DESC
-       LIMIT ? OFFSET ?,
+       LIMIT ? OFFSET ?`,
       [limit, offset],
     );
 

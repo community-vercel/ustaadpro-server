@@ -45,6 +45,7 @@ const PORT = process.env.PORT || 5000;
 // header, so browsers first send an OPTIONS preflight request.
 const allowedOrigins = new Set([
   'https://admin.ustaadpro.pk',
+  'https://api.ustaadpro.pk',
   'https://ustaadpro.pk',
   'https://www.ustaadpro.pk',
   'http://localhost:3000',
