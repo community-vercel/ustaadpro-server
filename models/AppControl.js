@@ -381,6 +381,18 @@ class AppControl {
         );
       }
     }
+    const performanceIndexes = [
+      'CREATE INDEX IF NOT EXISTS idx_orders_user_created ON orders (user_id, created_at DESC)',
+      'CREATE INDEX IF NOT EXISTS idx_payment_receipts_user_order ON payment_receipts (user_id, order_id, id)',
+      'CREATE INDEX IF NOT EXISTS idx_payment_receipts_stage ON payment_receipts (order_id, user_id, payment_stage, status)',
+      'CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id)',
+      'CREATE INDEX IF NOT EXISTS idx_service_reviews_order_service ON service_reviews (order_id, service_id, user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_services_catalog ON services (category_id, subcategory_id, is_active)',
+    ];
+    for (const indexSql of performanceIndexes) {
+      await pool.query(indexSql);
+    }
+
     const userColumns = [['reward_points', 'INT NOT NULL DEFAULT 0']];
 
     for (const [column, definition] of userColumns) {

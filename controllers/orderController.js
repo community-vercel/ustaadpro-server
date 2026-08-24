@@ -290,6 +290,15 @@ export const checkout = async (req, res) => {
   }
 };
 
+export const getOrderStatuses = async (req, res) => {
+  try {
+    const statuses = await Order.findStatusesByUserId(req.user.id);
+    res.json(statuses);
+  } catch (error) {
+    console.error('Get order statuses error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
 export const getOrders = async (req, res) => {
   try {
     const orders = await Order.findByUserId(req.user.id);

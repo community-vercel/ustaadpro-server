@@ -3,6 +3,7 @@ import {
   cancelOrder,
   checkout,
   getOrders,
+  getOrderStatuses,
   getPaymentReceiptImage,
   updateOrder,
   uploadPaymentReceipt,
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.post('/checkout', verifyToken, checkout);
 router.get('/', verifyToken, getOrders);
+router.get('/statuses', verifyToken, getOrderStatuses);
 router.get('/:id/receipts/:receiptId/image', verifyToken, getPaymentReceiptImage);
 router.put('/:id', verifyToken, updateOrder);
 router.patch('/:id/cancel', verifyToken, cancelOrder);

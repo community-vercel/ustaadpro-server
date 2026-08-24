@@ -108,7 +108,18 @@ async function importProducts() {
   const cfb = xlsx.CFB.read(workbookPath, {type: 'file'});
   const imageMap = getImageMapByExcelRow(cfb);
   const seenIds = new Set();
+  const existingProducts = await Shop.getProducts({activeOnly: false});
+  const exactProductKeys = new Set(
+    existingProducts.map(product =>
+      [
+        cleanText(product.title).toLowerCase(),
+        cleanText(product.description).toLowerCase(),
+        Number(product.price || 0).toFixed(2),
+      ].join('|'),
+    ),
+  );
   let imported = 0;
+  let skippedDuplicates = 0;
   let withImages = 0;
 
   for (let index = 1; index < rows.length; index += 1) {
@@ -116,6 +127,13 @@ async function importProducts() {
     const title = cleanText(row[1]);
     const price = numberValue(row[5], numberValue(row[4]));
     if (!title || title.toLowerCase() === 'product id' || price <= 0) continue;
+
+    const description = cleanText(row[9] || row[8] || title);
+    const exactKey = [title.toLowerCase(), description.toLowerCase(), price.toFixed(2)].join('|');
+    if (exactProductKeys.has(exactKey)) {
+      skippedDuplicates += 1;
+      continue;
+    }
 
     const id = uniqueSlug(`paint-${slugify(title)}`, seenIds);
     const stock = String(row[7] || '').toLowerCase().includes('out')
@@ -129,13 +147,14 @@ async function importProducts() {
       id,
       title,
       category: 'Paints',
-      description: cleanText(row[9] || row[8] || title),
+      description,
       price,
       originalPrice: price,
       imageUrl,
       stock,
       isActive: true,
     });
+    exactProductKeys.add(exactKey);
     imported += 1;
   }
 

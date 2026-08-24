@@ -5,6 +5,7 @@ import {
   getAdminOrderById,
   getAdminOrders,
   getAdminPaymentReceipts,
+  getAdminPaymentReceipt,
   updateAdminPaymentReceiptStatus,
   getAdminServices,
   getAdminCatalogue,
@@ -34,6 +35,7 @@ import {
 import {
   getAdminShopOrders,
   getAdminShopProducts,
+  getAdminShopProduct,
   saveAdminShopProduct,
   updateAdminShopOrderStatus,
 } from '../controllers/shopController.js';
@@ -48,6 +50,7 @@ router.get('/users', getAdminUsers);
 router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
+router.get('/payment-receipts/:id', getAdminPaymentReceipt);
 router.patch('/payment-receipts/:id/status', updateAdminPaymentReceiptStatus);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
@@ -74,6 +77,7 @@ router.put('/subscriptions/:id', updateAdminSubscription);
 router.delete('/subscriptions/:id', deleteAdminSubscription);
 
 router.get('/shop/products', getAdminShopProducts);
+router.get('/shop/products/:id', getAdminShopProduct);
 router.post('/shop/products', saveAdminShopProduct);
 router.put('/shop/products/:id', saveAdminShopProduct);
 router.get('/shop/orders', getAdminShopOrders);
