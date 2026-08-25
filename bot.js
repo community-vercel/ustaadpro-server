@@ -114,28 +114,52 @@ client.on('qr', async (qr) => {
     }
 });
 
-client.on('ready', () => {
-    setBotState('online', null, client.info?.wid?.user || 'Connected');
-    console.log('✅ Bot Ready!');
-});
-
 client.on('authenticated', () => {
     setBotState('authenticated');
     console.log('✅ Authenticated!');
 });
 
+client.on('ready', () => {
+    setBotState('online', null, client.info?.wid?.user || 'Connected');
+    console.log('✅ Bot Ready!');
+});
+
+client.on('auth_failure', async (msg) => {
+    console.error('❌ WhatsApp Authentication Failed:', msg);
+    setBotState('offline', null, null);
+
+    const authDataDir = path.join(__dirname, 'auth_data');
+    try {
+        if (fs.existsSync(authDataDir)) {
+            fs.rmSync(authDataDir, { recursive: true, force: true });
+            console.log('🧹 Cleared invalid session data from auth_data');
+        }
+    } catch (err) {
+        console.error('Error clearing invalid auth_data:', err.message);
+    }
+});
+
+let isReconnecting = false;
+
 client.on('disconnected', async (reason) => {
     if (isShuttingDown) return;
-    setBotState('offline');
-    console.log('⚠️ Disconnected:', reason);
+    console.log('⚠️ WhatsApp Disconnected:', reason);
+    setBotState('connecting', null, null);
 
-    if (process.env.NODE_ENV === 'development') {
-        return;
-    }
+    if (isReconnecting) return;
+    isReconnecting = true;
 
     setTimeout(async () => {
-        try { await client.initialize(); } catch (e) { process.exit(1); }
-    }, 10000);
+        try {
+            console.log('🔄 Attempting auto-reconnect...');
+            await client.initialize();
+        } catch (e) {
+            console.error('❌ Auto-reconnect failed:', e.message);
+            setBotState('offline', null, null);
+        } finally {
+            isReconnecting = false;
+        }
+    }, 5000);
 });
 
 // ═══════════════════════════════════════

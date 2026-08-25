@@ -72,6 +72,17 @@ const waitForProcessDeath = async (pid, maxMs = 5000, intervalMs = 300) => {
     return !isProcessRunning(pid);
 };
 
+const hasSavedSession = () => {
+    try {
+        const authDataDir = path.join(__dirname, '..', 'auth_data');
+        if (!fs.existsSync(authDataDir)) return false;
+        const files = fs.readdirSync(authDataDir);
+        return files.some(file => file.startsWith('session-'));
+    } catch {
+        return false;
+    }
+};
+
 /**
  * Try to delete auth_data, retrying a few times in case Chrome is still
  * releasing file handles after being killed.
@@ -80,7 +91,7 @@ const clearAuthData = async (authDataDir) => {
     for (let attempt = 1; attempt <= 5; attempt++) {
         try {
             fs.rmSync(authDataDir, { recursive: true, force: true });
-            console.log('[bot] Cleared auth_data for fresh QR');
+            console.log('[bot] Cleared auth_data session');
             return true;
         } catch (e) {
             console.warn(`[bot] auth_data clear attempt ${attempt} failed:`, e.message);
@@ -125,6 +136,47 @@ const stopBotInternal = async () => {
     clearPid();
 };
 
+const spawnBotProcessInternal = async () => {
+    const savedPid = getSavedPid();
+    if (['authenticated', 'connecting', 'starting'].includes(getBotStatusPayload().status) || (savedPid && isProcessRunning(savedPid))) {
+        console.log('[bot] Stopping active or stuck bot process before spawning new process...');
+        await stopBotInternal();
+        await new Promise(r => setTimeout(r, 2000));
+    }
+
+    writeState('starting');
+
+    const logFile = path.join(__dirname, '..', 'bot-error.log');
+    const logStream = fs.openSync(logFile, 'a');
+
+    const child = spawn(process.execPath, [botFile], {
+        detached: true,
+        stdio: ['ignore', logStream, logStream],
+        env: { ...process.env }
+    });
+
+    child.on('error', (err) => {
+        console.error('[bot] Spawn error:', err.message);
+        writeState('offline');
+        clearPid();
+        try { fs.closeSync(logStream); } catch { }
+    });
+
+    child.unref();
+
+    if (!child.pid) {
+        writeState('offline');
+        try { fs.closeSync(logStream); } catch { }
+        throw new Error('Failed to spawn bot process');
+    }
+
+    savePid(child.pid);
+    console.log(`[bot] Spawned PID ${child.pid} — output → bot-error.log`);
+
+    await new Promise(r => setTimeout(r, 3000));
+    return getBotStatusPayload();
+};
+
 // ─── Start Bot ────────────────────────────────────────────────────────────────
 
 export const startBot = async (req, res) => {
@@ -136,63 +188,8 @@ export const startBot = async (req, res) => {
         return res.json({ success: true, message: 'Bot is already running.', ...current });
     }
 
-    // If stuck at 'authenticated', 'connecting', or 'starting' with a dead/missing process,
-    // kill whatever is left and do a clean restart so Chrome is freed
-    if (['authenticated', 'connecting', 'starting'].includes(current.status) || (savedPid && isProcessRunning(savedPid))) {
-        console.log(`[bot] Stuck at "${current.status}" — killing old process tree and restarting…`);
-        await stopBotInternal();
-        // Give the OS time to release file handles
-        await new Promise(r => setTimeout(r, 2000));
-    }
-
     try {
-        writeState('starting');
-
-        // Kill any leftover processes and clear auth_data for a fresh QR
-        const authDataDir = path.join(__dirname, '..', 'auth_data');
-        if (fs.existsSync(authDataDir)) {
-            const cleared = await clearAuthData(authDataDir);
-            if (!cleared) {
-                console.warn('[bot] auth_data still locked — bot will attempt to reuse the existing session');
-            }
-        }
-
-        // Redirect bot output to a log file for diagnostics
-        const logFile = path.join(__dirname, '..', 'bot-error.log');
-        const logStream = fs.openSync(logFile, 'a');
-
-        // Spawn as fully detached so it survives server/nodemon restarts
-        // Use process.execPath (not 'node') so the correct Node binary is used
-        // in production environments where PATH may differ (nvm, n, etc.)
-        const child = spawn(process.execPath, [botFile], {
-            detached: true,
-            stdio: ['ignore', logStream, logStream],
-            env: { ...process.env }
-        });
-
-        child.on('error', (err) => {
-            console.error('[bot] Spawn error:', err.message);
-            writeState('offline');
-            clearPid();
-            try { fs.closeSync(logStream); } catch { }
-        });
-
-        child.unref();
-
-        if (!child.pid) {
-            writeState('offline');
-            try { fs.closeSync(logStream); } catch { }
-            return res.status(500).json({ success: false, message: 'Failed to spawn bot process' });
-        }
-
-        savePid(child.pid);
-        console.log(`[bot] Spawned PID ${child.pid} — output → bot-error.log`);
-
-        // Give bot time to write its initial state.
-        // Linux Chrome launch is significantly slower than Windows — use 3 s.
-        await new Promise(r => setTimeout(r, 3000));
-
-        const updated = getBotStatusPayload();
+        const updated = await spawnBotProcessInternal();
         return res.json({ success: true, message: 'Bot started.', ...updated });
     } catch (err) {
         console.error('[bot] Failed to spawn bot:', err.message);
@@ -201,12 +198,22 @@ export const startBot = async (req, res) => {
     }
 };
 
-// ─── Stop Bot ─────────────────────────────────────────────────────────────────
+// ─── Stop / Disconnect Bot ───────────────────────────────────────────────────
 
 export const stopBot = async (req, res) => {
     writeState('offline', null, null);
     await stopBotInternal();
-    return res.json({ success: true, message: 'Bot stopped' });
+
+    // Clear auth_data on manual disconnect from admin panel
+    const authDataDir = path.join(__dirname, '..', 'auth_data');
+    if (fs.existsSync(authDataDir)) {
+        const cleared = await clearAuthData(authDataDir);
+        if (cleared) {
+            console.log('[bot] Cleared auth_data on manual disconnect');
+        }
+    }
+
+    return res.json({ success: true, message: 'Bot stopped and session cleared' });
 };
 
 // ─── Get Status ───────────────────────────────────────────────────────────────
@@ -215,29 +222,33 @@ export const getBotStatus = async (req, res) => {
     res.json(getBotStatusPayload());
 };
 
-// ─── Startup: reset stale state ───────────────────────────────────────────────
+// ─── Startup: reset state or auto-restore session ─────────────────────────────
 // Called once from server.js on startup.
-// If bot-state.json says 'online'/'connecting'/'starting' but the saved PID is
-// no longer running (e.g. server restarted after deploy), reset to 'offline' so
-// the admin UI shows the correct state and the "Show QR" button appears.
 
-export const resetStateIfDead = () => {
+export const resetStateIfDead = async () => {
     try {
         const savedPid = getSavedPid();
         const state = getBotStatusPayload();
-        const liveStatuses = ['online', 'connecting', 'starting', 'authenticated'];
+        const pidRunning = savedPid && isProcessRunning(savedPid);
 
-        if (liveStatuses.includes(state.status)) {
-            if (!savedPid || !isProcessRunning(savedPid)) {
-                console.log(`[bot] Startup check: state was "${state.status}" but PID ${savedPid} is dead — resetting to offline.`);
-                writeState('offline', null, null);
-                clearPid();
-            } else {
-                console.log(`[bot] Startup check: state is "${state.status}" and PID ${savedPid} is alive — keeping.`);
-            }
+        if (pidRunning) {
+            console.log(`[bot] Startup check: state is "${state.status}" and PID ${savedPid} is alive.`);
+            return;
+        }
+
+        // If process is dead, check if a saved session exists in auth_data
+        if (hasSavedSession()) {
+            console.log('[bot] Startup check: Saved session found in auth_data — auto-restoring bot process...');
+            await spawnBotProcessInternal();
+        } else {
+            console.log('[bot] Startup check: No running process and no saved session — setting state to offline.');
+            writeState('offline', null, null);
+            clearPid();
         }
     } catch (e) {
         console.error('[bot] resetStateIfDead error:', e.message);
+        writeState('offline', null, null);
+        clearPid();
     }
 };
 
