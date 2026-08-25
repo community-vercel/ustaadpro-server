@@ -16,6 +16,13 @@ class Booking {
         return rows;
     }
 
+    // Find single booking by ID
+    static async findById(id) {
+        const query = 'SELECT * FROM bot_bookings WHERE id = $1';
+        const [rows] = await db.query(query, [id]);
+        return rows[0];
+    }
+
     // Get bookings timeline (last 7 days)
     static async getTimeline() {
         const query = `

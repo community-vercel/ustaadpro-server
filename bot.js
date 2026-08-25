@@ -12,9 +12,7 @@ import {
     resolveCategory, 
     buildCategoryMenu, 
     buildServicesMenu, 
-    buildOptionsMenu,
-    HARDCODED_HOME,
-    HARDCODED_CLEANING
+    buildOptionsMenu
 } from './services/whatsappService.js';
 import { validateAndParseDate, validateTime, validateAddress } from './utils/validators.js';
 import { buildConfirmationPreview } from './utils/helpers.js';
