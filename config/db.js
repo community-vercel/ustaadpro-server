@@ -47,6 +47,7 @@ export const createWhatsAppBotTables = async () => {
             sub_service TEXT,
             date VARCHAR(50),
             time VARCHAR(50),
+            customer_phone VARCHAR(50),
             address TEXT,
             address_type VARCHAR(20),
             has_image VARCHAR(50),
@@ -76,7 +77,8 @@ export const createWhatsAppBotTables = async () => {
             images JSONB DEFAULT '[]'::jsonb,
             status VARCHAR(30) DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`
+        )`,
+        `ALTER TABLE bot_bookings ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50)`
     ];
     // ... rest same
 

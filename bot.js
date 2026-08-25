@@ -142,12 +142,21 @@ client.on('disconnected', async (reason) => {
 // MEMORY SESSIONS (Fast + DB backup)
 // ═══════════════════════════════════════
 let userSessions = {};
+const processingUsers = new Set();
 
 // ═══════════════════════════════════════
 // 💬 MAIN MESSAGE HANDLER
 // ═══════════════════════════════════════
 client.on('message', async (msg) => {
     const userId = msg.from;
+    if (!userId) return;
+
+    // Prevent concurrent execution for the exact same user ID
+    if (processingUsers.has(userId)) {
+        return;
+    }
+    processingUsers.add(userId);
+
     const incomingText = msg.body ? msg.body.trim() : "";
 
     try {
@@ -158,17 +167,19 @@ client.on('message', async (msg) => {
             incomingText.toLowerCase() === 'hello' ||
             incomingText.toLowerCase() === 'restart'
         ) {
-            const categories = await getCategories();
-            
+            // Synchronously reserve session spot to prevent race condition
             userSessions[userId] = {
                 state: 'SELECT_CATEGORY',
                 orderDetails: {},
-                categoryMenu: categories,
+                categoryMenu: null,
                 currentCategory: null,
                 currentServiceKey: null,
                 currentServiceType: null,
                 changeDateTemp: null
             };
+
+            const categories = await getCategories();
+            userSessions[userId].categoryMenu = categories;
 
             await client.sendMessage(userId,
                 `Assalam-o-Alaikum! Welcome to *Ustad Pro Home Services*!\n\n` +
@@ -176,6 +187,7 @@ client.on('message', async (msg) => {
                 `Please select a number from below:\n\n` +
                 buildCategoryMenu(categories)
             );
+            try { await Session.upsert(userId, userSessions[userId]); } catch {}
             return;
         }
 
@@ -457,6 +469,7 @@ client.on('message', async (msg) => {
                     );
                     console.log("✅ Booking Confirmed:", session.orderDetails);
                     delete userSessions[userId];
+                    try { await Session.delete(userId); } catch {}
                 } else if (incomingText === '2') {
                     session.state = 'CHANGE_DATE_TIME';
                     session.changeDateTemp = null;
@@ -473,6 +486,7 @@ client.on('message', async (msg) => {
                     );
                 } else if (incomingText === '4') {
                     delete userSessions[userId];
+                    try { await Session.delete(userId); } catch {}
                     await client.sendMessage(userId,
                         `Order Cancelled.\n\nType Hi or Hello to book again.`
                     );
@@ -529,14 +543,18 @@ client.on('message', async (msg) => {
             }
         }
 
-        // Persist session to DB
-        try { await Session.upsert(userId, session); } catch {}
+        // Persist active session to DB
+        if (userSessions[userId]) {
+            try { await Session.upsert(userId, userSessions[userId]); } catch {}
+        }
         
     } catch (error) {
         console.error('Message handling failed:', error);
         await client.sendMessage(userId,
             `Sorry, something went wrong. Please try again by typing Hi.`
         );
+    } finally {
+        processingUsers.delete(userId);
     }
 });
 
