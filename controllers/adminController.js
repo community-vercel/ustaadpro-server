@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import bcrypt from 'bcryptjs';
 import xlsx from 'xlsx';
 import {createHash} from 'node:crypto';
+import sharp from 'sharp';
 import pool from '../config/db.js';
 import Order from '../models/Order.js';
 import Service from '../models/Service.js';
@@ -426,7 +427,14 @@ export const getAdminPaymentReceipt = async (req, res) => {
   try {
     const result = await PaymentReceipt.getAdminById(Number(req.params.id));
     if (!result) return res.status(404).json({message: 'Payment receipt not found.'});
-    res.json(result);
+    res.json({
+      ...result,
+      receipt: {...result.receipt, receiptUrl: `/api/admin/payment-receipts/${result.receipt.id}/image`},
+      receipts: result.receipts.map(receipt => ({
+        ...receipt,
+        receiptUrl: `/api/admin/payment-receipts/${receipt.id}/image`,
+      })),
+    });
   } catch (error) {
     console.error('Admin payment receipt details error:', error);
     res.status(500).json({message: 'Internal server error.'});
@@ -689,6 +697,38 @@ export const getAdminUsers = async (_req, res) => {
   }
 };
 
+export const getAdminPaymentReceiptImage = async (req, res) => {
+  try {
+    const receiptId = Number(req.params.id);
+    if (!Number.isInteger(receiptId) || receiptId <= 0) {
+      return res.status(400).json({message: 'A valid receipt id is required.'});
+    }
+    const [rows] = await pool.query(
+      'SELECT receipt_url as receiptUrl FROM payment_receipts WHERE id = ? LIMIT 1',
+      [receiptId],
+    );
+    const stored = rows[0]?.receiptUrl;
+    if (!stored) return res.status(404).json({message: 'Receipt image not found.'});
+
+    const match = String(stored).match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (!match) return res.redirect(stored);
+
+    const source = Buffer.from(match[2], 'base64');
+    // Browser support for iPhone HEIC/HEIF is inconsistent. Normalizing every
+    // stored receipt also applies its EXIF orientation correctly.
+    const jpeg = await sharp(source, {failOn: 'none'}).rotate().jpeg({quality: 88, mozjpeg: true}).toBuffer();
+    res.set({
+      'Content-Type': 'image/jpeg',
+      'Content-Length': String(jpeg.length),
+      'Cache-Control': 'private, max-age=3600',
+    });
+    return res.send(jpeg);
+  } catch (error) {
+    console.error('Admin receipt image conversion error:', error);
+    return res.status(422).json({message: 'This receipt image could not be converted for browser display.'});
+  }
+};
+
 export const getAdminUserOrders = async (req, res) => {
   try {
     const userId = Number(req.params.id);
@@ -706,10 +746,17 @@ export const getAdminUserOrders = async (req, res) => {
       `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
               o.payment_method as paymentMethod, o.created_at as createdAt,
               oi.quantity, oi.price, COALESCE(oi.service_work_title, s.title) as title,
-              s.image_url as imageUrl
+              COALESCE(
+                NULLIF(swp.image_url, ''),
+                NULLIF(s.image_url, ''),
+                NULLIF(sc.web_image_url, ''),
+                NULLIF(sc.mobile_icon_url, '')
+              ) as imageUrl
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id = o.id
        LEFT JOIN services s ON s.id = oi.service_id
+       LEFT JOIN service_work_prices swp ON swp.id = oi.service_work_price_id
+       LEFT JOIN subcategories sc ON sc.id = s.subcategory_id
        WHERE o.user_id = ?
        ORDER BY o.created_at DESC, oi.id ASC`,
       [userId],

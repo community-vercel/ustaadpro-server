@@ -6,6 +6,7 @@ import {
   getAdminOrders,
   getAdminPaymentReceipts,
   getAdminPaymentReceipt,
+  getAdminPaymentReceiptImage,
   updateAdminPaymentReceiptStatus,
   getAdminServices,
   getAdminCatalogue,
@@ -54,6 +55,7 @@ router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
 router.get('/payment-receipts/:id', getAdminPaymentReceipt);
+router.get('/payment-receipts/:id/image', getAdminPaymentReceiptImage);
 router.patch('/payment-receipts/:id/status', updateAdminPaymentReceiptStatus);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
