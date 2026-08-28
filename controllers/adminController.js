@@ -676,9 +676,9 @@ export const getAdminUsers = async (_req, res) => {
               u.reward_points as rewardPoints,
               u.created_at as createdAt,
               COALESCE((SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id), 0)
-                + COALESCE((SELECT COUNT(*) FROM shop_orders so WHERE so.user_id = u.id), 0) as totalOrders,
+                + COALESCE((SELECT COUNT(*) FROM shop_orders so WHERE so.user_id = u.id), 0) as total_orders,
               COALESCE((SELECT SUM(o.total) FROM orders o WHERE o.user_id = u.id), 0)
-                + COALESCE((SELECT SUM(so.total) FROM shop_orders so WHERE so.user_id = u.id), 0) as totalSpend
+                + COALESCE((SELECT SUM(so.total) FROM shop_orders so WHERE so.user_id = u.id), 0) as total_spend
        FROM users u
        ORDER BY u.created_at DESC`,
     );
