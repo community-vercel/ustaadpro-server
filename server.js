@@ -98,9 +98,8 @@ app.use('/api', reviewRoutes);
 
 
 // ═══════════════ WHATSAPP-BOT FRONTEND ═══════════════
-app.use('/admin', express.static(path.join(__dirname, 'frontend')));
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+app.get('/admin', (_req, res) => {
+  res.redirect(302, 'https://admin.ustaadpro.pk');
 });
 
 // Root test route
