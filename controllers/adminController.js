@@ -166,10 +166,13 @@ export const getAdminOrders = async (req, res) => {
               o.reward_discount as rewardDiscount,
               o.wallet_used as walletUsed,
               o.original_total as originalTotal,
+              o.provider_id as providerId,
               o.created_at as createdAt,
-              u.name as customerName, u.phone as customerPhone, u.email as customerEmail
+              u.name as customerName, u.phone as customerPhone, u.email as customerEmail,
+              p.name as providerName
        FROM orders o
        JOIN users u ON o.user_id = u.id
+       LEFT JOIN providers p ON p.id = o.provider_id
        ${whereClause}
        ORDER BY o.created_at DESC
        LIMIT ? OFFSET ?`,
@@ -208,10 +211,13 @@ export const getAdminOrderById = async (req, res) => {
               o.reward_discount as rewardDiscount,
               o.wallet_used as walletUsed,
               o.original_total as originalTotal,
+              o.provider_id as providerId,
               o.created_at as createdAt,
-              u.name as customerName, u.phone as customerPhone, u.email as customerEmail
+              u.name as customerName, u.phone as customerPhone, u.email as customerEmail,
+              p.name as providerName
        FROM orders o
        JOIN users u ON o.user_id = u.id
+       LEFT JOIN providers p ON p.id = o.provider_id
        WHERE o.id = ?`,
       [req.params.id],
     );
@@ -661,11 +667,11 @@ export const getAdminUsers = async (_req, res) => {
       `SELECT u.id, u.name, u.phone, u.email,
               u.reward_points as rewardPoints,
               u.created_at as createdAt,
-              COUNT(o.id) as totalOrders,
-              COALESCE(SUM(o.total), 0) as totalSpend
+              COALESCE((SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id), 0)
+                + COALESCE((SELECT COUNT(*) FROM shop_orders so WHERE so.user_id = u.id), 0) as totalOrders,
+              COALESCE((SELECT SUM(o.total) FROM orders o WHERE o.user_id = u.id), 0)
+                + COALESCE((SELECT SUM(so.total) FROM shop_orders so WHERE so.user_id = u.id), 0) as totalSpend
        FROM users u
-       LEFT JOIN orders o ON o.user_id = u.id
-       GROUP BY u.id
        ORDER BY u.created_at DESC`,
     );
 
@@ -679,6 +685,67 @@ export const getAdminUsers = async (_req, res) => {
     );
   } catch (error) {
     console.error('Admin users error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAdminUserOrders = async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({message: 'A valid user id is required.'});
+    }
+
+    const [users] = await pool.query(
+      'SELECT id, name, phone, email FROM users WHERE id = ?',
+      [userId],
+    );
+    if (!users[0]) return res.status(404).json({message: 'User not found.'});
+
+    const [serviceOrders] = await pool.query(
+      `SELECT o.id, o.total, o.status, o.booked_for as bookedFor,
+              o.payment_method as paymentMethod, o.created_at as createdAt,
+              oi.quantity, oi.price, COALESCE(oi.service_work_title, s.title) as title,
+              s.image_url as imageUrl
+       FROM orders o
+       LEFT JOIN order_items oi ON oi.order_id = o.id
+       LEFT JOIN services s ON s.id = oi.service_id
+       WHERE o.user_id = ?
+       ORDER BY o.created_at DESC, oi.id ASC`,
+      [userId],
+    );
+    const [shopOrders] = await pool.query(
+      `SELECT so.id, so.total, so.status, so.payment_method as paymentMethod,
+              so.created_at as createdAt, soi.quantity, soi.price,
+              sp.title, sp.image_url as imageUrl
+       FROM shop_orders so
+       LEFT JOIN shop_order_items soi ON soi.order_id = so.id
+       LEFT JOIN shop_products sp ON sp.id = soi.product_id
+       WHERE so.user_id = ?
+       ORDER BY so.created_at DESC, soi.id ASC`,
+      [userId],
+    );
+
+    const groupOrders = (rows, type) => Object.values(rows.reduce((grouped, row) => {
+      if (!grouped[row.id]) grouped[row.id] = {
+        id: row.id, type, total: Number(row.total), status: row.status,
+        paymentMethod: row.paymentMethod, bookedFor: row.bookedFor || null,
+        createdAt: row.createdAt, items: [],
+      };
+      if (row.title) grouped[row.id].items.push({
+        title: row.title, quantity: Number(row.quantity || 0),
+        price: Number(row.price || 0), imageUrl: row.imageUrl || '',
+      });
+      return grouped;
+    }, {}));
+
+    res.json({
+      user: users[0],
+      orders: [...groupOrders(serviceOrders, 'service'), ...groupOrders(shopOrders, 'shop')]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    });
+  } catch (error) {
+    console.error('Admin user orders error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };

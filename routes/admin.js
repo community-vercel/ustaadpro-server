@@ -14,6 +14,7 @@ import {
   getAdminSettings,
   getAdminSummary,
   getAdminUsers,
+  getAdminUserOrders,
   deleteAdminUser,
   saveAdminHomeSlide,
   sendBroadcastNotification,
@@ -39,6 +40,7 @@ import {
   saveAdminShopProduct,
   updateAdminShopOrderStatus,
 } from '../controllers/shopController.js';
+import {listProviders, createProvider, updateProvider, deleteProvider, assignProvider} from '../controllers/providerController.js';
 
 const router = express.Router();
 
@@ -47,6 +49,7 @@ router.get('/summary', getAdminSummary);
 router.post('/notifications/broadcast', sendBroadcastNotification);
 router.post('/uploads', uploadAdminImage);
 router.get('/users', getAdminUsers);
+router.get('/users/:id/orders', getAdminUserOrders);
 router.delete('/users/:id', deleteAdminUser);
 router.get('/orders', getAdminOrders);
 router.get('/payment-receipts', getAdminPaymentReceipts);
@@ -54,6 +57,11 @@ router.get('/payment-receipts/:id', getAdminPaymentReceipt);
 router.patch('/payment-receipts/:id/status', updateAdminPaymentReceiptStatus);
 router.get('/orders/:id', getAdminOrderById);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
+router.patch('/orders/:id/provider', assignProvider);
+router.get('/providers', listProviders);
+router.post('/providers', createProvider);
+router.put('/providers/:id', updateProvider);
+router.delete('/providers/:id', deleteProvider);
 router.get('/catalogue', getAdminCatalogue);
 router.post('/catalogue/import', importAdminCatalog);
 router.post('/categories', saveAdminCategory);

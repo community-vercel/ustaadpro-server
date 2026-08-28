@@ -48,6 +48,25 @@ CREATE TABLE user_addresses (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS providers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(160) NOT NULL UNIQUE,
+  phone VARCHAR(30) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  trade VARCHAR(120) NOT NULL,
+  commission_percent NUMERIC(5,2) NOT NULL DEFAULT 80,
+  is_available BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  rating NUMERIC(3,2) NOT NULL DEFAULT 0,
+  completed_jobs INT NOT NULL DEFAULT 0,
+  latitude NUMERIC(10,7),
+  longitude NUMERIC(10,7),
+  location_recorded_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE auth_otps (
   id SERIAL PRIMARY KEY,
   email VARCHAR(100) NOT NULL,
@@ -160,6 +179,9 @@ CREATE TABLE orders (
   reward_discount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   wallet_used NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   original_total NUMERIC(10, 2),
+  provider_id INT REFERENCES providers(id) ON DELETE SET NULL,
+  provider_job_status VARCHAR(30) DEFAULT 'assigned',
+  assigned_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

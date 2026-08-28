@@ -32,6 +32,11 @@ async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
     error.statusCode = 400;
     throw error;
   }
+  if (image.length > 15 * 1024 * 1024) {
+    const error = new Error('The receipt image is too large. Please crop it or choose a smaller image.');
+    error.statusCode = 413;
+    throw error;
+  }
 
   // Local upload files are removed by application rebuilds. Persist the
   // validated proof in the database-backed receipt URL so it remains available.
@@ -520,6 +525,7 @@ export const uploadPaymentReceipt = async (req, res) => {
       receiptUrl: `/api/orders/${encodeURIComponent(req.params.id)}/receipts/${receipt.id}/image`,
     });
   } catch (error) {
+    console.error('Upload payment receipt error:', error);
     res.status(error.statusCode || 500).json({message: error.message || 'Internal server error.'});
   }
 };

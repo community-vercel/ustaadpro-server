@@ -15,6 +15,7 @@ import reviewRoutes from './routes/reviews.js';
 import searchRoutes from './routes/search.js';
 import contactRoutes from './routes/contact.js';
 import complaintRoutes from './routes/complaints.js';
+import providerRoutes from './routes/providers.js';
 
 // ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
 import botServiceRoutes from './routes/botserviceRoutes.js';
@@ -28,6 +29,7 @@ import { initFirebase } from './utils/firebase.js';
 import db from './config/db.js';
 import botRoutes from './routes/botRoutes.js';
 import { resetStateIfDead } from './controllers/botController.js';
+import Provider from './models/Provider.js';
 
 // Initialize Firebase
 initFirebase();
@@ -68,7 +70,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
+// Receipt images are sent as base64 JSON. Base64 is roughly 33% larger than
+// the source file, so leave enough headroom while the mobile app compresses it.
+app.use(express.json({ limit: '20mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ═══════════════ WHATSAPP-BOT ROUTES ═══════════════
@@ -89,6 +93,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/providers', providerRoutes);
 app.use('/api', reviewRoutes);
 
 
@@ -135,12 +140,18 @@ app.get('/db-test', async (req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({
+      message: 'The uploaded image is too large. Please crop it or choose a smaller image.',
+    });
+  }
   res.status(500).json({ message: 'Something went wrong on the server!' });
 });
 
 try {
   await AppControl.ensureSchema();
   await Shop.ensureTables();
+  await Provider.ensureSchema();
   console.log('Dynamic app control schema is ready.');
 } catch (error) {
   console.error('Could not initialize dynamic app control schema:', error);
