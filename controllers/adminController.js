@@ -704,10 +704,10 @@ export const getAdminPaymentReceiptImage = async (req, res) => {
       return res.status(400).json({message: 'A valid receipt id is required.'});
     }
     const [rows] = await pool.query(
-      'SELECT receipt_url as receiptUrl FROM payment_receipts WHERE id = ? LIMIT 1',
+      'SELECT receipt_url FROM payment_receipts WHERE id = ? LIMIT 1',
       [receiptId],
     );
-    const stored = rows[0]?.receiptUrl;
+    const stored = rows[0]?.receipt_url;
     if (!stored) return res.status(404).json({message: 'Receipt image not found.'});
 
     const match = String(stored).match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
