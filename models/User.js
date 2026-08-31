@@ -2,10 +2,7 @@ import pool from '../config/db.js';
 
 class User {
   static async findById(id) {
-    const [rows] = await pool.query(
-      'SELECT id, name, phone, email, wallet_balance as walletBalance, coins, reward_points as rewardPoints, created_at as createdAt, pin_hash, pin_set_at FROM users WHERE id = ?',
-      [id]
-    );
+    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
     return rows[0];
   }
 

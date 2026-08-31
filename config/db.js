@@ -107,6 +107,7 @@ export const createWhatsAppBotTables = async () => {
 // Auto-create tables on startup. Export the promise so one-off scripts can
 // wait for it before closing the shared connection pool.
 export const whatsAppBotTablesReady = createWhatsAppBotTables();
+export const pinColumnsReady = ensurePinColumns();
 
 // ═══════════════════════════════════════
 // USTADPRO EXISTING CODE (UNCHANGED)
