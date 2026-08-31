@@ -24,6 +24,7 @@ function formatUser(user) {
     walletBalance: Number(user.walletBalance ?? user.wallet_balance),
     coins: user.coins,
     rewardPoints: Number(user.rewardPoints ?? user.reward_points ?? 0),
+    hasPin: user.pin_hash != null,
     createdAt: user.createdAt ?? user.created_at,
   };
 }
@@ -555,6 +556,35 @@ export const resetPinWithOtp = async (req, res) => {
     res.json({ message: 'PIN reset successfully.' });
   } catch (error) {
     console.error('PIN reset verification error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const checkPin = async (req, res) => {
+  try {
+    const { pin } = req.body;
+
+    if (!pin || !/^\d{4}$/.test(String(pin))) {
+      return res.status(400).json({ message: 'PIN must be exactly 4 digits.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (!user.pin_hash) {
+      return res.status(400).json({ message: 'No PIN set for this account.', valid: false });
+    }
+
+    const isValid = await bcrypt.compare(String(pin), user.pin_hash);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Current PIN is incorrect.', valid: false });
+    }
+
+    res.json({ message: 'PIN verified.', valid: true });
+  } catch (error) {
+    console.error('Check PIN error:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
