@@ -270,6 +270,13 @@ export const loginWithPhone = async (req, res) => {
       return res.status(404).json({ message: 'Phone number is not registered.' });
     }
 
+    // Check if user has set a PIN
+    const hasPin = user.pin_hash != null;
+    if (hasPin) {
+      return res.json({ requiresPin: true, phone: normalizedPhone });
+    }
+
+    // Legacy users without PIN — allow direct login
     const token = signToken(user);
     res.json({ token, user: formatUser(user) });
   } catch (error) {
@@ -360,6 +367,194 @@ export const verifyLoginOtp = async (req, res) => {
     res.json({ token, user: formatUser(user) });
   } catch (error) {
     console.error('Login OTP verification error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+const FORGOT_PIN_OTP_PURPOSE = 'forgot_pin';
+const PIN_LOCKOUT_ATTEMPTS = 5;
+const PIN_LOCKOUT_MINUTES = 15;
+
+// Simple in-memory rate limiter for PIN attempts per phone
+const pinAttempts = new Map();
+function getPinAttemptKey(phone) {
+  return `pin:${phone}`;
+}
+function checkPinLockout(phone) {
+  const key = getPinAttemptKey(phone);
+  const record = pinAttempts.get(key);
+  if (!record) return false;
+  if (Date.now() - record.lockedAt > PIN_LOCKOUT_MINUTES * 60 * 1000) {
+    pinAttempts.delete(key);
+    return false;
+  }
+  return record.attempts >= PIN_LOCKOUT_ATTEMPTS;
+}
+function recordPinAttempt(phone) {
+  const key = getPinAttemptKey(phone);
+  const existing = pinAttempts.get(key);
+  const attempts = (existing?.attempts || 0) + 1;
+  pinAttempts.set(key, { attempts, lockedAt: attempts >= PIN_LOCKOUT_ATTEMPTS ? Date.now() : (existing?.lockedAt || 0) });
+}
+function resetPinAttempts(phone) {
+  pinAttempts.delete(getPinAttemptKey(phone));
+}
+
+export const setPin = async (req, res) => {
+  try {
+    const { pin } = req.body;
+
+    if (!pin || !/^\d{4}$/.test(String(pin))) {
+      return res.status(400).json({ message: 'PIN must be exactly 4 digits.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const pinHash = await bcrypt.hash(String(pin), salt);
+    await User.setPin(user.id, pinHash);
+
+    res.json({ message: 'PIN set successfully.' });
+  } catch (error) {
+    console.error('Set PIN error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const verifyPin = async (req, res) => {
+  try {
+    const { phone, pin } = req.body;
+    const normalizedPhone = normalizePhone(phone);
+
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: 'Please enter a valid Pakistani phone number.' });
+    }
+
+    if (!pin || !/^\d{4}$/.test(String(pin))) {
+      return res.status(400).json({ message: 'PIN must be exactly 4 digits.' });
+    }
+
+    if (checkPinLockout(normalizedPhone)) {
+      return res.status(429).json({ message: `Too many attempts. Please try again after ${PIN_LOCKOUT_MINUTES} minutes.` });
+    }
+
+    const user = await User.findByPhone(normalizedPhone);
+    if (!user) {
+      return res.status(404).json({ message: 'Phone number is not registered.' });
+    }
+
+    if (!user.pin_hash) {
+      return res.status(400).json({ message: 'No PIN set for this account. Please login with password or set a PIN.' });
+    }
+
+    const isValid = await bcrypt.compare(String(pin), user.pin_hash);
+    if (!isValid) {
+      recordPinAttempt(normalizedPhone);
+      const remaining = PIN_LOCKOUT_ATTEMPTS - (pinAttempts.get(getPinAttemptKey(normalizedPhone))?.attempts || 0);
+      return res.status(401).json({ message: `Invalid PIN. ${remaining > 0 ? `${remaining} attempts remaining.` : 'Account locked temporarily.'}` });
+    }
+
+    resetPinAttempts(normalizedPhone);
+    const token = signToken(user);
+    res.json({ token, user: formatUser(user) });
+  } catch (error) {
+    console.error('Verify PIN error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const requestPinResetOtp = async (req, res) => {
+  try {
+    const normalizedPhone = normalizePhone(req.body.phone);
+
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: 'Please enter a valid Pakistani phone number.' });
+    }
+
+    const user = await User.findByPhone(normalizedPhone);
+    if (!user) {
+      return res.status(404).json({ message: 'Phone number is not registered.' });
+    }
+
+    const otpCode = await createOtp({
+      identifier: normalizedPhone,
+      purpose: FORGOT_PIN_OTP_PURPOSE,
+      payload: { userId: user.id, phone: normalizedPhone },
+    });
+
+    await sendOtpSms({
+      to: normalizedPhone,
+      code: otpCode,
+      purpose: 'PIN reset',
+    });
+
+    res.status(200).json({
+      message: 'PIN reset code sent to your phone.',
+      phone: normalizedPhone,
+      expiresInMinutes: OTP_EXPIRY_MINUTES,
+    });
+  } catch (error) {
+    console.error('PIN reset OTP request error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+export const resetPinWithOtp = async (req, res) => {
+  try {
+    const { phone, code, newPin } = req.body;
+    const normalizedPhone = normalizePhone(phone);
+
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: 'Please enter a valid Pakistani phone number.' });
+    }
+
+    if (!code || !/^\d{6}$/.test(String(code))) {
+      return res.status(400).json({ message: 'Verification code must be 6 digits.' });
+    }
+
+    if (!newPin || !/^\d{4}$/.test(String(newPin))) {
+      return res.status(400).json({ message: 'New PIN must be exactly 4 digits.' });
+    }
+
+    const otpRecord = await AuthOtp.findLatestActive(normalizedPhone, FORGOT_PIN_OTP_PURPOSE);
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'Verification code not found or already used.' });
+    }
+
+    if (new Date(otpRecord.expires_at).getTime() < Date.now()) {
+      await AuthOtp.consume(otpRecord.id);
+      return res.status(400).json({ message: 'Verification code has expired.' });
+    }
+
+    if (otpRecord.attempts >= 5) {
+      await AuthOtp.consume(otpRecord.id);
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new code.' });
+    }
+
+    const isValidCode = await bcrypt.compare(String(code), otpRecord.code_hash);
+    if (!isValidCode) {
+      await AuthOtp.incrementAttempts(otpRecord.id);
+      return res.status(400).json({ message: 'Invalid verification code.' });
+    }
+
+    const user = await User.findByPhone(normalizedPhone);
+    if (!user) {
+      await AuthOtp.consume(otpRecord.id);
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const pinHash = await bcrypt.hash(String(newPin), salt);
+    await User.setPin(user.id, pinHash);
+    await AuthOtp.consume(otpRecord.id);
+    resetPinAttempts(normalizedPhone);
+
+    res.json({ message: 'PIN reset successfully.' });
+  } catch (error) {
+    console.error('PIN reset verification error:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 };

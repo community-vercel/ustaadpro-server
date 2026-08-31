@@ -3,7 +3,7 @@ import pool from '../config/db.js';
 class User {
   static async findById(id) {
     const [rows] = await pool.query(
-      'SELECT id, name, phone, email, wallet_balance as walletBalance, coins, reward_points as rewardPoints, created_at as createdAt FROM users WHERE id = ?',
+      'SELECT id, name, phone, email, wallet_balance as walletBalance, coins, reward_points as rewardPoints, created_at as createdAt, pin_hash, pin_set_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0];
@@ -87,6 +87,28 @@ class User {
 
   static async updatePassword(id, password) {
     await pool.query('UPDATE users SET password = ? WHERE id = ?', [password, id]);
+  }
+
+  static async setPin(id, pinHash) {
+    await pool.query(
+      'UPDATE users SET pin_hash = ?, pin_set_at = NOW() WHERE id = ?',
+      [pinHash, id]
+    );
+  }
+
+  static async clearPin(id) {
+    await pool.query(
+      'UPDATE users SET pin_hash = NULL, pin_set_at = NULL WHERE id = ?',
+      [id]
+    );
+  }
+
+  static async hasPin(id) {
+    const [rows] = await pool.query(
+      'SELECT pin_hash FROM users WHERE id = ? AND pin_hash IS NOT NULL',
+      [id]
+    );
+    return rows.length > 0;
   }
 
   static async getFcmToken(id) {

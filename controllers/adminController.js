@@ -107,21 +107,36 @@ async function populateAdminOrder(order) {
 export const getAdminSummary = async (_req, res) => {
   try {
     const [[orders]] = await pool.query(
-      'SELECT COUNT(*) as totalOrders, COALESCE(SUM(total), 0) as revenue FROM orders',
+      'SELECT COUNT(*) as total_orders FROM orders',
+    );
+    const [[verifiedPayments]] = await pool.query(
+      `SELECT COALESCE(SUM(pr.amount), 0) as revenue,
+              COUNT(DISTINCT pr.order_id) as verified_order_count,
+              COALESCE(SUM(pr.amount) FILTER (
+                WHERE DATE(COALESCE(pr.updated_at, pr.created_at)) = CURRENT_DATE
+              ), 0) as today_verified_revenue
+       FROM payment_receipts pr
+       JOIN orders o ON o.id = pr.order_id
+       WHERE pr.status = 'verified' AND o.status <> 'cancelled'`,
     );
     const [[customers]] = await pool.query(
-      'SELECT COUNT(*) as totalCustomers FROM users',
+      'SELECT COUNT(*) as total_customers FROM users',
     );
     const [[services]] = await pool.query(
-      'SELECT COUNT(*) as totalServices FROM services',
+      'SELECT COUNT(*) as total_services FROM services',
     );
     const [[active]] = await pool.query(
-      "SELECT COUNT(*) as activeOrders FROM orders WHERE status NOT IN ('completed', 'cancelled')",
+      "SELECT COUNT(*) as active_orders FROM orders WHERE status NOT IN ('completed', 'cancelled')",
     );
 
     res.json({
       totalOrders: Number(orders.totalOrders),
-      revenue: Number(orders.revenue),
+      revenue: Number(verifiedPayments.revenue || 0),
+      verifiedOrderCount: Number(verifiedPayments.verifiedOrderCount || 0),
+      todayVerifiedRevenue: Number(verifiedPayments.todayVerifiedRevenue || 0),
+      averageVerifiedOrder: Number(verifiedPayments.verifiedOrderCount || 0) > 0
+        ? Number(verifiedPayments.revenue || 0) / Number(verifiedPayments.verifiedOrderCount)
+        : 0,
       totalCustomers: Number(customers.totalCustomers),
       totalServices: Number(services.totalServices),
       activeOrders: Number(active.activeOrders),

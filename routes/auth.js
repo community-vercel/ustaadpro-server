@@ -12,6 +12,10 @@ import {
   updateWallet,
   saveFcmToken,
   deleteAccount,
+  setPin,
+  verifyPin,
+  requestPinResetOtp,
+  resetPinWithOtp,
 } from '../controllers/authController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 
@@ -25,6 +29,10 @@ router.post('/request-login-otp', requestLoginOtp);
 router.post('/verify-login-otp', verifyLoginOtp);
 router.post('/forgot-password/request-otp', requestPasswordResetOtp);
 router.post('/forgot-password/reset', resetPasswordWithOtp);
+router.post('/set-pin', verifyToken, setPin);
+router.post('/verify-pin', verifyPin);
+router.post('/forgot-pin/request-otp', requestPinResetOtp);
+router.post('/forgot-pin/reset', resetPinWithOtp);
 router.get('/profile', verifyToken, getProfile);
 router.put('/wallet', verifyToken, updateWallet);
 router.post('/fcm-token', verifyToken, saveFcmToken);

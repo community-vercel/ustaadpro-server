@@ -27,6 +27,20 @@ const rawPool = new Pool(
 // ═══════════════════════════════════════
 // WHATSAPP-BOT TABLES (Auto-create)
 // ═══════════════════════════════════════
+export const ensurePinColumns = async () => {
+    try {
+        await rawPool.query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255) DEFAULT NULL`
+        );
+        await rawPool.query(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_set_at TIMESTAMP DEFAULT NULL`
+        );
+        console.log('✅ PIN columns are ready!');
+    } catch (error) {
+        console.error('❌ PIN column migration failed:', error.message);
+    }
+};
+
 export const createWhatsAppBotTables = async () => {
     const queries = [
         `CREATE TABLE IF NOT EXISTS bot_services (
@@ -265,6 +279,7 @@ export const connectDB = async () => {
         console.log('✅ PostgreSQL Connected Successfully!');
         console.log(`📊 Database: ${process.env.DB_NAME || 'ustaadpro_db'}`);
         await createWhatsAppBotTables();
+        await ensurePinColumns();
         client.release();
     } catch (error) {
         console.error('❌ Database connection failed:', error.message);
