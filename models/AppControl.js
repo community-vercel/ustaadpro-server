@@ -363,6 +363,7 @@ class AppControl {
     const orderItemColumns = [
       ['service_work_price_id', 'INT NULL'],
       ['service_work_title', 'VARCHAR(180) NULL'],
+      ['service_title', 'VARCHAR(255) NULL'],
     ];
 
     for (const [column, definition] of orderItemColumns) {

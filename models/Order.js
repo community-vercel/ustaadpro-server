@@ -60,15 +60,16 @@ class Order {
     await pool.query('DELETE FROM orders WHERE id = ? AND user_id = ?', [id, userId]);
   }
   static async addItems(orderId, items) {
-    // items is an array of { serviceId, serviceWorkPriceId, serviceWorkTitle, quantity, price }
+    // items is an array of { serviceId, serviceTitle, serviceWorkPriceId, serviceWorkTitle, quantity, price }
     for (const item of items) {
       await pool.query(
         `INSERT INTO order_items
-         (order_id, service_id, service_work_price_id, service_work_title, quantity, price)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         (order_id, service_id, service_title, service_work_price_id, service_work_title, quantity, price)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           item.serviceId,
+          item.serviceTitle || null,
           item.serviceWorkPriceId || null,
           item.serviceWorkTitle || null,
           item.quantity,
@@ -133,13 +134,15 @@ class Order {
     if (orderIds.length) {
       const placeholders = orderIds.map(() => '?').join(', ');
       [allItems] = await pool.query(
-        `SELECT oi.order_id as orderId, oi.quantity, oi.price,
+        `SELECT oi.order_id as orderId, oi.service_id as orderItemServiceId,
+                oi.quantity, oi.price,
                 oi.service_work_price_id as serviceWorkPriceId,
                 oi.service_work_title as serviceWorkTitle,
+                oi.service_title as storedServiceTitle,
                 s.id as service_id, s.title, s.description, s.duration, s.category_id,
                 sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
          FROM order_items oi
-         JOIN services s ON oi.service_id = s.id
+         LEFT JOIN services s ON oi.service_id = s.id
          LEFT JOIN service_reviews sr
            ON sr.order_id = oi.order_id
           AND sr.service_id = oi.service_id
@@ -161,14 +164,16 @@ class Order {
       const cartItems = items.map(item => ({
         quantity: item.quantity,
         service: {
-          id: item.service_id,
-          title: item.title,
-          description: item.description,
-          price: Number(item.price), // use the item's snapped price
+          // Use the stored service_id from order_items if the service row was deleted
+          id: item.service_id || item.orderItemServiceId,
+          // Fall back: live service title > stored title at booking > serviceWorkTitle > generic
+          title: item.title || item.storedServiceTitle || item.serviceWorkTitle || 'Service',
+          description: item.description || '',
+          price: Number(item.price),
           selectedWorkPriceId: item.serviceWorkPriceId ? Number(item.serviceWorkPriceId) : undefined,
           selectedWorkTitle: item.serviceWorkTitle || undefined,
-          duration: item.duration,
-          categoryId: item.category_id,
+          duration: item.duration || '',
+          categoryId: item.category_id || '',
         },
         review: item.review_id
           ? {
@@ -331,11 +336,12 @@ class Order {
     for (const item of items) {
       await pool.query(
         `INSERT INTO order_items
-         (order_id, service_id, service_work_price_id, service_work_title, quantity, price)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         (order_id, service_id, service_title, service_work_price_id, service_work_title, quantity, price)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           item.serviceId,
+          item.serviceTitle || null,
           item.serviceWorkPriceId || null,
           item.serviceWorkTitle || null,
           item.quantity,
