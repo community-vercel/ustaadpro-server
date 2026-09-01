@@ -133,23 +133,46 @@ class Order {
     let allItems = [];
     if (orderIds.length) {
       const placeholders = orderIds.map(() => '?').join(', ');
-      [allItems] = await pool.query(
-        `SELECT oi.order_id as orderId, oi.service_id as orderItemServiceId,
-                oi.quantity, oi.price,
-                oi.service_work_price_id as serviceWorkPriceId,
-                oi.service_work_title as serviceWorkTitle,
-                oi.service_title as storedServiceTitle,
-                s.id as service_id, s.title, s.description, s.duration, s.category_id,
-                sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
-         FROM order_items oi
-         LEFT JOIN services s ON oi.service_id = s.id
-         LEFT JOIN service_reviews sr
-           ON sr.order_id = oi.order_id
-          AND sr.service_id = oi.service_id
-          AND sr.user_id = ?
-         WHERE oi.order_id IN (${placeholders})`,
-        [userId, ...orderIds],
-      );
+      const itemParams = [userId, ...orderIds];
+      try {
+        // Post-migration query: includes service_title stored at booking time
+        [allItems] = await pool.query(
+          `SELECT oi.order_id as orderId, oi.service_id as orderItemServiceId,
+                  oi.quantity, oi.price,
+                  oi.service_work_price_id as serviceWorkPriceId,
+                  oi.service_work_title as serviceWorkTitle,
+                  oi.service_title as storedServiceTitle,
+                  s.id as service_id, s.title, s.description, s.duration, s.category_id,
+                  sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
+           FROM order_items oi
+           LEFT JOIN services s ON oi.service_id = s.id
+           LEFT JOIN service_reviews sr
+             ON sr.order_id = oi.order_id
+            AND sr.service_id = oi.service_id
+            AND sr.user_id = ?
+           WHERE oi.order_id IN (${placeholders})`,
+          itemParams,
+        );
+      } catch {
+        // Pre-migration fallback: service_title column may not exist yet
+        [allItems] = await pool.query(
+          `SELECT oi.order_id as orderId, oi.service_id as orderItemServiceId,
+                  oi.quantity, oi.price,
+                  oi.service_work_price_id as serviceWorkPriceId,
+                  oi.service_work_title as serviceWorkTitle,
+                  null as storedServiceTitle,
+                  s.id as service_id, s.title, s.description, s.duration, s.category_id,
+                  sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
+           FROM order_items oi
+           LEFT JOIN services s ON oi.service_id = s.id
+           LEFT JOIN service_reviews sr
+             ON sr.order_id = oi.order_id
+            AND sr.service_id = oi.service_id
+            AND sr.user_id = ?
+           WHERE oi.order_id IN (${placeholders})`,
+          itemParams,
+        );
+      }
     }
     const itemsByOrderId = allItems.reduce((grouped, item) => {
       if (!grouped[item.orderId]) grouped[item.orderId] = [];
