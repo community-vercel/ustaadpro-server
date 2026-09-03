@@ -33,6 +33,7 @@ import {
   deleteAdminSubcategory,
   deleteAdminService,
   deleteAdminHomeSlide,
+  cleanDatabase,
 } from '../controllers/adminController.js';
 import {
   getAdminShopOrders,
@@ -92,6 +93,7 @@ router.post('/shop/products', saveAdminShopProduct);
 router.put('/shop/products/:id', saveAdminShopProduct);
 router.get('/shop/orders', getAdminShopOrders);
 router.patch('/shop/orders/:id/status', updateAdminShopOrderStatus);
+router.post('/clean-database', cleanDatabase);
 
 export default router;
 

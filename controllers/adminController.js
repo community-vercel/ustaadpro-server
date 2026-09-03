@@ -950,4 +950,47 @@ export const deleteAdminSubscription = async (req, res) => {
   }
 };
 
+// ─── CLEAN DATABASE ────────────────────────────────────────
+// Requires a secret key to prevent accidental/unauthorized cleaning.
+const CLEAN_SECRET = process.env.CLEAN_DATABASE_SECRET || 'ustaadpro-clean-2024';
+
+const TABLES_TO_CLEAN = [
+  'service_reviews',
+  'order_items',
+  'payment_receipts',
+  'shop_order_items',
+  'auth_otps',
+  'user_addresses',
+  'orders',
+  'shop_orders',
+  'users',
+];
+
+export const cleanDatabase = async (req, res) => {
+  try {
+    const {secret} = req.body;
+    if (secret !== CLEAN_SECRET) {
+      return res.status(403).json({message: 'Invalid secret key.'});
+    }
+
+    const results = [];
+    for (const table of TABLES_TO_CLEAN) {
+      try {
+        const before = await pool.query(`SELECT COUNT(*)::int AS cnt FROM ${table}`);
+        await pool.query(`TRUNCATE TABLE ${table} CASCADE`);
+        results.push({table, removed: before.rows[0].cnt, status: 'ok'});
+      } catch (error) {
+        results.push({table, status: 'error', message: error.message});
+      }
+    }
+
+    const totalRemoved = results.reduce((sum, r) => sum + (r.removed || 0), 0);
+    console.log(`🧹 Database cleaned: ${totalRemoved} rows removed from ${TABLES_TO_CLEAN.length} tables.`);
+    res.json({message: 'Database cleaned.', totalRemoved, results});
+  } catch (error) {
+    console.error('Clean database error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
 
