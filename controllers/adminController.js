@@ -973,12 +973,15 @@ export const cleanDatabase = async (req, res) => {
       return res.status(403).json({message: 'Invalid secret key.'});
     }
 
+    // Use raw pool to bypass MySQL-compat wrapper
+    const rawPool = pool.raw || pool;
     const results = [];
     for (const table of TABLES_TO_CLEAN) {
       try {
-        const before = await pool.query(`SELECT COUNT(*)::int AS cnt FROM ${table}`);
-        await pool.query(`TRUNCATE TABLE ${table} CASCADE`);
-        results.push({table, removed: before.rows[0].cnt, status: 'ok'});
+        const before = await rawPool.query(`SELECT COUNT(*)::int AS cnt FROM ${table}`);
+        await rawPool.query(`TRUNCATE TABLE ${table} CASCADE`);
+        const count = before.rows ? before.rows[0].cnt : (before[0]?.cnt ?? 0);
+        results.push({table, removed: count, status: 'ok'});
       } catch (error) {
         results.push({table, status: 'error', message: error.message});
       }
