@@ -44,6 +44,14 @@ async function ensureShopTables() {
     });
 
   await pool
+    .query('ALTER TABLE shop_products ADD COLUMN brand VARCHAR(80) NULL')
+    .catch(error => {
+      if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
+        throw error;
+      }
+    });
+
+  await pool
     .query('ALTER TABLE shop_orders ADD COLUMN cancel_reason TEXT NULL')
     .catch(error => {
       if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
@@ -85,6 +93,7 @@ function normalizeProduct(row) {
     id: row.id,
     title: row.title,
     category: row.category,
+    brand: row.brand || '',
     description: row.description,
     price: Number(row.price),
     originalPrice: Number(row.originalPrice ?? row.original_price ?? 0),
@@ -107,7 +116,7 @@ class Shop {
     await ensureShopTables();
   }
 
-  static async getProducts({activeOnly = true, category = null, search = '', limit, offset = 0} = {}) {
+  static async getProducts({activeOnly = true, category = null, brand = null, search = '', limit, offset = 0} = {}) {
     await ensureShopTables();
     const conditions = [];
     const params = [];
@@ -120,6 +129,11 @@ class Shop {
     if (category && category !== 'All') {
       conditions.push('LOWER(category) = LOWER(?)');
       params.push(category);
+    }
+
+    if (brand && brand !== 'All Brands') {
+      conditions.push('LOWER(brand) = LOWER(?)');
+      params.push(brand);
     }
 
     if (search) {
@@ -135,7 +149,7 @@ class Shop {
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows] = await pool.query(
-      `SELECT id, title, category, description, price,
+      `SELECT id, title, category, brand, description, price,
               original_price as originalPrice, image_url as imageUrl,
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products
@@ -147,7 +161,7 @@ class Shop {
     return rows.map(normalizeProduct);
   }
 
-  static async countProducts({activeOnly = true, category = null, search = ''} = {}) {
+  static async countProducts({activeOnly = true, category = null, brand = null, search = ''} = {}) {
     await ensureShopTables();
     const conditions = [];
     const params = [];
@@ -159,6 +173,11 @@ class Shop {
     if (category && category !== 'All') {
       conditions.push('LOWER(category) = LOWER(?)');
       params.push(category);
+    }
+
+    if (brand && brand !== 'All Brands') {
+      conditions.push('LOWER(brand) = LOWER(?)');
+      params.push(brand);
     }
 
     if (search) {
@@ -192,10 +211,43 @@ class Shop {
     }));
   }
 
+  static async getBrands({category = null, activeOnly = true} = {}) {
+    await ensureShopTables();
+    const conditions = [];
+    const params = [];
+
+    if (activeOnly) {
+      conditions.push("is_active::text IN ('1', 'true', 't')");
+    }
+    
+    if (category && category !== 'All') {
+      conditions.push('LOWER(category) = LOWER(?)');
+      params.push(category);
+    }
+    
+    // Only return rows where brand is not null/empty
+    conditions.push("brand IS NOT NULL AND brand != ''");
+    
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const [rows] = await pool.query(
+      `SELECT brand, COUNT(*) as total
+       FROM shop_products
+       ${whereClause}
+       GROUP BY brand
+       ORDER BY brand ASC`,
+       params
+    );
+    return rows.map(row => ({
+      name: row.brand,
+      total: Number(row.total || row.count || 0),
+    }));
+  }
+
   static async findProductById(id) {
     await ensureShopTables();
     const [rows] = await pool.query(
-      `SELECT id, title, category, description, price,
+      `SELECT id, title, category, brand, description, price,
               original_price as originalPrice, image_url as imageUrl,
               stock, is_active as isActive, created_at as createdAt
        FROM shop_products WHERE id = ?`,
@@ -216,11 +268,12 @@ class Shop {
 
     await pool.query(
       `INSERT INTO shop_products
-       (id, title, category, description, price, original_price, image_url, stock, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (id, title, category, brand, description, price, original_price, image_url, stock, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (id) DO UPDATE SET
          title = EXCLUDED.title,
          category = EXCLUDED.category,
+         brand = EXCLUDED.brand,
          description = EXCLUDED.description,
          price = EXCLUDED.price,
          original_price = EXCLUDED.original_price,
@@ -231,6 +284,7 @@ class Shop {
         id,
         product.title,
         product.category || 'General',
+        product.brand || null,
         product.description || '',
         Number(product.price || 0),
         Number(product.originalPrice || product.original_price || 0),
@@ -311,7 +365,7 @@ class Shop {
     const populated = [];
     for (const order of orders) {
       const [items] = await pool.query(
-        `SELECT soi.quantity, soi.price, sp.id, sp.title, sp.category,
+        `SELECT soi.quantity, soi.price, sp.id, sp.title, sp.category, sp.brand,
                 sp.description, sp.image_url as imageUrl
          FROM shop_order_items soi
          JOIN shop_products sp ON sp.id = soi.product_id
@@ -332,6 +386,7 @@ class Shop {
             id: item.id,
             title: item.title,
             category: item.category,
+            brand: item.brand || '',
             description: item.description,
             imageUrl: item.imageUrl || '',
           },

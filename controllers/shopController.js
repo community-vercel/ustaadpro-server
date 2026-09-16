@@ -10,11 +10,13 @@ export const getShopProducts = async (req, res) => {
     const limitParam = req.query.limit !== undefined ? Math.min(200, Math.max(1, Number(req.query.limit))) : undefined;
     const offset = Math.max(0, Number(req.query.offset || 0));
     const category = String(req.query.category || 'All').trim() || 'All';
+    const brand = req.query.brand ? String(req.query.brand).trim() : null;
     const search = String(req.query.search || '').trim();
     const categoryFilter = category === 'All' ? null : category;
+    const brandFilter = brand === 'All Brands' ? null : brand;
     const [products, total, categories] = await Promise.all([
-      Shop.getProducts({activeOnly: true, category: categoryFilter, search, limit: limitParam, offset}),
-      Shop.countProducts({activeOnly: true, category: categoryFilter, search}),
+      Shop.getProducts({activeOnly: true, category: categoryFilter, brand: brandFilter, search, limit: limitParam, offset}),
+      Shop.countProducts({activeOnly: true, category: categoryFilter, brand: brandFilter, search}),
       Shop.getCategories({activeOnly: true}),
     ]);
 
@@ -30,6 +32,18 @@ export const getShopProducts = async (req, res) => {
     });
   } catch (error) {
     console.error('Shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getShopBrands = async (req, res) => {
+  try {
+    const category = String(req.query.category || 'All').trim() || 'All';
+    const categoryFilter = category === 'All' ? null : category;
+    const brands = await Shop.getBrands({activeOnly: true, category: categoryFilter});
+    res.json({brands});
+  } catch (error) {
+    console.error('Shop brands error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };
@@ -215,6 +229,93 @@ export const saveAdminShopProduct = async (req, res) => {
     res.json({message: 'Shop product saved.', id});
   } catch (error) {
     console.error('Admin save shop product error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const importAdminShopProducts = async (req, res) => {
+  try {
+    const { csvText } = req.body;
+    if (!csvText || typeof csvText !== 'string') {
+      return res.status(400).json({message: 'CSV text is required.'});
+    }
+
+    const lines = csvText.split('\n').map(line => line.trim()).filter(Boolean);
+    if (lines.length < 2) {
+      return res.status(400).json({message: 'CSV must have a header row and at least one product row.'});
+    }
+
+    // Parse header to get column positions (case-insensitive)
+    const parseCsvLine = (line) => {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"' && !inQuotes) { inQuotes = true; }
+        else if (ch === '"' && inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"' && inQuotes) { inQuotes = false; }
+        else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+        else { current += ch; }
+      }
+      result.push(current);
+      return result;
+    };
+
+    const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase().trim());
+    const col = (name) => headers.indexOf(name);
+
+    const idCol        = col('id');
+    const titleCol     = col('title');
+    const categoryCol  = col('category');
+    const brandCol     = col('brand');
+    const descCol      = col('description');
+    const priceCol     = col('price (pkr)') !== -1 ? col('price (pkr)') : col('price');
+    const origPriceCol = col('original price (pkr)') !== -1 ? col('original price (pkr)') : col('original price');
+    const stockCol     = col('stock');
+    const activeCol    = col('active');
+
+    if (titleCol === -1 || priceCol === -1) {
+      return res.status(400).json({message: 'CSV must contain at least "Title" and "Price" columns.'});
+    }
+
+    const results = { saved: 0, skipped: 0, errors: [] };
+
+    for (let i = 1; i < lines.length; i++) {
+      const row = parseCsvLine(lines[i]);
+      const title = row[titleCol]?.trim();
+      const price = Number(row[priceCol]?.replace(/[^0-9.]/g, '') || 0);
+
+      if (!title || price <= 0) {
+        results.skipped++;
+        continue;
+      }
+
+      try {
+        await Shop.saveProduct({
+          id: idCol !== -1 ? row[idCol]?.trim() || undefined : undefined,
+          title,
+          category: categoryCol !== -1 ? row[categoryCol]?.trim() || 'General' : 'General',
+          brand: brandCol !== -1 ? row[brandCol]?.trim() || null : null,
+          description: descCol !== -1 ? row[descCol]?.trim() || '' : '',
+          price,
+          originalPrice: origPriceCol !== -1 ? Number(row[origPriceCol]?.replace(/[^0-9.]/g, '') || 0) : 0,
+          stock: stockCol !== -1 ? Number(row[stockCol]?.trim() || 0) : 0,
+          isActive: activeCol !== -1 ? (row[activeCol]?.trim().toLowerCase() !== 'no') : true,
+        });
+        results.saved++;
+      } catch (err) {
+        results.errors.push(`Row ${i + 1} (${title}): ${err.message}`);
+        results.skipped++;
+      }
+    }
+
+    res.json({
+      message: `Import complete. ${results.saved} saved, ${results.skipped} skipped.`,
+      ...results,
+    });
+  } catch (error) {
+    console.error('Admin import shop products error:', error);
     res.status(500).json({message: 'Internal server error.'});
   }
 };
