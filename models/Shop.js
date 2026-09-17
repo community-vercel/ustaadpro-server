@@ -268,6 +268,12 @@ class Shop {
     await pool.query(`DELETE FROM shop_products WHERE id IN (${placeholders})`, ids);
   }
 
+  static async deleteAllProducts() {
+    await ensureShopTables();
+    const [result] = await pool.query('DELETE FROM shop_products');
+    return Number(result.affectedRows ?? result.rowCount ?? 0);
+  }
+
   static async saveProduct(product) {
     await ensureShopTables();
     const id =

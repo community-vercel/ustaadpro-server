@@ -43,6 +43,7 @@ import {
   importAdminShopProducts,
   deleteAdminShopProduct,
   bulkDeleteAdminShopProducts,
+  deleteAllAdminShopProducts,
   updateAdminShopOrderStatus,
 } from '../controllers/shopController.js';
 import {listProviders, createProvider, updateProvider, deleteProvider, assignProvider} from '../controllers/providerController.js';
@@ -96,6 +97,7 @@ router.post('/shop/products', saveAdminShopProduct);
 router.put('/shop/products/:id', saveAdminShopProduct);
 router.post('/shop/products/import-csv', importAdminShopProducts);
 router.post('/shop/products/bulk-delete', bulkDeleteAdminShopProducts);
+router.delete('/shop/products', deleteAllAdminShopProducts);
 router.delete('/shop/products/:id', deleteAdminShopProduct);
 router.get('/shop/orders', getAdminShopOrders);
 router.patch('/shop/orders/:id/status', updateAdminShopOrderStatus);

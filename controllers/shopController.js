@@ -259,6 +259,16 @@ export const bulkDeleteAdminShopProducts = async (req, res) => {
   }
 };
 
+export const deleteAllAdminShopProducts = async (req, res) => {
+  try {
+    const deleted = await Shop.deleteAllProducts();
+    res.json({message: `All ${deleted} product(s) deleted.`, deleted});
+  } catch (error) {
+    console.error('Admin delete all shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
 export const importAdminShopProducts = async (req, res) => {
   try {
     const { csvText } = req.body;
