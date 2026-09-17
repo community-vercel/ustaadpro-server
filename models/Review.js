@@ -39,13 +39,14 @@ class Review {
        WHERE o.id = ?
          AND o.user_id = ?
          AND oi.service_id = ?
+         AND o.status = 'completed'
        LIMIT 1`,
       [orderId, userId, serviceId],
     );
 
     if (!eligibleRows.length) {
       const error = new Error(
-        'You can review only services you have booked.',
+        'You can only review services from completed bookings.',
       );
       error.statusCode = 403;
       throw error;
