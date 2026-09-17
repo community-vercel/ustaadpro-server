@@ -632,7 +632,8 @@ export const importAdminShopProductsExcel = async (req, res) => {
     const imagesByRow = {};
     if (worksheet.getImages) {
       for (const img of worksheet.getImages()) {
-        const rowNum = Math.floor(img.range.tl.row) + 1;
+        // Use Math.round to handle floating point anchors (e.g. 1.9 vs 2.0)
+        const rowNum = Math.round(img.range.tl.row) + 1;
         imagesByRow[rowNum] = img.imageId;
       }
     }
