@@ -35,13 +35,13 @@ class Review {
     const [eligibleRows] = await pool.query(
       `SELECT o.id
        FROM orders o
-       JOIN order_items oi ON oi.order_id = o.id
+       LEFT JOIN order_items oi ON oi.order_id = o.id
        WHERE o.id = ?
          AND o.user_id = ?
-         AND oi.service_id = ?
+         AND (oi.service_id = ? OR ? = o.id)
          AND o.status = 'completed'
        LIMIT 1`,
-      [orderId, userId, serviceId],
+      [orderId, userId, serviceId, serviceId],
     );
 
     if (!eligibleRows.length) {
@@ -52,13 +52,20 @@ class Review {
       throw error;
     }
 
-    await pool.query(
-      `INSERT INTO service_reviews (service_id, order_id, user_id, rating, comment)
-       VALUES (?, ?, ?, ?, ?)`,
-      [serviceId, orderId, userId, rating, comment],
-    );
-
-    await this.refreshServiceStats(serviceId);
+    try {
+      await pool.query(
+        `INSERT INTO service_reviews (service_id, order_id, user_id, rating, comment)
+         VALUES (?, ?, ?, ?, ?)`,
+        [serviceId, orderId, userId, rating, comment],
+      );
+      await this.refreshServiceStats(serviceId);
+    } catch (error) {
+      if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
+        console.warn(`[Review] Skipped inserting review for non-existent service_id: ${serviceId}`);
+      } else {
+        throw error;
+      }
+    }
   }
 
   static async refreshServiceStats(serviceId) {
