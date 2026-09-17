@@ -1,3 +1,6 @@
+import ExcelJS from 'exceljs';
+import fs from 'fs';
+import path from 'path';
 import Shop from '../models/Shop.js';
 import AppControl from '../models/AppControl.js';
 import User from '../models/User.js';
@@ -445,5 +448,173 @@ export const cancelShopOrder = async (req, res) => {
   } catch (error) {
     console.error('Cancel shop order error:', error);
     res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+
+export const exportAdminShopProductsExcel = async (req, res) => {
+  try {
+    const search = String(req.query.search || '').trim();
+    const category = String(req.query.category || 'All');
+    const options = {activeOnly: false, category, search};
+    const products = await Shop.getProducts({...options, limit: 10000, offset: 0});
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Products');
+
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 25 },
+      { header: 'Title', key: 'title', width: 30 },
+      { header: 'Category', key: 'category', width: 20 },
+      { header: 'Brand', key: 'brand', width: 20 },
+      { header: 'Description', key: 'description', width: 40 },
+      { header: 'Price', key: 'price', width: 15 },
+      { header: 'Original Price', key: 'originalPrice', width: 15 },
+      { header: 'Stock', key: 'stock', width: 10 },
+      { header: 'Active', key: 'isActive', width: 10 },
+      { header: 'Image URL', key: 'imageUrl', width: 30 },
+      { header: 'Image', key: 'image', width: 15 },
+    ];
+
+    for (let i = 0; i < products.length; i++) {
+      const p = products[i];
+      const row = worksheet.addRow({
+        id: p.id,
+        title: p.title,
+        category: p.category,
+        brand: p.brand || '',
+        description: p.description || '',
+        price: p.price,
+        originalPrice: p.originalPrice,
+        stock: p.stock,
+        isActive: p.isActive ? 'Yes' : 'No',
+        imageUrl: p.imageUrl || ''
+      });
+      
+      if (p.imageUrl) {
+        row.height = 80;
+        try {
+          if (p.imageUrl.startsWith('/uploads/')) {
+            const imgPath = path.join(process.cwd(), p.imageUrl);
+            if (fs.existsSync(imgPath)) {
+              const imageId = workbook.addImage({
+                filename: imgPath,
+                extension: path.extname(imgPath).slice(1) || 'png'
+              });
+              worksheet.addImage(imageId, {
+                tl: { col: 10, row: i + 1 },
+                ext: { width: 80, height: 80 },
+                editAs: 'oneCell'
+              });
+            }
+          }
+        } catch (e) { console.error('Error embedding image', e); }
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="ustaadpro-shop-products.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const importAdminShopProductsExcel = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({message: 'No file uploaded.'});
+    
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return res.status(400).json({message: 'Spreadsheet is empty.'});
+    
+    const headers = {};
+    const firstRow = worksheet.getRow(1);
+    firstRow.eachCell((cell, colNumber) => {
+      headers[String(cell.value).toLowerCase().trim()] = colNumber;
+    });
+    
+    const col = (name) => headers[name] || headers[`${name} (pkr)`] || -1;
+    
+    const idCol        = col('id');
+    const titleCol     = col('title');
+    const categoryCol  = col('category');
+    const brandCol     = col('brand');
+    const descCol      = col('description');
+    const priceCol     = col('price');
+    const origPriceCol = col('original price');
+    const stockCol     = col('stock');
+    const activeCol    = col('active');
+    const imageCol     = col('image url') !== -1 ? col('image url') : col('image');
+    
+    if (titleCol === -1 || priceCol === -1) {
+      return res.status(400).json({message: 'Excel must contain at least "Title" and "Price" columns.'});
+    }
+
+    const imagesByRow = {};
+    if (worksheet.getImages) {
+      for (const img of worksheet.getImages()) {
+        const rowNum = Math.floor(img.range.tl.row) + 1;
+        imagesByRow[rowNum] = img.imageId;
+      }
+    }
+    
+    const results = { saved: 0, skipped: 0, errors: [] };
+    
+    for (let i = 2; i <= worksheet.rowCount; i++) {
+      const row = worksheet.getRow(i);
+      const title = String(row.getCell(titleCol).value || '').trim();
+      const priceRaw = String(row.getCell(priceCol).value || '');
+      const price = Number(priceRaw.replace(/[^0-9.]/g, '') || 0);
+      
+      if (!title || price <= 0) {
+        if (title || priceRaw) results.skipped++;
+        continue;
+      }
+      
+      let finalImageUrl = imageCol !== -1 ? String(row.getCell(imageCol).value || '').trim() : null;
+      if (finalImageUrl === 'null' || finalImageUrl === 'undefined') finalImageUrl = null;
+      
+      if (imagesByRow[i]) {
+        const media = workbook.model.media.find(m => m.index === imagesByRow[i]);
+        if (media && media.buffer) {
+          const ext = media.extension || 'png';
+          const filename = `shop-products/product-${Date.now()}-${Math.floor(Math.random()*1000)}.${ext}`;
+          const fullPath = path.join(process.cwd(), 'uploads', filename);
+          fs.writeFileSync(fullPath, media.buffer);
+          finalImageUrl = `/uploads/${filename}`;
+        }
+      }
+
+      try {
+        await Shop.saveProduct({
+          id: idCol !== -1 ? (row.getCell(idCol).value ? String(row.getCell(idCol).value).trim() : undefined) : undefined,
+          title,
+          category: categoryCol !== -1 ? String(row.getCell(categoryCol).value || 'General').trim() : 'General',
+          brand: brandCol !== -1 ? String(row.getCell(brandCol).value || '').trim() || null : null,
+          description: descCol !== -1 ? String(row.getCell(descCol).value || '').trim() : '',
+          price,
+          originalPrice: origPriceCol !== -1 ? Number(String(row.getCell(origPriceCol).value || '').replace(/[^0-9.]/g, '') || 0) : 0,
+          imageUrl: finalImageUrl,
+          stock: stockCol !== -1 ? Number(String(row.getCell(stockCol).value || 0).trim()) : 0,
+          isActive: activeCol !== -1 ? (String(row.getCell(activeCol).value || 'yes').trim().toLowerCase() !== 'no') : true,
+        });
+        results.saved++;
+      } catch (err) {
+        results.errors.push(`Row ${i} (${title}): ${err.message}`);
+        results.skipped++;
+      }
+    }
+    
+    res.json({
+      message: `Import complete. ${results.saved} saved, ${results.skipped} skipped.`,
+      errors: results.errors
+    });
+  } catch (error) {
+    console.error('Admin import shop products excel error:', error);
+    res.status(500).json({message: 'Internal server error.', error: error.message});
   }
 };

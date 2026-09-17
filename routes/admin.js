@@ -45,8 +45,13 @@ import {
   bulkDeleteAdminShopProducts,
   deleteAllAdminShopProducts,
   updateAdminShopOrderStatus,
+  exportAdminShopProductsExcel,
+  importAdminShopProductsExcel,
 } from '../controllers/shopController.js';
 import {listProviders, createProvider, updateProvider, deleteProvider, assignProvider} from '../controllers/providerController.js';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -96,6 +101,8 @@ router.get('/shop/products/:id', getAdminShopProduct);
 router.post('/shop/products', saveAdminShopProduct);
 router.put('/shop/products/:id', saveAdminShopProduct);
 router.post('/shop/products/import-csv', importAdminShopProducts);
+router.post('/shop/products/import-excel', upload.single('file'), importAdminShopProductsExcel);
+router.get('/shop/products-export/excel', exportAdminShopProductsExcel);
 router.post('/shop/products/bulk-delete', bulkDeleteAdminShopProducts);
 router.delete('/shop/products', deleteAllAdminShopProducts);
 router.delete('/shop/products/:id', deleteAdminShopProduct);
