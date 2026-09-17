@@ -640,10 +640,22 @@ export const importAdminShopProductsExcel = async (req, res) => {
     
     const results = { saved: 0, skipped: 0, errors: [] };
     
+    // Helper to safely extract string from cell (handles hyperlinks and rich text)
+    const getCellValue = (cell) => {
+      const val = cell.value;
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'object') {
+        if (val.hyperlink) return val.hyperlink;
+        if (val.text) return val.text;
+        if (val.richText) return val.richText.map(rt => rt.text).join('');
+      }
+      return String(val);
+    };
+
     for (let i = 2; i <= worksheet.rowCount; i++) {
       const row = worksheet.getRow(i);
-      const title = String(row.getCell(titleCol).value || '').trim();
-      const priceRaw = String(row.getCell(priceCol).value || '');
+      const title = getCellValue(row.getCell(titleCol)).trim();
+      const priceRaw = getCellValue(row.getCell(priceCol));
       const price = Number(priceRaw.replace(/[^0-9.]/g, '') || 0);
       
       if (!title || price <= 0) {
@@ -651,8 +663,8 @@ export const importAdminShopProductsExcel = async (req, res) => {
         continue;
       }
       
-      let finalImageUrl = imageCol !== -1 ? String(row.getCell(imageCol).value || '').trim() : null;
-      if (finalImageUrl === 'null' || finalImageUrl === 'undefined') finalImageUrl = null;
+      let finalImageUrl = imageCol !== -1 ? getCellValue(row.getCell(imageCol)).trim() : null;
+      if (finalImageUrl === 'null' || finalImageUrl === 'undefined' || finalImageUrl === '') finalImageUrl = null;
       
       if (imagesByRow[i]) {
         const media = workbook.model.media.find(m => m.index === imagesByRow[i]);
@@ -667,16 +679,16 @@ export const importAdminShopProductsExcel = async (req, res) => {
 
       try {
         await Shop.saveProduct({
-          id: idCol !== -1 ? (row.getCell(idCol).value ? String(row.getCell(idCol).value).trim() : undefined) : undefined,
+          id: idCol !== -1 ? (getCellValue(row.getCell(idCol)).trim() || undefined) : undefined,
           title,
-          category: categoryCol !== -1 ? String(row.getCell(categoryCol).value || 'General').trim() : 'General',
-          brand: brandCol !== -1 ? String(row.getCell(brandCol).value || '').trim() || null : null,
-          description: descCol !== -1 ? String(row.getCell(descCol).value || '').trim() : '',
+          category: categoryCol !== -1 ? getCellValue(row.getCell(categoryCol)).trim() || 'General' : 'General',
+          brand: brandCol !== -1 ? getCellValue(row.getCell(brandCol)).trim() || null : null,
+          description: descCol !== -1 ? getCellValue(row.getCell(descCol)).trim() : '',
           price,
-          originalPrice: origPriceCol !== -1 ? Number(String(row.getCell(origPriceCol).value || '').replace(/[^0-9.]/g, '') || 0) : 0,
+          originalPrice: origPriceCol !== -1 ? Number(getCellValue(row.getCell(origPriceCol)).replace(/[^0-9.]/g, '') || 0) : 0,
           imageUrl: finalImageUrl,
-          stock: stockCol !== -1 ? Number(String(row.getCell(stockCol).value || 0).trim()) : 0,
-          isActive: activeCol !== -1 ? (String(row.getCell(activeCol).value || 'yes').trim().toLowerCase() !== 'no') : true,
+          stock: stockCol !== -1 ? Number(getCellValue(row.getCell(stockCol)).trim() || 0) : 0,
+          isActive: activeCol !== -1 ? (getCellValue(row.getCell(activeCol)).trim().toLowerCase() !== 'no') : true,
         });
         results.saved++;
       } catch (err) {
