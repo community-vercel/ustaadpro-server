@@ -256,6 +256,18 @@ class Shop {
     return rows[0] ? normalizeProduct(rows[0]) : null;
   }
 
+  static async deleteProduct(id) {
+    await ensureShopTables();
+    await pool.query('DELETE FROM shop_products WHERE id = ?', [id]);
+  }
+
+  static async deleteProducts(ids) {
+    if (!ids || ids.length === 0) return;
+    await ensureShopTables();
+    const placeholders = ids.map(() => '?').join(', ');
+    await pool.query(`DELETE FROM shop_products WHERE id IN (${placeholders})`, ids);
+  }
+
   static async saveProduct(product) {
     await ensureShopTables();
     const id =

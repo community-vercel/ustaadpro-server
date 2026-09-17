@@ -233,6 +233,32 @@ export const saveAdminShopProduct = async (req, res) => {
   }
 };
 
+export const deleteAdminShopProduct = async (req, res) => {
+  try {
+    const {id} = req.params;
+    if (!id) return res.status(400).json({message: 'Product ID is required.'});
+    await Shop.deleteProduct(id);
+    res.json({message: 'Product deleted.'});
+  } catch (error) {
+    console.error('Admin delete shop product error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const bulkDeleteAdminShopProducts = async (req, res) => {
+  try {
+    const {ids} = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({message: 'A list of product IDs is required.'});
+    }
+    await Shop.deleteProducts(ids);
+    res.json({message: `${ids.length} product(s) deleted.`, deleted: ids.length});
+  } catch (error) {
+    console.error('Admin bulk delete shop products error:', error);
+    res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
 export const importAdminShopProducts = async (req, res) => {
   try {
     const { csvText } = req.body;
