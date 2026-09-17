@@ -310,6 +310,7 @@ export const importAdminShopProducts = async (req, res) => {
     const origPriceCol = col('original price (pkr)') !== -1 ? col('original price (pkr)') : col('original price');
     const stockCol     = col('stock');
     const activeCol    = col('active');
+    const imageCol     = col('image url') !== -1 ? col('image url') : col('image');
 
     if (titleCol === -1 || priceCol === -1) {
       return res.status(400).json({message: 'CSV must contain at least "Title" and "Price" columns.'});
@@ -336,6 +337,7 @@ export const importAdminShopProducts = async (req, res) => {
           description: descCol !== -1 ? row[descCol]?.trim() || '' : '',
           price,
           originalPrice: origPriceCol !== -1 ? Number(row[origPriceCol]?.replace(/[^0-9.]/g, '') || 0) : 0,
+          imageUrl: imageCol !== -1 ? row[imageCol]?.trim() || null : null,
           stock: stockCol !== -1 ? Number(row[stockCol]?.trim() || 0) : 0,
           isActive: activeCol !== -1 ? (row[activeCol]?.trim().toLowerCase() !== 'no') : true,
         });
