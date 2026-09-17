@@ -452,7 +452,82 @@ export const cancelShopOrder = async (req, res) => {
 };
 
 
+export const exportAdminShopProductsTemplate = async (req, res) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Products Template');
+
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 28 },
+      { header: 'Title', key: 'title', width: 30 },
+      { header: 'Category', key: 'category', width: 20 },
+      { header: 'Brand', key: 'brand', width: 18 },
+      { header: 'Description', key: 'description', width: 40 },
+      { header: 'Price', key: 'price', width: 14 },
+      { header: 'Original Price', key: 'originalPrice', width: 16 },
+      { header: 'Stock', key: 'stock', width: 10 },
+      { header: 'Active', key: 'isActive', width: 10 },
+      { header: 'Image URL', key: 'imageUrl', width: 30 },
+      { header: 'Image', key: 'image', width: 16 },
+    ];
+
+    // Style header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 22;
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF006C49' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FF004a32' } } };
+    });
+
+    // Instruction row (row 2)
+    worksheet.addRow({
+      id: '← Leave empty for new product. Fill in to UPDATE existing.',
+      title: 'e.g. Paint Roller Pro',
+      category: 'e.g. Painting',
+      brand: 'e.g. Berger',
+      description: 'Short product description here',
+      price: 350,
+      originalPrice: 450,
+      stock: 100,
+      isActive: 'Yes',
+      imageUrl: 'or paste URL here',
+    });
+
+    const instructionRow = worksheet.getRow(2);
+    instructionRow.height = 18;
+    instructionRow.eachCell(cell => {
+      cell.font = { italic: true, color: { argb: 'FF888888' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FFF7' } };
+    });
+
+    // Note in the Image column (K2) explaining how to paste
+    const imgNoteCell = worksheet.getCell('K2');
+    imgNoteCell.value = '← Paste/Insert real image here';
+    imgNoteCell.font = { italic: true, bold: true, color: { argb: 'FF006C49' } };
+
+    // Freeze top row
+    worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    // Add a few blank rows for the user to fill in
+    for (let i = 0; i < 10; i++) {
+      const row = worksheet.addRow({});
+      row.height = 65; // tall enough to see pasted images
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="shop-products-import-template.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Template export error:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
 export const exportAdminShopProductsExcel = async (req, res) => {
+
   try {
     const search = String(req.query.search || '').trim();
     const category = String(req.query.category || 'All');
