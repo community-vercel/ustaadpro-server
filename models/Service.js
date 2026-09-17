@@ -56,6 +56,7 @@ function mapService(row, workPrices = []) {
     price: Number(row.price || 0),
     rating: Number(row.rating || 0),
     reviews: Number(row.reviews || 0),
+    allowQuantity: row.allow_quantity !== 0 && row.allow_quantity !== false,
     workPrices,
   };
 }
@@ -169,8 +170,8 @@ class Service {
 
     await pool.query(
       `INSERT INTO services
-       (id, category_id, subcategory_id, title, description, price, original_price, duration, rating, reviews, badge, service_type, image_url, detail_description, details, includes, excludes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, category_id, subcategory_id, title, description, price, original_price, duration, rating, reviews, badge, service_type, image_url, detail_description, details, includes, excludes, allow_quantity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         payload.categoryId || payload.category_id || 'home',
@@ -191,6 +192,7 @@ class Service {
         JSON.stringify(payload.details || []),
         JSON.stringify(payload.includes || []),
         JSON.stringify(payload.excludes || []),
+        payload.allowQuantity !== false && payload.allow_quantity !== false,
       ],
     );
 
@@ -207,7 +209,7 @@ class Service {
       `UPDATE services
        SET category_id = ?, subcategory_id = ?, title = ?, description = ?,
            price = ?, original_price = ?, duration = ?, rating = ?, reviews = ?,
-           badge = ?, service_type = ?, image_url = ?, detail_description = ?, details = ?, includes = ?, excludes = ?, is_active = TRUE
+           badge = ?, service_type = ?, image_url = ?, detail_description = ?, details = ?, includes = ?, excludes = ?, allow_quantity = ?, is_active = TRUE
        WHERE id = ?`,
       [
         payload.categoryId || payload.category_id || 'home',
@@ -228,6 +230,7 @@ class Service {
         JSON.stringify(payload.details || []),
         JSON.stringify(payload.includes || []),
         JSON.stringify(payload.excludes || []),
+        payload.allowQuantity !== false && payload.allow_quantity !== false,
         id,
       ],
     );
