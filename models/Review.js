@@ -125,38 +125,41 @@ class Review {
       throw error;
     }
 
-    if (!svcId) {
-      // Client did not send a serviceId: review the single booked service, or
-      // ask the client to pick one when the booking covers several.
-      if (bookedServiceIds.length > 1) {
-        const error = new Error(
-          'This booking includes multiple services. Please select the one you want to review.',
-        );
-        error.statusCode = 400;
-        throw error;
-      }
-      svcId = bookedServiceIds[0];
-    } else if (!bookedServiceIds.includes(svcId)) {
-      console.warn(
-        `[Review] serviceId mismatch: client sent ${JSON.stringify(svcId)} but booking ${ordId} contains ${JSON.stringify(bookedServiceIds)}`,
-      );
+    // Treat common client-side garbage ("undefined", "null", "[object Object]"
+    // stringified by the app) as "not provided" so it falls through to
+    // server-side resolution below.
+    if (['undefined', 'null', '[object Object]'].includes(svcId.toLowerCase())) {
+      svcId = '';
+    }
 
-      // Case-only difference (e.g. "AC-Gas-Refill" vs "ac-gas-refill") is
-      // acceptable; anything else means the client is reviewing a service
-      // that is not part of this booking.
-      const caseInsensitiveMatch = bookedServiceIds.find(
-        booked => booked.toLowerCase() === svcId.toLowerCase(),
-      );
-
-      if (caseInsensitiveMatch) {
-        svcId = caseInsensitiveMatch;
+    if (svcId) {
+      const exactMatch = bookedServiceIds.find(booked => booked === svcId);
+      if (exactMatch) {
+        svcId = exactMatch;
       } else {
-        const error = new Error(
-          'You can only review services that were part of this booking.',
+        // Case-only difference (e.g. "AC-Gas-Refill" vs "ac-gas-refill") is
+        // still the same service — accept it.
+        const caseInsensitiveMatch = bookedServiceIds.find(
+          booked => booked.toLowerCase() === svcId.toLowerCase(),
         );
-        error.statusCode = 403;
-        throw error;
+
+        if (caseInsensitiveMatch) {
+          svcId = caseInsensitiveMatch;
+        } else {
+          // The app sent a service id that is not part of this booking
+          // (stale catalog id, wrong field from the review screen, etc.).
+          // Do NOT block the customer: attach the review to the service they
+          // actually booked and log the discrepancy for debugging.
+          console.warn(
+            `[Review] serviceId mismatch: client sent ${JSON.stringify(svcId)} but booking ${ordId} contains ${JSON.stringify(bookedServiceIds)}; attaching review to the booked service instead`,
+          );
+          svcId = bookedServiceIds[0];
+        }
       }
+    } else {
+      // Client did not send a usable serviceId: review the first booked
+      // service (bookings usually contain a single service).
+      svcId = bookedServiceIds[0];
     }
 
     // Final safety net: if the booked service no longer exists in `services`
