@@ -16,8 +16,11 @@ export const createServiceReview = async (req, res) => {
     const numericRating = Number(rating);
     const trimmedComment = String(comment || '').trim();
 
-    if (!serviceId || !orderId) {
-      return res.status(400).json({message: 'Service and order are required.'});
+    // orderId is mandatory; serviceId is optional — Review.create resolves
+    // the canonical service from the booking's order_items when it is
+    // missing or stale.
+    if (!orderId) {
+      return res.status(400).json({message: 'Booking reference is required.'});
     }
 
     if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {

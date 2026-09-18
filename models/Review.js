@@ -42,7 +42,7 @@ class Review {
   }
 
   static async create({serviceId, orderId, userId, rating, comment}) {
-    const svcId = stringifyId(serviceId);
+    let svcId = stringifyId(serviceId);
     const ordId = stringifyId(orderId);
     const numericUserId = toNumericId(userId);
 
@@ -100,6 +100,87 @@ class Review {
       error.statusCode = 403;
       throw error;
     }
+
+    // The FK target for service_reviews.service_id is services.id. The
+    // serviceId sent by the client can be stale (catalog re-seeded, service
+    // deleted) or flat-out wrong, which previously caused the insert to blow
+    // up with "invalid reference: service_reviews_service_id_fkey". Resolve
+    // the canonical service id(s) from the booking's order_items instead —
+    // order_items.service_id is itself FK-verified against services, so any
+    // id returned here is guaranteed to be insertable.
+    const [bookingItems] = await pool.query(
+      `SELECT DISTINCT oi.service_id
+       FROM order_items oi
+       WHERE oi.order_id = ? OR LOWER(oi.order_id) = LOWER(?)`,
+      [ordId, ordId],
+    );
+
+    const bookedServiceIds = bookingItems.map(item => stringifyId(item.service_id));
+
+    if (bookedServiceIds.length === 0) {
+      const error = new Error(
+        'This booking has no services attached, so it cannot be reviewed.',
+      );
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (!svcId) {
+      // Client did not send a serviceId: review the single booked service, or
+      // ask the client to pick one when the booking covers several.
+      if (bookedServiceIds.length > 1) {
+        const error = new Error(
+          'This booking includes multiple services. Please select the one you want to review.',
+        );
+        error.statusCode = 400;
+        throw error;
+      }
+      svcId = bookedServiceIds[0];
+    } else if (!bookedServiceIds.includes(svcId)) {
+      console.warn(
+        `[Review] serviceId mismatch: client sent ${JSON.stringify(svcId)} but booking ${ordId} contains ${JSON.stringify(bookedServiceIds)}`,
+      );
+
+      // Case-only difference (e.g. "AC-Gas-Refill" vs "ac-gas-refill") is
+      // acceptable; anything else means the client is reviewing a service
+      // that is not part of this booking.
+      const caseInsensitiveMatch = bookedServiceIds.find(
+        booked => booked.toLowerCase() === svcId.toLowerCase(),
+      );
+
+      if (caseInsensitiveMatch) {
+        svcId = caseInsensitiveMatch;
+      } else {
+        const error = new Error(
+          'You can only review services that were part of this booking.',
+        );
+        error.statusCode = 403;
+        throw error;
+      }
+    }
+
+    // Final safety net: if the booked service no longer exists in `services`
+    // (catalog re-seeded / service deleted — order_items keeps historical ids
+    // only when the FK allows it), fail with a readable message instead of a
+    // raw FK violation. When the service does exist, rewrite service_id from
+    // its canonical row so the insert can never hit the FK.
+    const [serviceExists] = await pool.query(
+      'SELECT id FROM services WHERE id = ? OR LOWER(id) = LOWER(?) LIMIT 1',
+      [svcId, svcId],
+    );
+
+    if (!serviceExists.length) {
+      console.warn(
+        `[Review] booked service ${JSON.stringify(svcId)} no longer exists in services table (orderId=${ordId})`,
+      );
+      const error = new Error(
+        'This service is no longer available for reviews.',
+      );
+      error.statusCode = 403;
+      throw error;
+    }
+
+    svcId = serviceExists[0].id;
 
     try {
       await pool.query(
