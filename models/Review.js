@@ -44,75 +44,58 @@ class Review {
   static async create({serviceId, orderId, userId, rating, comment}) {
     const svcId = stringifyId(serviceId);
     const ordId = stringifyId(orderId);
-    const numericSvcId = toNumericId(svcId);
-    const numericOrdId = toNumericId(ordId);
     const numericUserId = toNumericId(userId);
 
+    // Eligibility = the authenticated user owns a COMPLETED booking with this
+    // id. Case/whitespace tolerant on the order id, type tolerant on the
+    // user id (some JWTs carry it as a string).
     const [eligibleRows] = await pool.query(
       `SELECT o.id
        FROM orders o
-       LEFT JOIN order_items oi ON oi.order_id = o.id
-       WHERE (o.id = ? ${numericOrdId ? 'OR o.id = ?' : ''})
-         AND (o.user_id = ? ${numericUserId ? 'OR o.user_id = ?' : ''})
+       WHERE (o.id = ? OR LOWER(o.id) = LOWER(?))
+         AND (o.user_id = ? ${numericUserId !== null ? 'OR o.user_id = ?' : ''})
          AND o.status = 'completed'
        LIMIT 1`,
-      [
-        ordId,
-        ...(numericOrdId ? [numericOrdId] : []),
-        userId,
-        ...(numericUserId ? [numericUserId] : []),
-      ],
+      [ordId, ordId, userId, ...(numericUserId !== null ? [numericUserId] : [])],
     );
 
     if (!eligibleRows.length) {
-      // Precise diagnostics: figure out WHY it failed so logs show the
-      // exact failing condition instead of a generic message.
-      const diagnostics = [];
+      // Find out exactly WHY so the response (and server log) pinpoints it.
+      const reasons = [];
       try {
         const [byOrder] = await pool.query(
-          `SELECT o.id, o.user_id, o.status, o.created_at
-           FROM orders o WHERE o.id = ? LIMIT 1`,
-          [ordId],
+          `SELECT o.id, o.user_id, o.status
+           FROM orders o
+           WHERE o.id = ? OR LOWER(o.id) = LOWER(?)
+           LIMIT 1`,
+          [ordId, ordId],
         );
         if (!byOrder.length) {
-          diagnostics.push(`order ${ordId} not found`);
+          reasons.push(`booking ${ordId || '(empty)'} not found`);
         } else {
           const order = byOrder[0];
           if (Number(order.user_id) !== Number(userId)) {
-            diagnostics.push(`order belongs to user ${order.user_id}, not ${userId}`);
+            reasons.push(
+              `booking belongs to account #${order.user_id} but token says #${userId}`,
+            );
           }
           if (order.status !== 'completed') {
-            diagnostics.push(`order status is '${order.status}'`);
-          } else {
-            const [items] = await pool.query(
-              `SELECT service_id FROM order_items WHERE order_id = ?`,
-              [ordId],
-            );
-            if (items.length) {
-              const itemIds = items.map(i => i.service_id);
-              if (!itemIds.some(id => stringifyId(id) === svcId)) {
-                diagnostics.push(
-                  `service ${svcId} not in order items [${itemIds.join(', ')}]`,
-                );
-              }
-            } else {
-              diagnostics.push('order has no order_items rows (treated as eligible)');
-            }
+            reasons.push(`booking status is '${order.status}'`);
           }
         }
       } catch (diagError) {
-        diagnostics.push(`diagnostic query failed: ${diagError.message}`);
+        reasons.push(`lookup failed: ${diagError.message}`);
       }
 
       console.warn(
-        `[Review] Ineligible review attempt: ${diagnostics.join('; ') || 'unknown reason'}`,
+        `[Review] Rejected: ${reasons.join('; ') || 'unknown reason'}`,
       );
       console.warn(
-        `[Review] Received: serviceId=${JSON.stringify(serviceId)} (${typeof serviceId}), orderId=${JSON.stringify(orderId)} (${typeof orderId}), userId=${JSON.stringify(userId)} (${typeof userId})`,
+        `[Review] Payload: serviceId=${JSON.stringify(serviceId)}, orderId=${JSON.stringify(orderId)}, userId=${JSON.stringify(userId)}`,
       );
 
       const error = new Error(
-        'You can only review services from completed bookings.',
+        `You can only review services from completed bookings. (${reasons.join('; ') || 'unknown reason'})`,
       );
       error.statusCode = 403;
       throw error;
@@ -122,7 +105,7 @@ class Review {
       await pool.query(
         `INSERT INTO service_reviews (service_id, order_id, user_id, rating, comment)
          VALUES (?, ?, ?, ?, ?)`,
-        [svcId, ordId, userId, rating, comment],
+        [svcId, ordId, numericUserId !== null ? numericUserId : userId, rating, comment],
       );
     } catch (error) {
       const isDuplicate =
@@ -141,9 +124,13 @@ class Review {
       }
 
       if (isMissingReference) {
-        // Stale reference (e.g. service deleted by a catalog re-import).
+        const match = /constraint "([^"]+)"/i.exec(error.message || '');
+        const constraint = match ? match[1] : 'unknown';
+        console.warn(
+          `[Review] FK violation on insert: ${constraint} (serviceId=${svcId}, orderId=${ordId}, userId=${userId})`,
+        );
         const ineligible = new Error(
-          'You can only review services from completed bookings.',
+          `You can only review services from completed bookings. (invalid reference: ${constraint})`,
         );
         ineligible.statusCode = 403;
         throw ineligible;
