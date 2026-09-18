@@ -13,6 +13,10 @@ function mapReview(row) {
   };
 }
 
+// Postgres error codes surfaced through the mysql-compat db layer
+const PG_UNIQUE_VIOLATION = '23505';
+const PG_FOREIGN_KEY_VIOLATION = '23503';
+
 class Review {
   static async findByServiceId(serviceId) {
     const [rows] = await pool.query(
@@ -55,14 +59,36 @@ class Review {
          VALUES (?, ?, ?, ?, ?)`,
         [serviceId, orderId, userId, rating, comment],
       );
-      await this.refreshServiceStats(serviceId);
     } catch (error) {
-      if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
-        console.warn(`[Review] Skipped inserting review for non-existent service_id: ${serviceId}`);
-      } else {
-        throw error;
+      const isDuplicate =
+        error.code === PG_UNIQUE_VIOLATION || error.code === 'ER_DUP_ENTRY';
+      const isMissingReference =
+        error.code === PG_FOREIGN_KEY_VIOLATION ||
+        error.code === 'ER_NO_REFERENCED_ROW_2' ||
+        error.code === 'ER_NO_REFERENCED_ROW';
+
+      if (isDuplicate) {
+        const conflict = new Error(
+          'You have already reviewed this service booking.',
+        );
+        conflict.statusCode = 409;
+        throw conflict;
       }
+
+      if (isMissingReference) {
+        // Matches the eligibility check message so the client shows one
+        // consistent "cannot review" response for stale booking data.
+        const ineligible = new Error(
+          'You can only review services from completed bookings.',
+        );
+        ineligible.statusCode = 403;
+        throw ineligible;
+      }
+
+      throw error;
     }
+
+    await this.refreshServiceStats(serviceId);
   }
 
   static async refreshServiceStats(serviceId) {

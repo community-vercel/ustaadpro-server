@@ -40,7 +40,11 @@ export const createServiceReview = async (req, res) => {
   } catch (error) {
     console.error('Create service review error:', error);
 
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (
+      error.code === 'ER_DUP_ENTRY' ||
+      error.code === '23505' ||
+      error.statusCode === 409
+    ) {
       return res
         .status(409)
         .json({message: 'You have already reviewed this service booking.'});
