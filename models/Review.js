@@ -17,6 +17,16 @@ function mapReview(row) {
 const PG_UNIQUE_VIOLATION = '23505';
 const PG_FOREIGN_KEY_VIOLATION = '23503';
 
+const stringifyId = value => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+};
+
+const toNumericId = value => {
+  const str = stringifyId(value);
+  return /^\d+$/.test(str) ? Number(str) : null;
+};
+
 class Review {
   static async findByServiceId(serviceId) {
     const [rows] = await pool.query(
@@ -32,20 +42,75 @@ class Review {
   }
 
   static async create({serviceId, orderId, userId, rating, comment}) {
+    const svcId = stringifyId(serviceId);
+    const ordId = stringifyId(orderId);
+    const numericSvcId = toNumericId(svcId);
+    const numericOrdId = toNumericId(ordId);
+    const numericUserId = toNumericId(userId);
 
     const [eligibleRows] = await pool.query(
       `SELECT o.id
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id = o.id
-       WHERE o.id = ?
-         AND o.user_id = ?
-         AND (oi.service_id = ? OR ? = o.id)
+       WHERE (o.id = ? ${numericOrdId ? 'OR o.id = ?' : ''})
+         AND (o.user_id = ? ${numericUserId ? 'OR o.user_id = ?' : ''})
          AND o.status = 'completed'
        LIMIT 1`,
-      [orderId, userId, serviceId, serviceId],
+      [
+        ordId,
+        ...(numericOrdId ? [numericOrdId] : []),
+        userId,
+        ...(numericUserId ? [numericUserId] : []),
+      ],
     );
 
     if (!eligibleRows.length) {
+      // Precise diagnostics: figure out WHY it failed so logs show the
+      // exact failing condition instead of a generic message.
+      const diagnostics = [];
+      try {
+        const [byOrder] = await pool.query(
+          `SELECT o.id, o.user_id, o.status, o.created_at
+           FROM orders o WHERE o.id = ? LIMIT 1`,
+          [ordId],
+        );
+        if (!byOrder.length) {
+          diagnostics.push(`order ${ordId} not found`);
+        } else {
+          const order = byOrder[0];
+          if (Number(order.user_id) !== Number(userId)) {
+            diagnostics.push(`order belongs to user ${order.user_id}, not ${userId}`);
+          }
+          if (order.status !== 'completed') {
+            diagnostics.push(`order status is '${order.status}'`);
+          } else {
+            const [items] = await pool.query(
+              `SELECT service_id FROM order_items WHERE order_id = ?`,
+              [ordId],
+            );
+            if (items.length) {
+              const itemIds = items.map(i => i.service_id);
+              if (!itemIds.some(id => stringifyId(id) === svcId)) {
+                diagnostics.push(
+                  `service ${svcId} not in order items [${itemIds.join(', ')}]`,
+                );
+              }
+            } else {
+              diagnostics.push('order has no order_items rows (treated as eligible)');
+            }
+          }
+        }
+      } catch (diagError) {
+        diagnostics.push(`diagnostic query failed: ${diagError.message}`);
+      }
+
+      console.warn(
+        `[Review] Ineligible review attempt: ${diagnostics.join('; ') || 'unknown reason'}`,
+      );
+      console.warn(
+        `[Review] Received: serviceId=${JSON.stringify(serviceId)} (${typeof serviceId}), orderId=${JSON.stringify(orderId)} (${typeof orderId}), userId=${JSON.stringify(userId)} (${typeof userId})`,
+      );
+
       const error = new Error(
         'You can only review services from completed bookings.',
       );
@@ -57,7 +122,7 @@ class Review {
       await pool.query(
         `INSERT INTO service_reviews (service_id, order_id, user_id, rating, comment)
          VALUES (?, ?, ?, ?, ?)`,
-        [serviceId, orderId, userId, rating, comment],
+        [svcId, ordId, userId, rating, comment],
       );
     } catch (error) {
       const isDuplicate =
@@ -76,8 +141,7 @@ class Review {
       }
 
       if (isMissingReference) {
-        // Matches the eligibility check message so the client shows one
-        // consistent "cannot review" response for stale booking data.
+        // Stale reference (e.g. service deleted by a catalog re-import).
         const ineligible = new Error(
           'You can only review services from completed bookings.',
         );
@@ -88,7 +152,7 @@ class Review {
       throw error;
     }
 
-    await this.refreshServiceStats(serviceId);
+    await this.refreshServiceStats(svcId);
   }
 
   static async refreshServiceStats(serviceId) {
