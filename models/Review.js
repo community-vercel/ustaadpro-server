@@ -1,5 +1,4 @@
 import pool from '../config/db.js';
-import AppControl from './AppControl.js';
 
 function mapReview(row) {
   return {
@@ -16,7 +15,6 @@ function mapReview(row) {
 
 class Review {
   static async findByServiceId(serviceId) {
-    await AppControl.ensureSchema();
     const [rows] = await pool.query(
       `SELECT sr.*, u.name as customer_name
        FROM service_reviews sr
@@ -30,7 +28,6 @@ class Review {
   }
 
   static async create({serviceId, orderId, userId, rating, comment}) {
-    await AppControl.ensureSchema();
 
     const [eligibleRows] = await pool.query(
       `SELECT o.id
