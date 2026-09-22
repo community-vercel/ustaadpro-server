@@ -190,6 +190,7 @@ class AppControl {
     await pool.query('ALTER TABLE categories ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 999');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS web_image_url TEXT');
     await pool.query('ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS mobile_icon_url TEXT');
+    await pool.query("ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS pricing_mode VARCHAR(20) NOT NULL DEFAULT 'fixed'");
     await pool.query('ALTER TABLE services ADD COLUMN IF NOT EXISTS allow_quantity BOOLEAN NOT NULL DEFAULT TRUE');
 
     await pool.query(`

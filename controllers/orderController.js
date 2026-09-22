@@ -65,10 +65,22 @@ function resolveSelectedWork(service, item) {
     throw error;
   }
 
+  // Area-based services (e.g. "Texture Painting" with unit "Per sq. ft.")
+  // charge on the customer-entered area even without specific work prices.
+  // A subcategory marked per_sqft (texture wall groups etc.) applies to all
+  // services under it.
+  const serviceIsPerSqft =
+    !selectedWork &&
+    !requestedWorkId &&
+    (
+      /\bper\s*sq/i.test(service.service_type || service.serviceType || '') ||
+      service.subcategoryPricingMode === 'per_sqft'
+    );
+
   return {
     serviceWorkPriceId: selectedWork?.id || null,
     serviceWorkTitle: selectedWork?.title || item.service?.selectedWorkPrice?.title || service.title,
-    pricingMode: selectedWork?.pricingMode || 'fixed',
+    pricingMode: selectedWork?.pricingMode || (serviceIsPerSqft ? 'per_sqft' : 'fixed'),
     price: selectedWork ? selectedWork.price : service.price,
   };
 }

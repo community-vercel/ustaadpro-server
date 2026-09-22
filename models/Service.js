@@ -42,11 +42,14 @@ function mapWorkPrice(row) {
   };
 }
 
-function mapService(row, workPrices = []) {
+function mapService(row, workPrices = [], subcategoryPricingMode = null) {
   return {
     ...row,
     categoryId: row.category_id,
     subcategoryId: row.subcategory_id,
+    // Pricing mode inherited from the parent subcategory (area-based groups
+    // like texture walls). Services keep their own explicit mode if present.
+    subcategoryPricingMode: subcategoryPricingMode === 'per_sqft' ? 'per_sqft' : 'fixed',
     originalPrice: Number(row.original_price || 0),
     serviceType: row.service_type,
     unitDescription: row.service_type || '',
@@ -155,8 +158,28 @@ class Service {
     const pricesByService = await this.getWorkPricesByServiceIds(
       rows.map(row => row.id),
     );
+    const subModes = await this.getSubcategoryPricingModes(
+      rows.map(row => row.subcategory_id),
+    );
 
-    return rows.map(row => mapService(row, pricesByService.get(row.id) || []));
+    return rows.map(row =>
+      mapService(row, pricesByService.get(row.id) || [], subModes.get(row.subcategory_id) || null),
+    );
+  }
+
+  // Pricing modes of the subcategories a set of services belongs to.
+  static async getSubcategoryPricingModes(subcategoryIds) {
+    const ids = [...new Set(subcategoryIds.filter(Boolean))];
+    const modes = new Map();
+    if (!ids.length) return modes;
+
+    const placeholders = ids.map(() => '?').join(', ');
+    const [rows] = await pool.query(
+      `SELECT id, pricing_mode FROM subcategories WHERE id IN (${placeholders})`,
+      ids,
+    );
+    rows.forEach(row => modes.set(row.id, row.pricing_mode));
+    return modes;
   }
 
   static async findById(id) {
@@ -166,7 +189,8 @@ class Service {
     ]);
     if (!rows[0]) return null;
     const pricesByService = await this.getWorkPricesByServiceIds([id]);
-    return mapService(rows[0], pricesByService.get(id) || []);
+    const subModes = await this.getSubcategoryPricingModes([rows[0].subcategory_id]);
+    return mapService(rows[0], pricesByService.get(id) || [], subModes.get(rows[0].subcategory_id) || null);
   }
 
   static async create(payload) {
