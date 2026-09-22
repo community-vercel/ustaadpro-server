@@ -585,13 +585,24 @@ export const saveAdminCategory = async (req, res) => {
 export const saveAdminSubcategory = async (req, res) => {
   try {
     await AppControl.ensureSchema();
+    // Make sure the pricing_mode column exists before writing it.
+    await pool.query("ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS pricing_mode VARCHAR(20) NOT NULL DEFAULT 'fixed'");
     const categoryId = String(req.body?.categoryId || req.body?.category_id || '').trim();
     const title = String(req.body?.title || '').trim();
     const id = catalogueId(req.body?.id || categoryId + '-' + title);
     if (!categoryId || !title) return res.status(400).json({message: 'Main service and sub-service title are required.'});
-    await pool.query('INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url, pricing_mode) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url, pricing_mode = EXCLUDED.pricing_mode',
-      [id, categoryId, title, req.body?.description || null, req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null, req.body?.pricingMode === 'per_sqft' ? 'per_sqft' : 'fixed']);
-    res.status(201).json({id, categoryId, title});
+    const pricingMode = req.body?.pricingMode === 'per_sqft' ? 'per_sqft' : 'fixed';
+    try {
+      await pool.query('INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url, pricing_mode) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url, pricing_mode = EXCLUDED.pricing_mode',
+        [id, categoryId, title, req.body?.description || null, req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null, pricingMode]);
+    } catch (schemaError) {
+      // Older database without the pricing_mode column: save the row without
+      // it rather than failing the whole subcategory save.
+      console.warn('subcategory pricing_mode write skipped:', schemaError.message);
+      await pool.query('INSERT INTO subcategories (id, category_id, title, description, web_image_url, mobile_icon_url) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET category_id = EXCLUDED.category_id, title = EXCLUDED.title, description = EXCLUDED.description, web_image_url = EXCLUDED.web_image_url, mobile_icon_url = EXCLUDED.mobile_icon_url',
+        [id, categoryId, title, req.body?.description || null, req.body?.webImageUrl || req.body?.web_image_url || null, req.body?.mobileIconUrl || req.body?.mobile_icon_url || null]);
+    }
+    res.status(201).json({id, categoryId, title, pricingMode});
   } catch (error) {
     console.error('Save admin subcategory error:', error);
     res.status(500).json({message: 'Could not save sub-service.'});

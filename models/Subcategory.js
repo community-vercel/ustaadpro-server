@@ -15,13 +15,27 @@ function mapSubcategory(row) {
 
 class Subcategory {
   static async findByCategoryId(categoryId) {
-    const [rows] = await pool.query(
-      `SELECT id, category_id, title, description,
-              image_url, web_image_url, mobile_icon_url, pricing_mode
-       FROM subcategories WHERE category_id = ?`,
-      [categoryId],
-    );
-    return rows.map(mapSubcategory);
+    try {
+      const [rows] = await pool.query(
+        `SELECT id, category_id, title, description,
+                image_url, web_image_url, mobile_icon_url, pricing_mode
+         FROM subcategories WHERE category_id = ?`,
+        [categoryId],
+      );
+      return rows.map(mapSubcategory);
+    } catch (error) {
+      // Older database without the pricing_mode column yet.
+      if (String(error.message || '').includes('pricing_mode')) {
+        const [rows] = await pool.query(
+          `SELECT id, category_id, title, description,
+                  image_url, web_image_url, mobile_icon_url
+           FROM subcategories WHERE category_id = ?`,
+          [categoryId],
+        );
+        return rows.map(row => ({...mapSubcategory(row), pricingMode: 'fixed'}));
+      }
+      throw error;
+    }
   }
 }
 
