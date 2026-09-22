@@ -289,6 +289,13 @@ class AppControl {
       )`,
     );
 
+    // Per-area (square feet) pricing support for services like wall texture.
+    // 'fixed' keeps legacy behaviour; 'per_sqft' charges price x area entered
+    // by the customer at booking time.
+    await pool.query(
+      "ALTER TABLE service_work_prices ADD COLUMN IF NOT EXISTS pricing_mode VARCHAR(20) NOT NULL DEFAULT 'fixed'",
+    );
+
     const serviceWorkPriceColumns = [['image_url', 'LONGTEXT NULL']];
 
     for (const [column, definition] of serviceWorkPriceColumns) {
@@ -365,6 +372,9 @@ class AppControl {
       ['service_work_price_id', 'INT NULL'],
       ['service_work_title', 'VARCHAR(180) NULL'],
       ['service_title', 'VARCHAR(255) NULL'],
+      ['work_area_sqft', 'NUMERIC(10, 2) NULL'],
+      ['work_price_per_sqft', 'NUMERIC(10, 2) NULL'],
+      ['work_pricing_mode', "VARCHAR(20) NULL"],
     ];
 
     for (const [column, definition] of orderItemColumns) {

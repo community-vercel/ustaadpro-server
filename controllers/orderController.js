@@ -10,6 +10,10 @@ import PaymentReceipt from '../models/PaymentReceipt.js';
 const EASYPAISA_ACCOUNT_NUMBER = '03485838593';
 const EASYPAISA_ACCOUNT_TITLE = 'Muhammad Ikram';
 
+// Design-driven work (e.g. Wall Texture Design A/B/C) is scheduled at least
+// two days ahead so material and crew can be arranged.
+const MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING = 2;
+
 async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
   if (!dataUrl || !dataUrl.startsWith('data:image/')) {
     const error = new Error('A valid receipt image is required.');
@@ -64,8 +68,30 @@ function resolveSelectedWork(service, item) {
   return {
     serviceWorkPriceId: selectedWork?.id || null,
     serviceWorkTitle: selectedWork?.title || item.service?.selectedWorkPrice?.title || service.title,
+    pricingMode: selectedWork?.pricingMode || 'fixed',
     price: selectedWork ? selectedWork.price : service.price,
   };
+}
+
+// Per-sqft work prices (Wall Texture designs etc.) multiply the rate by the
+// area the customer entered. Area is clamped to keep totals sane.
+function resolveWorkAreaSqft(item, pricingMode) {
+  if (pricingMode !== 'per_sqft') return null;
+  const rawArea = Number(
+    item.areaSqft ??
+      item.area_sqft ??
+      item.service?.areaSqft ??
+      item.service?.area_sqft ??
+      0,
+  );
+  if (!Number.isFinite(rawArea) || rawArea <= 0) {
+    const error = new Error(
+      'Area size in square feet is required for per square feet priced designs.',
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+  return Math.min(100000, Math.round(rawArea * 100) / 100);
 }
 
 function parseBookingStartInPakistan(bookedFor) {
@@ -128,8 +154,17 @@ export const checkout = async (req, res) => {
       }
 
       const selectedWork = resolveSelectedWork(service, cartItem);
+      const workAreaSqft = resolveWorkAreaSqft(cartItem, selectedWork.pricingMode);
+      const workRate =
+        selectedWork.pricingMode === 'per_sqft'
+          ? Number(selectedWork.price) // price per square feet
+          : Number(selectedWork.price);
+      const unitPrice =
+        selectedWork.pricingMode === 'per_sqft'
+          ? Math.round(workRate * workAreaSqft * 100) / 100
+          : workRate;
       const itemTotal =
-        Number(selectedWork.price) * quantity * occurrenceCount;
+        unitPrice * quantity * occurrenceCount;
       total += itemTotal;
 
       const existingItem = itemsToInsert.find(item =>
@@ -146,7 +181,11 @@ export const checkout = async (req, res) => {
           serviceWorkPriceId: selectedWork.serviceWorkPriceId,
           serviceWorkTitle: selectedWork.serviceWorkTitle,
           quantity,
-          price: selectedWork.price,
+          price: unitPrice,
+          workAreaSqft,
+          workPricePerSqft:
+            selectedWork.pricingMode === 'per_sqft' ? workRate : null,
+          workPricingMode: selectedWork.pricingMode,
         });
       }
     }
@@ -154,10 +193,27 @@ export const checkout = async (req, res) => {
     const settings = await AppControl.getSettings();
     const minimumBookingLeadHours = Math.max(0, Math.min(168, Number(settings.minimumBookingLeadHours || 0)));
     const bookingStart = parseBookingStartInPakistan(bookedFor);
-    if (bookingStart && bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
-      return res.status(400).json({
-        message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
-      });
+    if (bookingStart) {
+      if (bookingStart.getTime() < Date.now() + minimumBookingLeadHours * 60 * 60 * 1000) {
+        return res.status(400).json({
+          message: `Please choose a time at least ${minimumBookingLeadHours} hour(s) from now.`,
+        });
+      }
+      // Area-priced designs (wall texture etc.) must be booked at least two
+      // days ahead of the appointment.
+      const hasAreaPricedWork = itemsToInsert.some(
+        item => item.workPricingMode === 'per_sqft',
+      );
+      if (
+        hasAreaPricedWork &&
+        bookingStart.getTime() <
+          Date.now() +
+            MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING * 24 * 60 * 60 * 1000
+      ) {
+        return res.status(400).json({
+          message: `Design bookings need at least ${MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING} days advance appointment. Please choose a date two or more days from today.`,
+        });
+      }
     }
     const inspectionFee = Number(settings.inspectionFee || 0);
     const rewardEnabled = settings.rewardEnabled !== false;
@@ -378,13 +434,26 @@ export const updateOrder = async (req, res) => {
       }
 
       const selectedWork = resolveSelectedWork(service, item);
-      servicesTotal += Number(selectedWork.price) * quantity * occurrenceCount;
+      const workAreaSqft = resolveWorkAreaSqft(item, selectedWork.pricingMode);
+      const unitPrice =
+        selectedWork.pricingMode === 'per_sqft'
+          ? Math.round(
+              Number(selectedWork.price) * workAreaSqft * 100,
+            ) / 100
+          : Number(selectedWork.price);
+      servicesTotal += unitPrice * quantity * occurrenceCount;
       itemsToInsert.push({
         serviceId: service.id,
         serviceWorkPriceId: selectedWork.serviceWorkPriceId,
         serviceWorkTitle: selectedWork.serviceWorkTitle,
         quantity,
-        price: selectedWork.price,
+        price: unitPrice,
+        workAreaSqft,
+        workPricePerSqft:
+          selectedWork.pricingMode === 'per_sqft'
+            ? Number(selectedWork.price)
+            : null,
+        workPricingMode: selectedWork.pricingMode,
       });
     }
 

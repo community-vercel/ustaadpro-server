@@ -23,6 +23,7 @@ function normalizeWorkPrices(workPrices = []) {
       description: String(item.description || '').trim(),
       price: Number(item.price || 0),
       imageUrl: item.imageUrl || item.image_url || '',
+      pricingMode: item.pricingMode === 'per_sqft' ? 'per_sqft' : 'fixed',
       sortOrder: Number(item.sortOrder ?? item.sort_order ?? index),
     }))
     .filter(item => item.title && item.price > 0);
@@ -36,6 +37,7 @@ function mapWorkPrice(row) {
     description: row.description || '',
     price: Number(row.price || 0),
     imageUrl: row.image_url || '',
+    pricingMode: row.pricing_mode === 'per_sqft' ? 'per_sqft' : 'fixed',
     sortOrder: Number(row.sort_order || 0),
   };
 }
@@ -67,7 +69,7 @@ class Service {
 
     const placeholders = serviceIds.map(() => '?').join(', ');
     const [rows] = await pool.query(
-      `SELECT id, service_id, title, description, price, image_url, sort_order
+      `SELECT id, service_id, title, description, price, image_url, pricing_mode, sort_order
        FROM service_work_prices
        WHERE service_id IN (${placeholders})
        ORDER BY service_id ASC, sort_order ASC, price ASC, title ASC`,
@@ -94,14 +96,15 @@ class Service {
     for (const [index, item] of normalized.entries()) {
       await pool.query(
         `INSERT INTO service_work_prices
-         (service_id, title, description, price, image_url, sort_order)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         (service_id, title, description, price, image_url, pricing_mode, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           serviceId,
           item.title,
           item.description || null,
           item.price,
           item.imageUrl || null,
+          item.pricingMode || 'fixed',
           Number.isFinite(item.sortOrder) ? item.sortOrder : index,
         ],
       );
@@ -116,6 +119,14 @@ class Service {
       return Math.min(...workPrices.map(item => Number(item.price || 0)));
     }
     return Number(payload.price || 0);
+  }
+
+  // Effective starting price for a work item: fixed items use their price
+  // directly; per-sqft items are billed on the customer-entered area, so the
+  // catalog shows the rate as "per sq ft" starting price.
+  static effectiveWorkPrice(work) {
+    if (work.pricingMode === 'per_sqft') return Number(work.price || 0);
+    return Number(work.price || 0);
   }
 
   static async getAll({categoryId = null, subcategoryId = null} = {}) {

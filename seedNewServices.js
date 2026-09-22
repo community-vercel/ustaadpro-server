@@ -58,6 +58,7 @@ const mainServices = [
   { id: 'home-cleaning-main', categoryId: 'home-cleaning', title: 'Home Cleaning Services', description: 'Professional deep cleaning and sofa cleaning.', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEdyZ3ARrF1f55JGcSBy_TAyqbs2p0KO0JTCA78X6L-w&s=10' },
   { id: 'plumbers-main', categoryId: 'plumbers', title: 'Plumber Services', description: 'Professional plumbing repairs and installation.', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0CmktSAYF45gnWKaZIUkbGo00hfjEGwxMZv71kmY2PA&s=10' },
   { id: 'painters-main', categoryId: 'painters', title: 'Painter Services', description: 'Professional painting and polishing works.', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS57x5xzMtLEZjRCQIIPPOq2TXpYm3hJrr_Ye2ws8u55Q&s=10' },
+  { id: 'wall-texture-main', categoryId: 'painters', title: 'Wall Texture', description: 'Designer wall texture finishes - choose a design, enter area, get instant total.', imageFile: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800' },
   { id: 'carpenter-main', categoryId: 'carpenter', title: 'Carpenter Services', description: 'Professional furniture and wood works.', imageFile: 'https://images.ctfassets.net/5kq8dse7hipf/7FhCe1WYFMZMo0SA9FR3Qi/595b0bedfdaa8dc30408ec280fc9d62f/Furniture-repair-cost.jpg' },
   { id: 'welder-fabricator-main', categoryId: 'welder-fabricator', title: 'Welder & Fabricator', description: 'Professional welding and fabrication works.', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzlSr775plNRk8zhDGnWlSQnWxv90iHCmW4AIq4X38opWYN5FiHHrwPwZV&s=10' },
   { id: 'cctv-main', categoryId: 'cctv', title: 'CCTV Services', description: 'Professional CCTV installation and maintenance.', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyW4HuwBp1GBmCe_Ai2yQS9pe7wDPqaiUJ3mTxAOKQ1cLJa8kwVR3Mh-sx&s=10' },
@@ -126,6 +127,11 @@ const newSpecificWorks = [
   { serviceId: 'painters-main', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb4GWgI0nHC51CjHGNPNRiOvzmfbuvW9PHa7GHckQpTEVznX1tBR6WYpZh&s=10', title: 'Wall Putty Works', description: 'Wall putty works per sq ft.', price: 22, originalPrice: 26 },
   { serviceId: 'painters-main', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-1PIrYbcX8xxNoxaj0UWtDoYwRdBJWKUgGUiRh3ccnkTBjWnwCVCdTFuW&s=10', title: 'Waterproofing', description: 'Waterproofing per sq ft.', price: 70, originalPrice: 84 },
   { serviceId: 'painters-main', imageFile: 'https://cdn.mrmahir.com/uploads/21534635-fe5a-4315-8c83-9d97a4ed0fbe.png', title: 'Gray Structure Paint', description: 'Gray structure paint service.', price: 500, originalPrice: 600 },
+
+  // Wall Texture — design-driven, priced per square feet.
+  { serviceId: 'wall-texture-main', imageFile: 'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800', title: 'Wall Texture Design A', description: 'Modern textured wall finish - Design A, priced per square feet.', price: 85, originalPrice: 102, pricingMode: 'per_sqft' },
+  { serviceId: 'wall-texture-main', imageFile: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800', title: 'Wall Texture Design B', description: 'Premium patterned wall finish - Design B, priced per square feet.', price: 120, originalPrice: 144, pricingMode: 'per_sqft' },
+  { serviceId: 'wall-texture-main', imageFile: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800', title: 'Wall Texture Design C', description: 'Luxury designer wall finish - Design C, priced per square feet.', price: 160, originalPrice: 192, pricingMode: 'per_sqft' },
   // Carpenter
   { serviceId: 'carpenter-main', imageFile: 'https://images.ctfassets.net/5kq8dse7hipf/7FhCe1WYFMZMo0SA9FR3Qi/595b0bedfdaa8dc30408ec280fc9d62f/Furniture-repair-cost.jpg', title: 'Furniture Repair', description: 'Furniture repair service.', price: 1000, originalPrice: 1200 },
   { serviceId: 'carpenter-main', imageFile: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHX3H16SzIN2qh_gT6zvj8l8yUKS7SdlQYSOItM_cCFSdh_3Opm10Z4zQ&s=10', title: 'Door Installation', description: 'Door installation service.', price: 2000, originalPrice: 2400 },
@@ -215,9 +221,9 @@ async function seedNewServices() {
     for (const work of newSpecificWorks) {
       const localImage = await downloadImage(work.imageFile, work.serviceId);
       await pool.query(`
-        INSERT INTO service_work_prices (service_id, title, description, price, image_url, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [work.serviceId, work.title, work.description, work.price, localImage, workCounter]);
+        INSERT INTO service_work_prices (service_id, title, description, price, image_url, pricing_mode, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [work.serviceId, work.title, work.description, work.price, localImage, work.pricingMode || 'fixed', workCounter]);
       workCounter++;
     }
     console.log(`✅ Seeded ${newSpecificWorks.length} specific works`);

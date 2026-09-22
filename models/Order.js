@@ -60,12 +60,14 @@ class Order {
     await pool.query('DELETE FROM orders WHERE id = ? AND user_id = ?', [id, userId]);
   }
   static async addItems(orderId, items) {
-    // items is an array of { serviceId, serviceTitle, serviceWorkPriceId, serviceWorkTitle, quantity, price }
+    // items is an array of { serviceId, serviceTitle, serviceWorkPriceId, serviceWorkTitle, quantity, price,
+    //                         workAreaSqft, workPricePerSqft, workPricingMode }
     for (const item of items) {
       await pool.query(
         `INSERT INTO order_items
-         (order_id, service_id, service_title, service_work_price_id, service_work_title, quantity, price)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (order_id, service_id, service_title, service_work_price_id, service_work_title, quantity, price,
+          work_area_sqft, work_price_per_sqft, work_pricing_mode)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           item.serviceId,
@@ -74,6 +76,9 @@ class Order {
           item.serviceWorkTitle || null,
           item.quantity,
           item.price,
+          item.workAreaSqft ?? null,
+          item.workPricePerSqft ?? null,
+          item.workPricingMode || null,
         ],
       );
     }
@@ -141,6 +146,9 @@ class Order {
                   oi.quantity, oi.price,
                   oi.service_work_price_id as serviceWorkPriceId,
                   oi.service_work_title as serviceWorkTitle,
+                  oi.work_area_sqft as workAreaSqft,
+                  oi.work_price_per_sqft as workPricePerSqft,
+                  oi.work_pricing_mode as workPricingMode,
                   oi.service_title as storedServiceTitle,
                   s.id as service_id, s.title, s.description, s.duration, s.category_id,
                   sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
@@ -160,6 +168,9 @@ class Order {
                   oi.quantity, oi.price,
                   oi.service_work_price_id as serviceWorkPriceId,
                   oi.service_work_title as serviceWorkTitle,
+                  null as workAreaSqft,
+                  null as workPricePerSqft,
+                  null as workPricingMode,
                   null as storedServiceTitle,
                   s.id as service_id, s.title, s.description, s.duration, s.category_id,
                   sr.id as review_id, sr.rating as review_rating, sr.comment as review_comment
@@ -197,6 +208,15 @@ class Order {
           selectedWorkTitle: item.serviceWorkTitle || undefined,
           duration: item.duration || '',
           categoryId: item.category_id || '',
+          areaSqft:
+            item.workAreaSqft !== null && item.workAreaSqft !== undefined
+              ? Number(item.workAreaSqft)
+              : undefined,
+          pricePerSqft:
+            item.workPricePerSqft !== null && item.workPricePerSqft !== undefined
+              ? Number(item.workPricePerSqft)
+              : undefined,
+          pricingMode: item.workPricingMode === 'per_sqft' ? 'per_sqft' : undefined,
         },
         review: item.review_id
           ? {
