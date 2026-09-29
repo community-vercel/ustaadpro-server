@@ -11,8 +11,8 @@ const EASYPAISA_ACCOUNT_NUMBER = '03485838593';
 const EASYPAISA_ACCOUNT_TITLE = 'Muhammad Ikram';
 
 // Design-driven work (e.g. Wall Texture Design A/B/C) is scheduled at least
-// two days ahead so material and crew can be arranged.
-const MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING = 2;
+// three days ahead so material and crew can be arranged.
+const MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING = 3;
 
 async function saveReceiptImage(dataUrl, filename = 'payment-receipt.jpg') {
   if (!dataUrl || !dataUrl.startsWith('data:image/')) {
@@ -223,7 +223,7 @@ export const checkout = async (req, res) => {
             MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING * 24 * 60 * 60 * 1000
       ) {
         return res.status(400).json({
-          message: `Design bookings need at least ${MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING} days advance appointment. Please choose a date two or more days from today.`,
+          message: `Design bookings need at least ${MIN_BOOKING_DAYS_AHEAD_FOR_AREA_PRICING} days advance appointment. Please choose a date three or more days from today.`,
         });
       }
     }
