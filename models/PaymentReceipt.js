@@ -210,12 +210,23 @@ class PaymentReceipt {
       orderIds,
     );
     const [allItems] = await pool.query(
-      `SELECT oi.order_id as order_id, oi.quantity, oi.price, oi.service_work_price_id, oi.service_work_title, s.id as service_id, s.title, s.description, s.duration, s.category_id, s.service_type, s.image_url FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id IN (${placeholders})`,
+      `SELECT oi.order_id as order_id, oi.quantity, oi.price, oi.service_work_price_id, oi.service_work_title,
+              oi.work_area_sqft, oi.work_price_per_sqft, oi.work_pricing_mode,
+              s.id as service_id, s.title, s.description, s.duration, s.category_id, s.service_type, s.image_url
+       FROM order_items oi JOIN services s ON oi.service_id = s.id
+       WHERE oi.order_id IN (${placeholders})`,
       orderIds,
     );
     const itemsByOrder = allItems.reduce((grouped, item) => {
       if (!grouped[item.orderId]) grouped[item.orderId] = [];
-      grouped[item.orderId].push({...item, quantity: Number(item.quantity || 0), price: Number(item.price || 0)});
+      grouped[item.orderId].push({
+        ...item,
+        quantity: Number(item.quantity || 0),
+        price: Number(item.price || 0),
+        workAreaSqft: item.work_area_sqft === null || item.work_area_sqft === undefined ? null : Number(item.work_area_sqft),
+        workPricePerSqft: item.work_price_per_sqft === null || item.work_price_per_sqft === undefined ? null : Number(item.work_price_per_sqft),
+        workPricingMode: item.work_pricing_mode || null,
+      });
       return grouped;
     }, {});
     const receiptOrder = new Map(orderIds.map((id, index) => [id, index]));
