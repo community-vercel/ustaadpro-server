@@ -67,6 +67,7 @@ export const checkoutShopOrder = async (req, res) => {
       address,
       paymentMethod = 'Cash on Delivery',
       useRewardPoints = false,
+      useWalletBalance = false,
     } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -155,21 +156,36 @@ export const checkoutShopOrder = async (req, res) => {
       rewardDiscount = redeemableDiscount;
     }
 
-    const total = Math.max(0, subtotal - rewardDiscount) + shippingCost;
+    const orderTotal = Math.max(0, subtotal - rewardDiscount) + shippingCost;
 
-    await Shop.createOrder({
-      id: orderId,
-      userId: req.user.id,
-      total,
-      shippingCost,
-      status: 'placed',
-      paymentMethod,
-      address,
-      rewardPointsEarned: 0,
-      rewardPointsRedeemed,
-      rewardDiscount,
-      items: orderItems,
-    });
+    // Optionally apply the user's wallet balance toward this order (like service bookings).
+    let walletUsed = 0;
+    if (useWalletBalance) {
+      walletUsed = await User.consumeWallet(req.user.id, orderTotal);
+      if (walletUsed > 0) console.info('[Wallet] Shop order consuming Rs ' + walletUsed + ' for user ' + req.user.id + '.');
+    }
+    const total = Math.max(0, orderTotal - walletUsed);
+
+    try {
+      await Shop.createOrder({
+        id: orderId,
+        userId: req.user.id,
+        total,
+        shippingCost,
+        status: 'placed',
+        paymentMethod,
+        address,
+        rewardPointsEarned: 0,
+        rewardPointsRedeemed,
+        rewardDiscount,
+        walletUsed,
+        items: orderItems,
+      });
+    } catch (orderError) {
+      // Refund the wallet deduction if the order could not be created.
+      if (walletUsed > 0) await User.creditWallet(req.user.id, walletUsed);
+      throw orderError;
+    }
 
     const [order] = await Shop.getOrders({userId: req.user.id});
     const updatedUser = await User.findById(req.user.id);

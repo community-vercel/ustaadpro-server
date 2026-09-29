@@ -75,6 +75,14 @@ async function ensureShopTables() {
       });
   }
 
+  await pool
+    .query('ALTER TABLE shop_orders ADD COLUMN wallet_used DECIMAL(10, 2) NOT NULL DEFAULT 0')
+    .catch(error => {
+      if (error?.code !== 'ER_DUP_FIELDNAME' && error?.code !== '42701') {
+        throw error;
+      }
+    });
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shop_order_items (
       id SERIAL PRIMARY KEY,
@@ -325,14 +333,15 @@ class Shop {
     rewardPointsEarned = 0,
     rewardPointsRedeemed = 0,
     rewardDiscount = 0,
+    walletUsed = 0,
     items,
   }) {
     await ensureShopTables();
     await pool.query(
       `INSERT INTO shop_orders
        (id, user_id, total, shipping_cost, status, payment_method, address,
-        reward_points_earned, reward_points_redeemed, reward_discount)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        reward_points_earned, reward_points_redeemed, reward_discount, wallet_used)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         userId,
@@ -344,6 +353,7 @@ class Shop {
         rewardPointsEarned,
         rewardPointsRedeemed,
         rewardDiscount,
+        walletUsed,
       ],
     );
 
@@ -372,6 +382,7 @@ class Shop {
               so.reward_points_earned as rewardPointsEarned,
               so.reward_points_redeemed as rewardPointsRedeemed,
               so.reward_discount as rewardDiscount,
+              so.wallet_used as walletUsed,
               u.name as customerName, u.phone as customerPhone, u.email as customerEmail
        FROM shop_orders so
        JOIN users u ON u.id = so.user_id
@@ -397,6 +408,7 @@ class Shop {
         rewardPointsEarned: Number(order.rewardPointsEarned || 0),
         rewardPointsRedeemed: Number(order.rewardPointsRedeemed || 0),
         rewardDiscount: Number(order.rewardDiscount || 0),
+        walletUsed: Number(order.walletUsed || 0),
         items: items.map(item => ({
           quantity: Number(item.quantity),
           price: Number(item.price),
@@ -418,7 +430,8 @@ class Shop {
     await ensureShopTables();
     const [orders] = await pool.query(
       `SELECT user_id as userId, status, reward_points_earned as rewardPointsEarned,
-              reward_points_redeemed as rewardPointsRedeemed
+              reward_points_redeemed as rewardPointsRedeemed,
+              wallet_used as walletUsed
        FROM shop_orders
        WHERE id = ?
        LIMIT 1`,
@@ -441,6 +454,15 @@ class Shop {
         await pool.query(
           'UPDATE users SET reward_points = GREATEST(0, COALESCE(reward_points, 0) + ?) WHERE id = ?',
           [adjustment, order.userId],
+        );
+      }
+
+      // Refund any wallet balance that was used on this order.
+      const walletRefund = Number(order.walletUsed || 0);
+      if (walletRefund > 0) {
+        await pool.query(
+          'UPDATE users SET wallet_balance = COALESCE(wallet_balance, 0) + ? WHERE id = ?',
+          [walletRefund, order.userId],
         );
       }
       return;

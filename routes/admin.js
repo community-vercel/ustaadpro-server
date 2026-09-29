@@ -50,6 +50,7 @@ import {
   importAdminShopProductsExcel,
 } from '../controllers/shopController.js';
 import {listProviders, createProvider, updateProvider, deleteProvider, assignProvider} from '../controllers/providerController.js';
+import {getAdminWithdrawals, updateAdminWithdrawalStatus} from '../controllers/walletController.js';
 import multer from 'multer';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -110,6 +111,8 @@ router.delete('/shop/products', deleteAllAdminShopProducts);
 router.delete('/shop/products/:id', deleteAdminShopProduct);
 router.get('/shop/orders', getAdminShopOrders);
 router.patch('/shop/orders/:id/status', updateAdminShopOrderStatus);
+router.get('/withdrawals', getAdminWithdrawals);
+router.patch('/withdrawals/:id/status', updateAdminWithdrawalStatus);
 router.post('/clean-database', cleanDatabase);
 
 export default router;

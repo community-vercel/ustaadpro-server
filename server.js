@@ -12,6 +12,7 @@ import addressRoutes from './routes/addresses.js';
 import adminRoutes from './routes/admin.js';
 import shopRoutes from './routes/shop.js';
 import reviewRoutes from './routes/reviews.js';
+import walletRoutes from './routes/wallet.js';
 import searchRoutes from './routes/search.js';
 import contactRoutes from './routes/contact.js';
 import complaintRoutes from './routes/complaints.js';
@@ -95,6 +96,7 @@ app.use('/api/shop', shopRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api', reviewRoutes);
+app.use('/api/wallet', walletRoutes);
 
 
 // ═══════════════ WHATSAPP-BOT FRONTEND ═══════════════
