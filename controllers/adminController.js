@@ -70,16 +70,19 @@ export const loginAdmin = async (req, res) => {
 };
 
 async function populateAdminOrder(order) {
+  // NOTE: select raw snake_case columns — Postgres lowercases camelCase
+  // aliases ("workAreaSqft" -> "workareasqft") which the row normalizer
+  // cannot convert, breaking these fields in the admin order details.
   const [items] = await pool.query(
-    `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
-            oi.service_work_title as serviceWorkTitle,
-            oi.service_title as storedServiceTitle,
-            oi.work_area_sqft as workAreaSqft, oi.work_price_per_sqft as workPricePerSqft,
-            oi.work_pricing_mode as workPricingMode,
-            s.id as serviceId, s.title,
-            s.description, s.duration, s.category_id as categoryId,
-            s.service_type as serviceType, s.image_url as imageUrl,
-            s.detail_description as detailDescription, s.details
+    `SELECT oi.quantity, oi.price, oi.service_work_price_id,
+            oi.service_work_title,
+            oi.service_title,
+            oi.work_area_sqft, oi.work_price_per_sqft,
+            oi.work_pricing_mode,
+            s.id as service_id, s.title,
+            s.description, s.duration, s.category_id,
+            s.service_type, s.image_url,
+            s.detail_description, s.details
      FROM order_items oi
      JOIN services s ON oi.service_id = s.id
      WHERE oi.order_id = ?`,
@@ -99,7 +102,7 @@ async function populateAdminOrder(order) {
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
-      storedServiceTitle: item.storedServiceTitle || item.storedservicetitle || null,
+      storedServiceTitle: item.serviceTitle || null,
       workAreaSqft:
         item.workAreaSqft === null || item.workAreaSqft === undefined
           ? null
