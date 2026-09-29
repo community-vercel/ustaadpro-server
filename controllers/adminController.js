@@ -310,7 +310,7 @@ export const updateAdminOrderStatus = async (req, res) => {
             notification: {
               title: requiresRemainingPayment ? 'Remaining payment due' : status === 'completed' ? 'Work completed' : 'Order Status Updated',
               body: requiresRemainingPayment
-                ? 'Your Rs. 200 advance was received. Please pay and upload the remaining EasyPaisa balance.'
+                ? 'Your 10% advance was received. Please pay and upload the remaining EasyPaisa balance.'
                 : status === 'completed'
                 ? 'Your work has been completed.'
                 : `Your order status is now: ${status.replace('_', ' ').toUpperCase()}`,

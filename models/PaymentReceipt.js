@@ -64,7 +64,7 @@ class PaymentReceipt {
 
     const paid = existing.filter(item => item.status !== 'rejected').reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const expected = paymentStage === 'advance'
-      ? Math.min(200, Number(order.total || 0))
+      ? Math.round(Number(order.total || 0) * 0.10)
       : Math.max(0, Number(order.total || 0) - paid);
     if (Number(amount) !== expected) {
       const error = new Error('Payment amount must be Rs. ' + expected + '.'); error.statusCode = 400; throw error;
