@@ -73,6 +73,7 @@ async function populateAdminOrder(order) {
   const [items] = await pool.query(
     `SELECT oi.quantity, oi.price, oi.service_work_price_id as serviceWorkPriceId,
             oi.service_work_title as serviceWorkTitle,
+            oi.service_title as storedServiceTitle,
             oi.work_area_sqft as workAreaSqft, oi.work_price_per_sqft as workPricePerSqft,
             oi.work_pricing_mode as workPricingMode,
             s.id as serviceId, s.title,
@@ -98,6 +99,7 @@ async function populateAdminOrder(order) {
     items: items.map(item => ({
       ...item,
       price: Number(item.price),
+      storedServiceTitle: item.storedServiceTitle || item.storedservicetitle || null,
       workAreaSqft:
         item.workAreaSqft === null || item.workAreaSqft === undefined
           ? null
