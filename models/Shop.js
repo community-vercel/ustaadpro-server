@@ -124,7 +124,7 @@ function normalizeProduct(row) {
     description: row.description,
     price: Number(row.price),
     originalPrice: Number(row.originalPrice ?? row.original_price ?? 0),
-    imageUrl: row.imageUrl ?? row.image_url ?? '',
+    imageUrl: normalizeImageUrl(row.imageUrl ?? row.image_url ?? ''),
     stock: Number(row.stock ?? 0),
     isActive: Boolean(row.isActive ?? row.is_active),
     createdAt: row.createdAt ?? row.created_at,
