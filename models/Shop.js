@@ -1,4 +1,4 @@
-import pool from '../config/db.js';
+﻿import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
 let shopTablesInitialization = null;
@@ -131,14 +131,20 @@ function normalizeProduct(row) {
   };
 }
 
+const SERVER_ORIGIN = 'https://api.ustaadpro.pk';
+
 function normalizeImageUrl(url = '') {
   let value = String(url || '').trim();
-  // Strip markdown hyperlink format: [text](https://...) or [url](url)
+  if (!value) return '';
+  // Strip markdown hyperlink format: [text](https://...) -> https://...
   const markdownMatch = value.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/i);
   if (markdownMatch) value = markdownMatch[1].trim();
-  // Convert localhost/127.0.0.1 URLs to relative upload paths
+  // Convert localhost/127.0.0.1 absolute URLs to relative paths first
   const localMatch = value.match(/^https?:\/\/(?:127\.0\.0\.1|localhost):\d+(\/uploads\/.+)$/i);
-  return localMatch ? localMatch[1] : value;
+  if (localMatch) value = localMatch[1];
+  // Prepend production server URL to relative /uploads/ paths
+  if (value.startsWith('/uploads/')) return `${SERVER_ORIGIN}${value}`;
+  return value;
 }
 
 class Shop {
