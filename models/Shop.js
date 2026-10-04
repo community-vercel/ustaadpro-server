@@ -132,10 +132,13 @@ function normalizeProduct(row) {
 }
 
 function normalizeImageUrl(url = '') {
-  const value = String(url || '').trim();
-  const match = value.match(/^https?:\/\/(?:127\.0\.0\.1|localhost):\d+(\/uploads\/.+)$/i);
-
-  return match ? match[1] : value;
+  let value = String(url || '').trim();
+  // Strip markdown hyperlink format: [text](https://...) or [url](url)
+  const markdownMatch = value.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/i);
+  if (markdownMatch) value = markdownMatch[1].trim();
+  // Convert localhost/127.0.0.1 URLs to relative upload paths
+  const localMatch = value.match(/^https?:\/\/(?:127\.0\.0\.1|localhost):\d+(\/uploads\/.+)$/i);
+  return localMatch ? localMatch[1] : value;
 }
 
 class Shop {
