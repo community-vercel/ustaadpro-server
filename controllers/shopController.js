@@ -295,12 +295,13 @@ export const importAdminShopProducts = async (req, res) => {
       return res.status(400).json({message: 'CSV text is required.'});
     }
 
-    const lines = csvText.split('\n').map(line => line.trim()).filter(Boolean);
+    const lines = csvText.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
     if (lines.length < 2) {
       return res.status(400).json({message: 'CSV must have a header row and at least one product row.'});
     }
 
     // Parse header to get column positions (case-insensitive)
+    const delimiter = lines[0].includes('\t') && !lines[0].includes(',') ? '\t' : ',';
     const parseCsvLine = (line) => {
       const result = [];
       let current = '';
@@ -310,7 +311,7 @@ export const importAdminShopProducts = async (req, res) => {
         if (ch === '"' && !inQuotes) { inQuotes = true; }
         else if (ch === '"' && inQuotes && line[i + 1] === '"') { current += '"'; i++; }
         else if (ch === '"' && inQuotes) { inQuotes = false; }
-        else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+        else if (ch === delimiter && !inQuotes) { result.push(current); current = ''; }
         else { current += ch; }
       }
       result.push(current);
@@ -325,7 +326,11 @@ export const importAdminShopProducts = async (req, res) => {
     const categoryCol  = col('category');
     const brandCol     = col('brand');
     const descCol      = col('description');
-    const priceCol     = col('price (pkr)') !== -1 ? col('price (pkr)') : col('price');
+    const priceCol     = col('discounted price') !== -1
+      ? col('discounted price')
+      : col('price (pkr)') !== -1
+        ? col('price (pkr)')
+        : col('price');
     const origPriceCol = col('original price (pkr)') !== -1 ? col('original price (pkr)') : col('original price');
     const stockCol     = col('stock');
     const activeCol    = col('active');
@@ -347,6 +352,9 @@ export const importAdminShopProducts = async (req, res) => {
         continue;
       }
 
+      const rawImageUrl = imageCol !== -1 ? row[imageCol]?.trim() || null : null;
+      const markdownImageMatch = rawImageUrl?.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/i);
+
       try {
         await Shop.saveProduct({
           id: idCol !== -1 ? row[idCol]?.trim() || undefined : undefined,
@@ -356,9 +364,11 @@ export const importAdminShopProducts = async (req, res) => {
           description: descCol !== -1 ? row[descCol]?.trim() || '' : '',
           price,
           originalPrice: origPriceCol !== -1 ? Number(row[origPriceCol]?.replace(/[^0-9.]/g, '') || 0) : 0,
-          imageUrl: imageCol !== -1 ? row[imageCol]?.trim() || null : null,
+          imageUrl: markdownImageMatch?.[1] || rawImageUrl,
           stock: stockCol !== -1 ? Number(row[stockCol]?.trim() || 0) : 0,
-          isActive: activeCol !== -1 ? (row[activeCol]?.trim().toLowerCase() !== 'no') : true,
+          isActive: activeCol !== -1
+            ? !['no', 'false', '0', 'inactive'].includes(row[activeCol]?.trim().toLowerCase())
+            : true,
         });
         results.saved++;
       } catch (err) {
@@ -635,7 +645,7 @@ export const importAdminShopProductsExcel = async (req, res) => {
     const categoryCol  = col('category');
     const brandCol     = col('brand');
     const descCol      = col('description');
-    const priceCol     = col('price');
+    const priceCol     = col('discounted price') !== -1 ? col('discounted price') : col('price');
     const origPriceCol = col('original price');
     const stockCol     = col('stock');
     const activeCol    = col('active');
@@ -681,6 +691,8 @@ export const importAdminShopProductsExcel = async (req, res) => {
       
       let finalImageUrl = imageCol !== -1 ? getCellValue(row.getCell(imageCol)).trim() : null;
       if (finalImageUrl === 'null' || finalImageUrl === 'undefined' || finalImageUrl === '') finalImageUrl = null;
+      const markdownImageMatch = finalImageUrl?.match(/^\[[^\]]*\]\((https?:\/\/[^)]+)\)$/i);
+      if (markdownImageMatch) finalImageUrl = markdownImageMatch[1];
       
       if (imagesByRow[i]) {
         const media = workbook.model.media.find(m => m.index === imagesByRow[i]);
@@ -704,7 +716,9 @@ export const importAdminShopProductsExcel = async (req, res) => {
           originalPrice: origPriceCol !== -1 ? Number(getCellValue(row.getCell(origPriceCol)).replace(/[^0-9.]/g, '') || 0) : 0,
           imageUrl: finalImageUrl,
           stock: stockCol !== -1 ? Number(getCellValue(row.getCell(stockCol)).trim() || 0) : 0,
-          isActive: activeCol !== -1 ? (getCellValue(row.getCell(activeCol)).trim().toLowerCase() !== 'no') : true,
+          isActive: activeCol !== -1
+            ? !['no', 'false', '0', 'inactive'].includes(getCellValue(row.getCell(activeCol)).trim().toLowerCase())
+            : true,
         });
         results.saved++;
       } catch (err) {
@@ -715,6 +729,8 @@ export const importAdminShopProductsExcel = async (req, res) => {
     
     res.json({
       message: `Import complete. ${results.saved} saved, ${results.skipped} skipped.`,
+      saved: results.saved,
+      skipped: results.skipped,
       errors: results.errors
     });
   } catch (error) {
