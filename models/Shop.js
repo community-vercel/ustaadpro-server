@@ -1,7 +1,9 @@
 import pool from '../config/db.js';
 import AppControl from './AppControl.js';
 
-async function ensureShopTables() {
+let shopTablesInitialization = null;
+
+async function initializeShopTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shop_products (
       id VARCHAR(80) PRIMARY KEY,
@@ -51,6 +53,13 @@ async function ensureShopTables() {
       }
     });
 
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_shop_products_active_category ON shop_products (is_active, category)',
+  );
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_shop_products_active_brand ON shop_products (is_active, brand)',
+  );
+
   await pool
     .query('ALTER TABLE shop_orders ADD COLUMN cancel_reason TEXT NULL')
     .catch(error => {
@@ -94,6 +103,16 @@ async function ensureShopTables() {
       FOREIGN KEY (product_id) REFERENCES shop_products(id)
     )
   `);
+}
+
+async function ensureShopTables() {
+  if (!shopTablesInitialization) {
+    shopTablesInitialization = initializeShopTables().catch(error => {
+      shopTablesInitialization = null;
+      throw error;
+    });
+  }
+  return shopTablesInitialization;
 }
 
 function normalizeProduct(row) {
