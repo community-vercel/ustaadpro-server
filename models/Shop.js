@@ -1,5 +1,7 @@
 ﻿import pool from '../config/db.js';
 import AppControl from './AppControl.js';
+import fs from 'fs';
+import path from 'path';
 
 let shopTablesInitialization = null;
 
@@ -115,16 +117,31 @@ async function ensureShopTables() {
   return shopTablesInitialization;
 }
 
+function findLocalProductImage(productId) {
+  const safeId = path.basename(String(productId || ''));
+  if (!safeId) return '';
+
+  for (const extension of ['png', 'jpg', 'jpeg', 'webp']) {
+    const relativePath = `/uploads/shop-products/${safeId}.${extension}`;
+    if (fs.existsSync(path.join(process.cwd(), 'uploads', 'shop-products', `${safeId}.${extension}`))) {
+      return `${SERVER_ORIGIN}${relativePath}`;
+    }
+  }
+  return '';
+}
+
 function normalizeProduct(row) {
+  const id = String(row.id || '');
+  const storedImageUrl = row.imageUrl ?? row.image_url ?? '';
   return {
-    id: row.id,
+    id,
     title: row.title,
     category: row.category,
     brand: row.brand || '',
     description: row.description,
     price: Number(row.price),
     originalPrice: Number(row.originalPrice ?? row.original_price ?? 0),
-    imageUrl: normalizeImageUrl(row.imageUrl ?? row.image_url ?? ''),
+    imageUrl: normalizeImageUrl(storedImageUrl) || findLocalProductImage(id),
     stock: Number(row.stock ?? 0),
     isActive: Boolean(row.isActive ?? row.is_active),
     createdAt: row.createdAt ?? row.created_at,
@@ -331,7 +348,7 @@ class Shop {
          description = EXCLUDED.description,
          price = EXCLUDED.price,
          original_price = EXCLUDED.original_price,
-         image_url = EXCLUDED.image_url,
+         image_url = COALESCE(NULLIF(EXCLUDED.image_url, ''), shop_products.image_url),
          stock = EXCLUDED.stock,
          is_active = EXCLUDED.is_active`,
       [
